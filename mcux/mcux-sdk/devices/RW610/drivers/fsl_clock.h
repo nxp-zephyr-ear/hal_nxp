@@ -499,7 +499,37 @@ typedef enum _clock_attach_id
     kXTAL32K_to_CLK32K = PMU_TUPLE_MUX(0x70U, 1),
     kNCO32K_to_CLK32K  = PMU_TUPLE_MUX(0x70U, 2),
 } clock_attach_id_t;
-
+/*! @brief Clock name used to get clock frequency. */
+typedef enum _clock_name
+{
+    kCLOCK_CoreSysClk,    /*!< Core clock  (aka HCLK)                                 */
+    kCLOCK_BusClk,        /*!< Bus clock (AHB/APB clock, aka HCLK)                    */
+    kCLOCK_MclkClk,       /*!< MCLK, to MCLK pin                                      */
+    kCLOCK_ClockOutClk,   /*!< CLOCKOUT                                               */
+    kCLOCK_AdcClk,        /*!< ADC                                                    */
+    kCLOCK_FlexspiClk,    /*!< FLEXSPI                                                */
+    kCLOCK_SctClk,        /*!< SCT                                                    */
+    kCLOCK_Wdt0Clk,       /*!< Watchdog0                                              */
+    kCLOCK_Wdt1Clk,       /*!< Watchdog1                                              */
+    kCLOCK_SystickClk,    /*!< Systick                                                */
+    kCLOCK_Sdio0Clk,      /*!< SDIO0                                                  */
+    kCLOCK_Sdio1Clk,      /*!< SDIO1                                                  */
+    kCLOCK_I3cClk,        /*!< I3C                                                    */
+    kCLOCK_UsbClk,        /*!< USB                                                    */
+    kCLOCK_DmicClk,       /*!< Digital Mic clock                                      */
+    kCLOCK_DspCpuClk,     /*!< DSP  clock                                             */
+    kCLOCK_AcmpClk,       /*!< Acmp clock                                             */
+    kCLOCK_Flexcomm0Clk,  /*!< Flexcomm0Clock                                         */
+    kCLOCK_Flexcomm1Clk,  /*!< Flexcomm1Clock                                         */
+    kCLOCK_Flexcomm2Clk,  /*!< Flexcomm2Clock                                         */
+    kCLOCK_Flexcomm3Clk,  /*!< Flexcomm3Clock                                         */
+    kCLOCK_Flexcomm4Clk,  /*!< Flexcomm4Clock                                         */
+    kCLOCK_Flexcomm5Clk,  /*!< Flexcomm5Clock                                         */
+    kCLOCK_Flexcomm6Clk,  /*!< Flexcomm6Clock                                         */
+    kCLOCK_Flexcomm7Clk,  /*!< Flexcomm7Clock                                         */
+    kCLOCK_Flexcomm14Clk, /*!< Flexcomm14Clock                                        */
+    kCLOCK_Flexcomm15Clk, /*!< Flexcomm15Clock                                        */
+} clock_name_t;
 /*!
  * @brief Clock divider definition.
  */
@@ -685,7 +715,10 @@ void CLOCK_AttachClk(clock_attach_id_t connection);
  * @param   divider     : Value to be divided.
  */
 void CLOCK_SetClkDiv(clock_div_name_t name, uint32_t divider);
-
+/*! @brief  Return Frequency of selected clock
+ *  @return Frequency of selected clock
+ */
+uint32_t CLOCK_GetFreq(clock_name_t clockName);
 /*! @brief  Return Input frequency for the Fractional baud rate generator
  *  @return Input Frequency for FRG
  */

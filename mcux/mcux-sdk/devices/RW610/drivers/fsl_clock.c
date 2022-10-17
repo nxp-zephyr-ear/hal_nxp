@@ -196,6 +196,49 @@ static uint32_t CLOCK_GetTcpuFvcoFreq(void)
     return freq;
 }
 
+/* Get IP Clk */
+/*! brief  Return Frequency of selected clock
+ *  return Frequency of selected clock
+ */
+uint32_t CLOCK_GetFreq(clock_name_t clockName)
+{
+    uint32_t freq = 0U;
+
+    switch (clockName)
+    {
+        case kCLOCK_CoreSysClk:
+        case kCLOCK_BusClk:
+            freq = CLOCK_GetMainClkFreq() / ((CLKCTL0->SYSCPUAHBCLKDIV & CLKCTL0_SYSCPUAHBCLKDIV_DIV_MASK) + 1U);
+            break;
+        case kCLOCK_FlexspiClk:
+            freq = CLOCK_GetFlexspiClkFreq();
+            break;
+        case kCLOCK_SystickClk:
+            freq = CLOCK_GetSystickClkFreq();
+            break;
+        case kCLOCK_Flexcomm0Clk:
+            freq = CLOCK_GetFlexCommClkFreq(0U);
+            break;
+        case kCLOCK_Flexcomm1Clk:
+            freq = CLOCK_GetFlexCommClkFreq(1U);
+            break;
+        case kCLOCK_Flexcomm2Clk:
+            freq = CLOCK_GetFlexCommClkFreq(2U);
+            break;
+        case kCLOCK_Flexcomm3Clk:
+            freq = CLOCK_GetFlexCommClkFreq(3U);
+            break;
+        case kCLOCK_Flexcomm14Clk:
+            freq = CLOCK_GetFlexCommClkFreq(14U);
+            break;
+        default:
+            freq = 0U;
+            break;
+    }
+
+    return freq;
+}
+
 /*! @brief  Return Frequency of tcpu_mci_clk
  *  return Frequency of tcpu_mci_clk
  */
