@@ -1,0 +1,54 @@
+/*!
+@page driver_log Driver Change Log
+@section clock CLOCK
+  The current CLOCK driver version is 2.1.0.
+
+  - 2.1.0
+    - Added USIM_CLOCKS macro
+    - Added CLOCK_DisableUsbhsPhyClock API
+  - 2.0.1
+    - Moved g_clkinFreq and g_mclkinFreq inside extern "C"
+  - 2.0.0
+    - initial version.
+
+@section power POWER
+  The current POWER driver version is 2.1.0.
+
+  - 2.1.0
+    - Added PM3 wakeup support for A1 device.
+    - Added POWER_ConfigCauInSleep() API. Remove pm3CauPd field from power_sleep_config_t structure.
+    - Added power_init_config_t parameter in POWER_InitPowerConfig() API.
+  - 2.0.1
+    - Improved power performance
+    - Added return value for POWER_EnterPowerMode()
+  - 2.0.0
+    - initial version.
+
+@section io_mux IO_MUX
+  The current IO_MUX driver version is 2.1.0.
+
+  - 2.1.0
+    - Added IO_MUX_SetPinOutLevelInSleep API
+    - Added IO_MUX_SetRfPinOutLevelInSleep API
+    - Added capture pulse macro IO_MUX_AON_CAPTURE
+  - 2.0.0
+    - initial version.
+
+@section reset RESET
+  The current RESET driver version is 2.0.2.
+
+  - 2.0.2
+    - Added USIM_RSTS macro
+  - 2.0.1
+    - Added kCSS_GDET_REF_RST_SHIFT_RSTn
+  - 2.0.0
+    - initial version.
+
+@section ocotp OCOTP
+  The current OCOTP driver version is 2.0.1.
+
+  - 2.0.1
+    - Fixed an misra issue 10.1
+  - 2.0.0
+    - initial version.
+*/

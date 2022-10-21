@@ -1,0 +1,156 @@
+---
+#####################################################################################
+# This file is placed under devices/<deivce>
+#
+# The following components(manifest_content) are translated from the devices/<deivce>.meta
+# and devices/<deivce>_device.meta
+#
+# They are used contained the information for manifest generation usage. Currently, they are
+# not related to SW components actions
+#
+# The naming for this component must be consistent in all devices. Generator can get the contents
+# of them directly from the name.
+#
+#####################################################################################
+
+# automatically, from fromChipModel
+device.hardware_data:
+  section-type: "manifest_content"
+  contents:
+    generated_from_chip_model: "yes"
+    devices:
+      - id: "RW610"
+        full_name: "RW610"
+        name: "RW610"
+        platform: "RW"
+        series: "RW"
+        family: "RW61X"
+        subfamily: "RW610"
+        core:
+          - name: "Cortex-M33"
+            type: "cm33"
+            id: "cm33"
+            description: ""
+            fpu: "SP_FPU"
+            dsp: false
+            mpu: true
+            sau: true
+            frequency_mhz: 260
+        memory:
+          memoryBlock:
+            - id: "SRAM"
+              name: "SRAM"
+              addr: 0x0
+              size: 0x130000
+              type: "RAM"
+              access: "RW"
+              default: true
+              aliases:
+                - name: "SRAM_alias1"
+                  addr: 0x10000000
+                  size: 0x130000
+                  access: "RW"
+                - name: "SRAM_alias2"
+                  addr: 0x20000000
+                  size: 0x130000
+                  access: "RW"
+                - name: "SRAM_alias3"
+                  addr: 0x30000000
+                  size: 0x130000
+                  access: "RW"
+            - id: "BootROM"
+              name: "BootROM"
+              addr: 0x3000000
+              size: 0x40000
+              type: "ROM"
+              access: "RO"
+              aliases:
+                - name: "BootROM_alias"
+                  addr: 0x13000000
+                  size: 0x40000
+                  access: "RO"
+        total_memory:
+          ram_size_kb: 1216
+          flash_size_kb: 0
+        part:
+          - name: "RW610HNA0IK"
+          - name: "RW610HNA0IMP"
+          - name: "RW610EVA0IK"
+          - name: "RW610EVA0IMP"
+          - name: "RW610UKA0IZ"
+        ips:
+          - "DriverType_CACHE64"
+          - "DriverType_CACHE64_POLSEL"
+          - "DriverType_CNS_ACOMP"
+          - "DriverType_CNS_ADC"
+          - "DriverType_CNS_APU"
+          - "DriverType_CNS_BG"
+          - "DriverType_CNS_BLEAPU"
+          - "DriverType_CNS_BUCK11"
+          - "DriverType_CNS_BUCK18"
+          - "DriverType_CNS_CAU"
+          - "DriverType_CNS_CIU1"
+          - "DriverType_CNS_CIU2"
+          - "DriverType_CNS_DAC"
+          - "DriverType_CNS_MCI_IO_MUX"
+          - "DriverType_CNS_PMU"
+          - "DriverType_CNS_PUF"
+          - "DriverType_CNS_SDU_FBR_CARD"
+          - "DriverType_CNS_SDU_FN0_CARD"
+          - "DriverType_CNS_SDU_FN_CARD"
+          - "DriverType_CNS_SENSOR_CTRL"
+          - "DriverType_CNS_SOCCIU"
+          - "DriverType_CNS_SYSPLL_T3"
+          - "DriverType_CNS_SYSPLL_TCPU"
+          - "DriverType_CNS_SYSPLL_TDDR"
+          - "DriverType_CNS_USBC"
+          - "DriverType_CNS_WLAPU"
+          - "DriverType_CSS"
+          - "DriverType_ENET"
+          - "DriverType_FLEXSPI"
+          - "DriverType_GDMA"
+          - "DriverType_IMU"
+          - "DriverType_LCDIC"
+          - "DriverType_LPC_AHB_SECURE_CTRL"
+          - "DriverType_LPC_CDOG"
+          - "DriverType_LPC_CLKCTL0"
+          - "DriverType_LPC_CLKCTL1"
+          - "DriverType_LPC_CRC"
+          - "DriverType_LPC_CTIMER"
+          - "DriverType_LPC_DBGMAILBOX"
+          - "DriverType_LPC_DMA"
+          - "DriverType_LPC_DMIC"
+          - "DriverType_LPC_FLEXCOMM"
+          - "DriverType_LPC_FREQME"
+          - "DriverType_LPC_GPIO"
+          - "DriverType_LPC_I2C"
+          - "DriverType_LPC_I2S"
+          - "DriverType_LPC_INPUTMUX"
+          - "DriverType_LPC_ITRC"
+          - "DriverType_LPC_MRT"
+          - "DriverType_LPC_OSTIMER"
+          - "DriverType_LPC_OTP"
+          - "DriverType_LPC_PINT"
+          - "DriverType_LPC_POWERQUAD"
+          - "DriverType_LPC_RSTCTL0"
+          - "DriverType_LPC_RSTCTL1"
+          - "DriverType_LPC_RTC"
+          - "DriverType_LPC_SCT"
+          - "DriverType_LPC_SPI"
+          - "DriverType_LPC_SYSCTL0"
+          - "DriverType_LPC_SYSCTL1"
+          - "DriverType_LPC_SYSCTL2"
+          - "DriverType_LPC_USART"
+          - "DriverType_LPC_UTICK"
+          - "DriverType_LPC_WWDT"
+          - "DriverType_PKC"
+          - "DriverType_POWERLIB"
+          - "DriverType_ROMC"
+          - "DriverType_TRNG"
+          - "DriverType_USIM"
+          - "DriverType_USBHS"
+          - "DriverType_USBNC"
+          - "DriverType_USBPHY"
+          - "ipv_usbo2_1.18"
+        modules:
+...
