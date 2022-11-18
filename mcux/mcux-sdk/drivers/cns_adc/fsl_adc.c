@@ -203,13 +203,13 @@ void ADC_SetScanChannel(ADC_Type *base, adc_scan_channel_t scanChannel, adc_chan
 {
     if (scanChannel < kADC_ScanChannel8)
     {
-        base->ADC_REG_SCN1 = (base->ADC_REG_SCN1 & ~(0xFUL << (uint32_t)scanChannel)) |
-                             ((uint32_t)channelSource << (uint32_t)scanChannel);
+        base->ADC_REG_SCN1 = (base->ADC_REG_SCN1 & ~(0xFUL << (4 * (uint32_t)scanChannel))) |
+                             ((uint32_t)channelSource << (4 * (uint32_t)scanChannel));
     }
     else
     {
-        base->ADC_REG_SCN2 = (base->ADC_REG_SCN2 & ~(0xFUL << ((uint32_t)scanChannel - 8UL))) |
-                             ((uint32_t)channelSource << ((uint32_t)scanChannel - 8UL));
+        base->ADC_REG_SCN2 = (base->ADC_REG_SCN2 & ~(0xFUL << (4 * ((uint32_t)scanChannel - 8UL)))) |
+                             ((uint32_t)channelSource << (4 * ((uint32_t)scanChannel - 8UL)));
     }
 }
 
