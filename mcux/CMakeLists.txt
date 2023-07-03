@@ -74,6 +74,7 @@ zephyr_library_sources(mcux-sdk/devices/${MCUX_DEVICE}/drivers/fsl_clock.c)
 if (${MCUX_DEVICE} MATCHES "LPC|MIMXRT6|MIMXRT5|RW6")
   zephyr_library_sources(mcux-sdk/devices/${MCUX_DEVICE}/drivers/fsl_power.c)
   zephyr_library_sources(mcux-sdk/devices/${MCUX_DEVICE}/drivers/fsl_reset.c)
+  zephyr_library_sources_ifdef(CONFIG_FW_LOADER mcux-sdk/devices/${MCUX_DEVICE}/drivers/fsl_ocotp.c)
 endif()
 
 # RT11xx SOC initialization file requires additional drivers, import them

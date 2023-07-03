@@ -47,7 +47,7 @@ typedef enum _RSTCTL_RSTn
 {
     kPOWERQUAD_RST_SHIFT_RSTn = (RST_CTL0_PSCCTL0 << 8) | 8U,  /**< POWERQUAD reset control */
     kPKC_RST_SHIFT_RSTn       = (RST_CTL0_PSCCTL0 << 8) | 9U,  /**< PKC reset control */
-    kCSS_RST_SHIFT_RSTn       = (RST_CTL0_PSCCTL0 << 8) | 10U, /**< CSS reset control */
+    kELS_RST_SHIFT_RSTn       = (RST_CTL0_PSCCTL0 << 8) | 10U, /**< ELS reset control */
     kPUF_RST_SHIFT_RSTn       = (RST_CTL0_PSCCTL0 << 8) | 11U, /**< Physical unclonable function reset control */
     kFLEXSPI_RST_SHIFT_RSTn   = (RST_CTL0_PSCCTL0 << 8) | 16U, /**< FLEXSPI reset control */
     kHPU_RST_SHIFT_RSTn       = (RST_CTL0_PSCCTL0 << 8) | 20U, /**< HPU reset control */
@@ -59,8 +59,8 @@ typedef enum _RSTCTL_RSTn
     kDMA1_RST_SHIFT_RSTn      = (RST_CTL0_PSCCTL0 << 8) | 30U, /**< DMA1 reset control */
     kSDIO_RST_SHIFT_RSTn      = (RST_CTL0_PSCCTL0 << 8) | 31U, /**< SDIO reset control */
 
-    kCSS_APB_RST_SHIFT_RSTn      = (RST_CTL0_PSCCTL1 << 8) | 0U,  /**< CSS_APB reset control */
-    kCSS_GDET_REF_RST_SHIFT_RSTn = (RST_CTL0_PSCCTL1 << 8) | 1U,  /**< CSS_GDET_REF_RST reset control */
+    kELS_APB_RST_SHIFT_RSTn      = (RST_CTL0_PSCCTL1 << 8) | 0U,  /**< ELS_APB reset control */
+    kELS_GDET_REF_RST_SHIFT_RSTn = (RST_CTL0_PSCCTL1 << 8) | 1U,  /**< ELS_GDET_REF_RST reset control */
     kSDIO_SLV_SHIFT_RSTn         = (RST_CTL0_PSCCTL1 << 8) | 2U,  /**< SDIO_SLV reset control */
     kGAU_RST_SHIFT_RSTn          = (RST_CTL0_PSCCTL1 << 8) | 16U, /**< GAU reset control */
     kOTP_RST_SHIFT_RSTn          = (RST_CTL0_PSCCTL1 << 8) | 17U, /**< OTP reset control */

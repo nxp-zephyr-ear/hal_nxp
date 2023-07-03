@@ -40,8 +40,8 @@
 
 /*! @name Driver version */
 /*@{*/
-/*! @brief CLOCK driver version 2.1.0. */
-#define FSL_CLOCK_DRIVER_VERSION (MAKE_VERSION(2, 1, 0))
+/*! @brief CLOCK driver version 2.1.1. */
+#define FSL_CLOCK_DRIVER_VERSION (MAKE_VERSION(2, 1, 1))
 /*@}*/
 
 /* Definition for delay API in clock driver, users can redefine it to the real application. */
@@ -271,7 +271,7 @@ typedef enum _clock_ip_name
     kCLOCK_Romcp     = CLK_GATE_DEFINE(CLK_CTL0_PSCCTL0, 2),
     kCLOCK_PowerQuad = CLK_GATE_DEFINE(CLK_CTL0_PSCCTL0, 8),
     kCLOCK_Pkc       = CLK_GATE_DEFINE(CLK_CTL0_PSCCTL0, 9),
-    kCLOCK_Css       = CLK_GATE_DEFINE(CLK_CTL0_PSCCTL0, 10),
+    kCLOCK_Els       = CLK_GATE_DEFINE(CLK_CTL0_PSCCTL0, 10),
     kCLOCK_Puf       = CLK_GATE_DEFINE(CLK_CTL0_PSCCTL0, 11),
     kCLOCK_Flexspi   = CLK_GATE_DEFINE(CLK_CTL0_PSCCTL0, 16),
     kCLOCK_Hpu       = CLK_GATE_DEFINE(CLK_CTL0_PSCCTL0, 20),
@@ -283,7 +283,7 @@ typedef enum _clock_ip_name
     kCLOCK_Dma1      = CLK_GATE_DEFINE(CLK_CTL0_PSCCTL0, 30),
     kCLOCK_Sdio      = CLK_GATE_DEFINE(CLK_CTL0_PSCCTL0, 31),
 
-    kCLOCK_CssApb     = CLK_GATE_DEFINE(CLK_CTL0_PSCCTL1, 0),
+    kCLOCK_ElsApb     = CLK_GATE_DEFINE(CLK_CTL0_PSCCTL1, 0),
     kCLOCK_SdioSlv    = CLK_GATE_DEFINE(CLK_CTL0_PSCCTL1, 2),
     kCLOCK_Gau        = CLK_GATE_DEFINE(CLK_CTL0_PSCCTL1, 16),
     kCLOCK_Otp        = CLK_GATE_DEFINE(CLK_CTL0_PSCCTL1, 17),
