@@ -1,0 +1,2 @@
+zephyr_include_directories(AzureWave/tx_pwr_limits)
+zephyr_include_directories(Murata/tx_pwr_limits)
