@@ -11,5 +11,5 @@ target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
 )
 
 
-include(driver_flexio_mculcd)
 include(driver_edma_MK28FA15)
+include(driver_flexio_mculcd)

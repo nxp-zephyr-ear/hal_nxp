@@ -1,15 +1,13 @@
 /*
 ** ###################################################################
-**     Processors:          RW610EVA0IK
-**                          RW610EVA0IMP
-**                          RW610HNA0IK
-**                          RW610HNA0IMP
-**                          RW610UKA0IZ
+**     Processors:          RW610ETA1I
+**                          RW610HNA1I
+**                          RW610UKA1I
 **
 **     Compiler:            GNU C Compiler
 **     Reference manual:    RW61X User manual Rev. 0.95, June 2022
 **     Version:             rev. 1.0, 2021-03-16
-**     Build:               b220615
+**     Build:               b221116
 **
 **     Abstract:
 **         Linker file for the GNU C Compiler
@@ -37,7 +35,7 @@ STACK_SIZE = DEFINED(__stack_size__) ? __stack_size__ : 0x0400;
 /* Specify the memory areas */
 MEMORY
 {
-  m_flash               (RX)  : ORIGIN = 0x08000400, LENGTH = 0x001FFC00
+  m_flash               (RX)  : ORIGIN = 0x08000000, LENGTH = 0x00200000
   m_interrupts          (RX)  : ORIGIN = 0x00001000, LENGTH = 0x00000280
   m_text                (RX)  : ORIGIN = 0x00001280, LENGTH = 0x000BED80
   m_data                (RW)  : ORIGIN = 0x200C0000, LENGTH = 0x00070000
@@ -49,9 +47,11 @@ SECTIONS
   .flash_config :
   {
     . = ALIGN(4);
+    FILL(0xFF)
+    . = 0x400;
     __FLASH_BASE = .;
     KEEP(* (.flash_conf))     /* flash config section */
-    . = 0xC00;
+    . = 0x1000;
   } > m_flash
 
   /* The startup code goes first into internal ram */
@@ -152,7 +152,7 @@ SECTIONS
   } > m_text AT > m_flash
 
   __etext = .;    /* define a global symbol at end of code */
-  __DATA_ROM = ORIGIN(m_flash) + 0xC00 + __etext - __VECTOR_TABLE;
+  __DATA_ROM = ORIGIN(m_flash) + 0x1000 + __etext - __VECTOR_TABLE;
 
   __VECTOR_RAM = ORIGIN(m_interrupts);
   __RAM_VECTOR_TABLE_SIZE_BYTES = 0x0;

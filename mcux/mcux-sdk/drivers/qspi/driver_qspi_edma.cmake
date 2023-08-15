@@ -20,8 +20,5 @@ endif()
 if(${MCUX_DEVICE} STREQUAL "MK28FA15")
     include(driver_edma_MK28FA15)
 endif()
-if(${MCUX_DEVICE} STREQUAL "MK27FA15")
-    include(driver_edma_MK28FA15)
-endif()
 
 include(driver_qspi)

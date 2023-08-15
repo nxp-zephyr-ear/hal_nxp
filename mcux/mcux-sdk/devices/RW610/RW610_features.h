@@ -1,15 +1,13 @@
 /*
 ** ###################################################################
 **     Version:             rev. 1.0, 2021-03-16
-**     Build:               b220830
+**     Build:               b230614
 **
 **     Abstract:
 **         Chip specific module features.
 **
 **     Copyright 2016 Freescale Semiconductor, Inc.
-**     Copyright 2016-2022 NXP
-**     All rights reserved.
-**
+**     Copyright 2016-2023 NXP
 **     SPDX-License-Identifier: BSD-3-Clause
 **
 **     http:                 www.nxp.com
@@ -31,12 +29,28 @@
 #define FSL_FEATURE_SOC_ACOMP_COUNT (1)
 /* @brief ADC availability on the SoC. */
 #define FSL_FEATURE_SOC_ADC_COUNT (2)
+/* @brief AON_SOC_CIU availability on the SoC. */
+#define FSL_FEATURE_SOC_AON_SOC_CIU_COUNT (1)
+/* @brief APU availability on the SoC. */
+#define FSL_FEATURE_SOC_APU_COUNT (2)
+/* @brief BG availability on the SoC. */
+#define FSL_FEATURE_SOC_BG_COUNT (1)
+/* @brief BLEAPU availability on the SoC. */
+#define FSL_FEATURE_SOC_BLEAPU_COUNT (1)
+/* @brief BUCK11 availability on the SoC. */
+#define FSL_FEATURE_SOC_BUCK11_COUNT (1)
+/* @brief BUCK18 availability on the SoC. */
+#define FSL_FEATURE_SOC_BUCK18_COUNT (1)
 /* @brief CACHE64_CTRL availability on the SoC. */
 #define FSL_FEATURE_SOC_CACHE64_CTRL_COUNT (2)
 /* @brief CACHE64_POLSEL availability on the SoC. */
 #define FSL_FEATURE_SOC_CACHE64_POLSEL_COUNT (2)
 /* @brief CAU availability on the SoC. */
 #define FSL_FEATURE_SOC_CAU_COUNT (1)
+/* @brief CDOG availability on the SoC. */
+#define FSL_FEATURE_SOC_CDOG_COUNT (1)
+/* @brief CIU1 availability on the SoC. */
+#define FSL_FEATURE_SOC_CIU1_COUNT (1)
 /* @brief CIU2 availability on the SoC. */
 #define FSL_FEATURE_SOC_CIU2_COUNT (1)
 /* @brief CLKCTL0 availability on the SoC. */
@@ -47,14 +61,14 @@
 #define FSL_FEATURE_SOC_CRC_COUNT (1)
 /* @brief CTIMER availability on the SoC. */
 #define FSL_FEATURE_SOC_CTIMER_COUNT (4)
-/* @brief CDOG availability on the SoC. */
-#define FSL_FEATURE_SOC_CDOG_COUNT (1)
 /* @brief DAC availability on the SoC. */
 #define FSL_FEATURE_SOC_DAC_COUNT (1)
 /* @brief DMA availability on the SoC. */
 #define FSL_FEATURE_SOC_DMA_COUNT (2)
 /* @brief DMIC availability on the SoC. */
 #define FSL_FEATURE_SOC_DMIC_COUNT (1)
+/* @brief ELS availability on the SoC. */
+#define FSL_FEATURE_SOC_ELS_COUNT (1)
 /* @brief ENET availability on the SoC. */
 #define FSL_FEATURE_SOC_ENET_COUNT (1)
 /* @brief FLEXCOMM availability on the SoC. */
@@ -63,6 +77,8 @@
 #define FSL_FEATURE_SOC_FLEXSPI_COUNT (1)
 /* @brief FREQME availability on the SoC. */
 #define FSL_FEATURE_SOC_FREQME_COUNT (1)
+/* @brief GDMA availability on the SoC. */
+#define FSL_FEATURE_SOC_GDMA_COUNT (1)
 /* @brief GPIO availability on the SoC. */
 #define FSL_FEATURE_SOC_GPIO_COUNT (2)
 /* @brief I2C availability on the SoC. */
@@ -71,6 +87,12 @@
 #define FSL_FEATURE_SOC_I2S_COUNT (5)
 /* @brief INPUTMUX availability on the SoC. */
 #define FSL_FEATURE_SOC_INPUTMUX_COUNT (1)
+/* @brief ITRC availability on the SoC. */
+#define FSL_FEATURE_SOC_ITRC_COUNT (1)
+/* @brief LCDIC availability on the SoC. */
+#define FSL_FEATURE_SOC_LCDIC_COUNT (1)
+/* @brief MCI_IO_MUX availability on the SoC. */
+#define FSL_FEATURE_SOC_MCI_IO_MUX_COUNT (1)
 /* @brief MRT availability on the SoC. */
 #define FSL_FEATURE_SOC_MRT_COUNT (2)
 /* @brief OCOTP availability on the SoC. */
@@ -79,12 +101,12 @@
 #define FSL_FEATURE_SOC_OSTIMER_COUNT (1)
 /* @brief PINT availability on the SoC. */
 #define FSL_FEATURE_SOC_PINT_COUNT (1)
+/* @brief PKC availability on the SoC. */
+#define FSL_FEATURE_SOC_PKC_COUNT (1)
 /* @brief POWERQUAD availability on the SoC. */
 #define FSL_FEATURE_SOC_POWERQUAD_COUNT (1)
 /* @brief PUF availability on the SoC. */
 #define FSL_FEATURE_SOC_PUF_COUNT (1)
-/* @brief RF_SYSCON availability on the SoC. */
-#define FSL_FEATURE_SOC_RF_SYSCON_COUNT (1)
 /* @brief ROMC availability on the SoC. */
 #define FSL_FEATURE_SOC_ROMC_COUNT (1)
 /* @brief RSTCTL0 availability on the SoC. */
@@ -101,6 +123,22 @@
 #define FSL_FEATURE_SOC_SYSCTL0_COUNT (1)
 /* @brief SYSCTL1 availability on the SoC. */
 #define FSL_FEATURE_SOC_SYSCTL1_COUNT (1)
+/* @brief SYSCTL2 availability on the SoC. */
+#define FSL_FEATURE_SOC_SYSCTL2_COUNT (1)
+/* @brief SYSPLL_T3 availability on the SoC. */
+#define FSL_FEATURE_SOC_SYSPLL_T3_COUNT (1)
+/* @brief SYSPLL_TCPU availability on the SoC. */
+#define FSL_FEATURE_SOC_SYSPLL_TCPU_COUNT (1)
+/* @brief SOC_OTP_CTRL availability on the SoC. */
+#define FSL_FEATURE_SOC_SOC_OTP_CTRL_COUNT (1)
+/* @brief SENSOR_CTRL availability on the SoC. */
+#define FSL_FEATURE_SOC_SENSOR_CTRL_COUNT (1)
+/* @brief SDU_FN0_CARD availability on the SoC. */
+#define FSL_FEATURE_SOC_SDU_FN0_CARD_COUNT (1)
+/* @brief SDU_FBR_CARD availability on the SoC. */
+#define FSL_FEATURE_SOC_SDU_FBR_CARD_COUNT (1)
+/* @brief SDU_FN_CARD availability on the SoC. */
+#define FSL_FEATURE_SOC_SDU_FN_CARD_COUNT (1)
 /* @brief TRNG availability on the SoC. */
 #define FSL_FEATURE_SOC_TRNG_COUNT (1)
 /* @brief USART availability on the SoC. */
@@ -111,6 +149,8 @@
 #define FSL_FEATURE_SOC_USIM_COUNT (1)
 /* @brief UTICK availability on the SoC. */
 #define FSL_FEATURE_SOC_UTICK_COUNT (1)
+/* @brief WLAPU availability on the SoC. */
+#define FSL_FEATURE_SOC_WLAPU_COUNT (1)
 /* @brief WWDT availability on the SoC. */
 #define FSL_FEATURE_SOC_WWDT_COUNT (1)
 
@@ -125,8 +165,10 @@
 
 /* CDOG module features */
 
-/* @brief SOC has no reset driver. */
+/* @brief CDOG Has No Reset */
 #define FSL_FEATURE_CDOG_HAS_NO_RESET (1)
+/* @brief CDOG Load default configurations during init function */
+#define FSL_FEATURE_CDOG_NEED_LOAD_DEFAULT_CONF (1)
 
 /* CRC module features */
 
@@ -145,6 +187,8 @@
 #define FSL_FEATURE_CTIMER_HAS_NO_CCR_CAP2 (0)
 /* @brief Has CTIMER CCR_CAP3 (register bits CCR[CAP3RE][CAP3FE][CAP3I]). */
 #define FSL_FEATURE_CTIMER_HAS_CCR_CAP3 (1)
+/* @brief CTIMER Has register MSR */
+#define FSL_FEATURE_CTIMER_HAS_MSR (1)
 
 /* DMA module features */
 
@@ -280,6 +324,11 @@
 /* @brief FlexSPI support sample clock source or source_b selection */
 #define FSL_FEATURE_FLEXSPI_SUPPORT_RXCLKSRC_DIFF (1)
 
+/* GDMA module features */
+
+/* @brief GDMA Channel Number */
+#define FSL_FEATURE_GDMA_CHANNEL_NUM (4)
+
 /* GPIO module features */
 
 /* @brief GPIO has interrupts */
@@ -296,6 +345,11 @@
 
 /* @brief Number of channels */
 #define FSL_FEATURE_INPUTMUX_HAS_SIGNAL_ENA (1)
+
+/* MEMORY module features */
+
+/* @brief Memory map has offset between subsystems. */
+#define FSL_FEATURE_MEMORY_HAS_ADDRESS_OFFSET (1)
 
 /* MRT module features */
 
@@ -319,8 +373,10 @@
 
 /* RTC module features */
 
-/* @brief RTC does not support reset from RSTCTL. */
+/* @brief RTC has no reset control */
 #define FSL_FEATURE_RTC_HAS_NO_RESET (1)
+/* @brief Has SUBSEC Register (register SUBSEC) */
+#define FSL_FEATURE_RTC_HAS_SUBSEC (1)
 
 /* SCT module features */
 
@@ -332,6 +388,11 @@
 #define FSL_FEATURE_SCT_NUMBER_OF_MATCH_CAPTURE (16)
 /* @brief Number of outputs */
 #define FSL_FEATURE_SCT_NUMBER_OF_OUTPUTS (10)
+
+/* SPI module features */
+
+/* @brief SSEL pin count. */
+#define FSL_FEATURE_SPI_SSEL_COUNT (4)
 
 /* TRNG module features */
 

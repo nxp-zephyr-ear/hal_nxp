@@ -38,8 +38,5 @@ endif()
 if(${MCUX_DEVICE} STREQUAL "MKL27Z644")
     include(middleware_freertos-kernel_MKL27Z644)
 endif()
-if(${MCUX_DEVICE} STREQUAL "MKL17Z644")
-    include(middleware_freertos-kernel_MKL27Z644)
-endif()
 
 include(driver_spi)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -7,13 +7,13 @@
 #include <stdarg.h>
 
 #include "fsl_pm_core.h"
-#include "fsl_pm_board.h"
+#include "fsl_pm_device.h"
 
 /*
  * $Coverage Justification Reference$
  *
  * $Justification pm_core_c_ref_1$
- * This depends on board implementation. The "clean" function is not NULL with tested boards.
+ * This depends on device implementation. The "clean" function is not NULL with tested devices.
  *
  * $Justification pm_core_c_ref_2$
  * Error doesn't happen in test case.
@@ -256,6 +256,11 @@ void PM_CreateHandle(pm_handle_t *handle)
 
     s_pmHandle = handle;
 
+    if (s_pmHandle->deviceOption->prepare != NULL)
+    {
+        s_pmHandle->deviceOption->prepare();
+    }
+
     /* Need to clean some device register for proper functioning */
     /*
      * $Branch Coverage Justification$
@@ -337,7 +342,6 @@ void PM_EnterLowPower(uint64_t duration)
     {
         /* 1. Based on duration and system constraints compute the next allowed deepest power state. */
         stateIndex = PM_findDeepestState(duration);
-
         if (stateIndex != 0xFFU)
         {
             s_pmHandle->targetState = stateIndex;
@@ -533,7 +537,7 @@ status_t PM_UnregisterNotify(void *notifyElement)
  * brief Initialize the wakeup source object.
  *
  * param ws    Pointer to the pm_wakeup_source_t variable.
- * param wsId  Used to select the wakeup source, the wsId of each wakeup source can be found in fsl_pm_board.h
+ * param wsId  Used to select the wakeup source, the wsId of each wakeup source can be found in fsl_pm_device.h
  * param service The function to be invoked when wake up source asserted.
  * param enable Used to enable/disable the selected wakeup source.
  */
@@ -746,13 +750,13 @@ status_t PM_TriggerWakeSourceService(pm_wakeup_source_t *ws)
 /*!
  * brief Used to set constraints(including power mode constraint and resource constraints)
  *
- * For example, if the board support 3 resource constraints: PM_RESC_1, PM_RESC_2, PM_RESC3
+ * For example, if the device support 3 resource constraints: PM_RESC_1, PM_RESC_2, PM_RESC3
  *  code
  *      PM_SetConstraints(Sleep_Mode, 3, PM_RESC_1, PM_RESC_2, PM_RESC_3);
  *  endcode
  *
  * param powerModeConstraint The lowest power mode allowed, the power mode constraint macros
- *                            can be found in fsl_pm_board.h
+ *                            can be found in fsl_pm_device.h
  * param rescNum The number of resource constraints to be set.
  * return status_t The status of set constraints behavior.
  */
@@ -764,8 +768,6 @@ status_t PM_SetConstraints(uint8_t powerModeConstraint, int32_t rescNum, ...)
     int32_t inputResc;
     va_list ap;
     int32_t i;
-    uint32_t curRescOpMode;
-    uint32_t opModeToSet;
 
     if (s_pmHandle->enterCritical != NULL)
     {
@@ -802,13 +804,42 @@ status_t PM_SetConstraints(uint8_t powerModeConstraint, int32_t rescNum, ...)
             PM_DECODE_RESC(inputResc);
 
             assert(rescShift < (uint32_t)PM_CONSTRAINT_COUNT);
-            curRescOpMode = s_pmHandle->sysRescGroup.groupSlice[rescShift / 8UL];
-            opModeToSet   = ((uint32_t)opMode << (4UL * ((uint32_t)rescShift % 8UL)));
-            if ((curRescOpMode & opModeToSet) == 0UL)
+
+            if (opMode != PM_RESOURCE_OFF)
             {
+                switch (opMode)
+                {
+                    case PM_RESOURCE_FULL_ON:
+                    {
+                        assert(s_pmHandle->resConstraintCount[rescShift].subConter.fullOnCounter <
+                               ((1U << PM_FULL_ON_COUNTER_SIZE) - 1U));
+                        s_pmHandle->resConstraintCount[rescShift].subConter.fullOnCounter++;
+                        break;
+                    }
+                    case PM_RESOURCE_PARTABLE_ON2:
+                    {
+                        assert(s_pmHandle->resConstraintCount[rescShift].subConter.partOn2Counter <
+                               ((1U << PM_PARTABLE_ON2_COUNTER_SIZE) - 1U));
+                        s_pmHandle->resConstraintCount[rescShift].subConter.partOn2Counter++;
+                        break;
+                    }
+                    case PM_RESOURCE_PARTABLE_ON1:
+                    {
+                        assert(s_pmHandle->resConstraintCount[rescShift].subConter.partOn1Counter <
+                               ((1U << PM_PARTABLE_ON1_COUNTER_SIZE) - 1U));
+                        s_pmHandle->resConstraintCount[rescShift].subConter.partOn1Counter++;
+                        break;
+                    }
+                    default:
+                    {
+                        assert(false);
+                        break;
+                    }
+                }
+                /* Set corresponding bit of operate mode in system resource group. */
                 s_pmHandle->sysRescGroup.groupSlice[rescShift / 8UL] |=
                     ((uint32_t)opMode << (4UL * ((uint32_t)rescShift % 8UL)));
-                s_pmHandle->resConstraintCount[rescShift]++;
+                /* Enable corresponding bit of constraint in system resource mask. */
                 s_pmHandle->resConstraintMask.rescMask[rescShift / 32UL] |= (1UL << ((uint32_t)rescShift % 32UL));
             }
         }
@@ -826,13 +857,13 @@ status_t PM_SetConstraints(uint8_t powerModeConstraint, int32_t rescNum, ...)
 /*!
  * brief Used to release constraints(including power mode constraint and resource constraints)
  *
- * For example, if the board support 3 resource constraints: PM_RESC_1, PM_RESC_2, PM_RESC3
+ * For example, if the device support 3 resource constraints: PM_RESC_1, PM_RESC_2, PM_RESC3
  *  code
  *      PM_ReleaseConstraints(Sleep_Mode, 1, PM_RESC_1);
  *  endcode
  *
  * param powerModeConstraint The lowest power mode allowed, the power mode constraint macros
- *                            can be found in fsl_pm_board.h
+ *                            can be found in fsl_pm_device.h
  * param rescNum The number of resource constraints to be released.
  * return status_t The status of set constraints behavior.
  */
@@ -888,13 +919,51 @@ status_t PM_ReleaseConstraints(uint8_t powerModeConstraint, int32_t rescNum, ...
             opModeToRelease = ((uint32_t)opMode << (4UL * ((uint32_t)rescShift % 8UL)));
             if ((curRescOpMode & opModeToRelease) != 0UL)
             {
-                s_pmHandle->sysRescGroup.groupSlice[rescShift / 8UL] &=
-                    ~((uint32_t)opMode << (4UL * ((uint32_t)rescShift % 8UL)));
-                if (s_pmHandle->resConstraintCount[rescShift] == 1UL)
+                uint8_t subCounterValue = 0U;
+                switch (opMode)
                 {
-                    s_pmHandle->resConstraintMask.rescMask[rescShift / 32UL] &= ~(1UL << ((uint32_t)rescShift % 32UL));
+                    case PM_RESOURCE_FULL_ON:
+                    {
+                        assert(s_pmHandle->resConstraintCount[rescShift].subConter.fullOnCounter >= 1U);
+                        s_pmHandle->resConstraintCount[rescShift].subConter.fullOnCounter--;
+                        subCounterValue = (s_pmHandle->resConstraintCount[rescShift].u8Count & PM_FULL_ON_COUNTER_MASK);
+                        break;
+                    }
+                    case PM_RESOURCE_PARTABLE_ON2:
+                    {
+                        assert(s_pmHandle->resConstraintCount[rescShift].subConter.partOn2Counter >= 1U);
+                        s_pmHandle->resConstraintCount[rescShift].subConter.partOn2Counter--;
+                        subCounterValue =
+                            (s_pmHandle->resConstraintCount[rescShift].u8Count & PM_PARTABLE_ON2_COUNTER_MASK);
+                        break;
+                    }
+                    case PM_RESOURCE_PARTABLE_ON1:
+                    {
+                        assert(s_pmHandle->resConstraintCount[rescShift].subConter.partOn1Counter >= 1U);
+                        s_pmHandle->resConstraintCount[rescShift].subConter.partOn1Counter--;
+                        subCounterValue =
+                            (s_pmHandle->resConstraintCount[rescShift].u8Count & PM_PARTABLE_ON1_COUNTER_MASK);
+                        break;
+                    }
+                    default:
+                    {
+                        assert(false);
+                        break;
+                    }
                 }
-                s_pmHandle->resConstraintCount[rescShift]--;
+
+                if (subCounterValue == 0U)
+                {
+                    /* Clear corresponding bit of operate mode in system resource group. */
+                    s_pmHandle->sysRescGroup.groupSlice[rescShift / 8UL] &=
+                        ~((uint32_t)opMode << (4UL * ((uint32_t)rescShift % 8UL)));
+                    if (s_pmHandle->resConstraintCount[rescShift].u8Count == 0U)
+                    {
+                        /* Disable corresponding bit of constraint in system resource mask. */
+                        s_pmHandle->resConstraintMask.rescMask[rescShift / 32UL] &=
+                            ~(1UL << ((uint32_t)rescShift % 32UL));
+                    }
+                }
             }
         }
         va_end(ap);

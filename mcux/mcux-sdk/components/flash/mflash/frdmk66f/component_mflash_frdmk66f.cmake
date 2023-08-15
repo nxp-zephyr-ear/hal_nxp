@@ -11,6 +11,6 @@ target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
 )
 
 
-include(component_mflash_common)
 include(driver_flash)
 include(driver_cache_lmem)
+include(component_mflash_common)

@@ -213,10 +213,6 @@ static uint32_t s_jrIndex2              = 0;    /*!< Current index in the input 
 static caam_job_ring_interface_t *s_jr3 = NULL; /*!< Pointer to job ring interface 3. */
 static uint32_t s_jrIndex3              = 0;    /*!< Current index in the input job ring 3. */
 
-AT_NONCACHEABLE_SECTION(static caam_rng_config_t rngConfig);
-AT_NONCACHEABLE_SECTION(static caam_desc_rng_t rngGenSeckey);
-AT_NONCACHEABLE_SECTION(static caam_desc_rng_t rngInstantiate);
-AT_NONCACHEABLE_SECTION(static caam_desc_rng_t descBuf);
 /*******************************************************************************
  * Code
  ******************************************************************************/
@@ -1758,6 +1754,7 @@ status_t CAAM_Init(CAAM_Type *base, const caam_config_t *config)
      * for FIFO STORE command to be able to store Key register as Black key
      * for example during AES XCBC-MAC context switch (need to store derived key K1 to memory)
      */
+    caam_rng_config_t rngConfig;
     (void)CAAM_RNG_GetDefaultConfig(&rngConfig);
 
     /* reset RNG */
@@ -4093,6 +4090,7 @@ status_t CAAM_RNG_Init(CAAM_Type *base,
     status_t status;
 
     /* create job descriptor */
+    caam_desc_rng_t rngInstantiate = {0};
     rngInstantiate[0]              = 0xB0800006u;
     rngInstantiate[1]              = 0x12200020u; /* LOAD 32 bytes of  to Class 1 Context Register. Offset 0 bytes. */
     rngInstantiate[2]              = (uint32_t)ADD_OFFSET((uint32_t)config->personalString);
@@ -4188,6 +4186,7 @@ status_t CAAM_RNG_GenerateSecureKey(CAAM_Type *base, caam_handle_t *handle, caam
     status_t status;
 
     /* create job descriptor */
+    caam_desc_rng_t rngGenSeckey = {0};
     rngGenSeckey[0]              = 0xB0800004u; /* HEADER */
     rngGenSeckey[1]              = 0x12200020u; /* LOAD 32 bytes of  to Class 1 Context Register. Offset 0 bytes. */
     rngGenSeckey[2]              = ADD_OFFSET((uint32_t)additionalEntropy);
@@ -4294,6 +4293,7 @@ status_t CAAM_RNG_GetRandomData(CAAM_Type *base,
                                 caam_rng_generic256_t additionalEntropy)
 {
     status_t status;
+    caam_desc_rng_t descBuf;
 
     do
     {
@@ -4321,7 +4321,7 @@ static const uint32_t templateRng[] = {
     /* 02 */ 0x00000000u, /* place: additional input address */
     /* 03 */ 0x12820004u, /* LOAD Class 1 Data Size Register by IMM data */
     /* 04 */ 0x00000000u, /* place: data size to generate */
-    /* 05 */ 0x82500000u, /* RNG generate */
+    /* 05 */ 0x82500002u, /* RNG generate */
     /* 06 */ 0x60700000u, /* FIFO STORE message */
     /* 07 */ 0x00000000u, /* place: destination address */
     /* 08 */ 0x00000000u, /* place: destination size */
@@ -4364,7 +4364,6 @@ status_t CAAM_RNG_GetRandomDataNonBlocking(CAAM_Type *base,
     if (additionalEntropy != NULL)
     {
         descriptor[2] = ADD_OFFSET((uint32_t)additionalEntropy);
-        descriptor[5] |= (uint32_t)1U << 1;  /* set PR bit in ALG OPERATION (entropy seed) */
         descriptor[5] |= (uint32_t)1U << 11; /* set AI bit in ALG OPERATION */
     }
     else

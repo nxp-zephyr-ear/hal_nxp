@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -19,7 +19,7 @@
  ******************************************************************************/
 
 /*! @brief ADC driver version */
-#define FSL_ADC_DRIVER_VERSION (MAKE_VERSION(2, 0, 1)) /*!< Version 2.0.1. */
+#define FSL_ADC_DRIVER_VERSION (MAKE_VERSION(2, 0, 2)) /*!< Version 2.0.2. */
 
 /*!
  * @brief The enumeration of interrupts, this enumeration can be used to enable/disable interrupts.
@@ -405,6 +405,9 @@ typedef struct _adc_config
     bool enableInputGainBuffer : 1U;           /*!< Enable/Disable input gain buffer.
                                                        - \b true Enable input gain buffer.
                                                        - \b false Disable input gain buffer. */
+    bool enableInputBufferChop : 1U;           /*!< Enable/Disable input buffer chopper:
+                                                       - \b true Enable input buffer chopper;
+                                                       - \b false Disable input buffer chopper. */
 
     /* ADC conversion result related options. */
     adc_result_width_t resultWidth : 1U;     /*!< Select result FIFO data packed format, please

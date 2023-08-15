@@ -220,6 +220,12 @@ static inline void _SDK_AtomicLocalClearAndSet4Byte(volatile uint32_t *addr, uin
          ((2UL == sizeof(*(addr))) ? _SDK_AtomicLocalAdd2Byte((volatile uint16_t *)(volatile void *)(addr), (uint16_t)(val)) : \
                                      _SDK_AtomicLocalAdd4Byte((volatile uint32_t *)(volatile void *)(addr), (uint32_t)(val))))
 
+#define SDK_ATOMIC_LOCAL_SUB(addr, val)                                                                                        \
+    ((1UL == sizeof(*(addr))) ?                                                                                                \
+         _SDK_AtomicLocalSub1Byte((volatile uint8_t *)(volatile void *)(addr), (uint8_t)(val)) :                               \
+         ((2UL == sizeof(*(addr))) ? _SDK_AtomicLocalSub2Byte((volatile uint16_t *)(volatile void *)(addr), (uint16_t)(val)) : \
+                                     _SDK_AtomicLocalSub4Byte((volatile uint32_t *)(volatile void *)(addr), (uint32_t)(val))))
+
 #define SDK_ATOMIC_LOCAL_SET(addr, bits)                                                                                        \
     ((1UL == sizeof(*(addr))) ?                                                                                                 \
          _SDK_AtomicLocalSet1Byte((volatile uint8_t *)(volatile void *)(addr), (uint8_t)(bits)) :                               \
@@ -254,6 +260,15 @@ static inline void _SDK_AtomicLocalClearAndSet4Byte(volatile uint32_t *addr, uin
         uint32_t s_atomicOldInt;             \
         s_atomicOldInt = DisableGlobalIRQ(); \
         *(addr) += (val);                    \
+        EnableGlobalIRQ(s_atomicOldInt);     \
+    } while (0)
+
+#define SDK_ATOMIC_LOCAL_SUB(addr, val)      \
+    do                                       \
+    {                                        \
+        uint32_t s_atomicOldInt;             \
+        s_atomicOldInt = DisableGlobalIRQ(); \
+        *(addr) -= (val);                    \
         EnableGlobalIRQ(s_atomicOldInt);     \
     } while (0)
 
@@ -395,21 +410,15 @@ _Pragma("diag_suppress=Pm120")
 #endif
 
 #elif (defined(__GNUC__))
-#if defined(__ARM_ARCH_8A__) /* This macro is ARMv8-A specific */
-#define __CS "//"
-#else
-#define __CS "@"
-#endif
-
 /* For GCC, when the non-cacheable section is required, please define "__STARTUP_INITIALIZE_NONCACHEDATA"
  * in your projects to make sure the non-cacheable section variables will be initialized in system startup.
  */
 #define AT_NONCACHEABLE_SECTION_INIT(var) __attribute__((section("NonCacheable.init"))) var
 #define AT_NONCACHEABLE_SECTION_ALIGN_INIT(var, alignbytes) \
     __attribute__((section("NonCacheable.init"))) var __attribute__((aligned(alignbytes)))
-#define AT_NONCACHEABLE_SECTION(var) __attribute__((section("NonCacheable,\"aw\",%nobits " __CS))) var
+#define AT_NONCACHEABLE_SECTION(var) __attribute__((section("NonCacheable,\"aw\",%nobits @"))) var
 #define AT_NONCACHEABLE_SECTION_ALIGN(var, alignbytes) \
-    __attribute__((section("NonCacheable,\"aw\",%nobits " __CS))) var __attribute__((aligned(alignbytes)))
+    __attribute__((section("NonCacheable,\"aw\",%nobits @"))) var __attribute__((aligned(alignbytes)))
 #else
 #error Toolchain not supported.
 #endif
@@ -573,10 +582,6 @@ static inline status_t DisableIRQ(IRQn_Type interrupt)
 
     return status;
 }
-
-#if defined(__GIC_PRIO_BITS)
-#define NVIC_SetPriority(irq, prio) do {} while(0)
-#endif
 
 /*!
  * @brief Enable the IRQ, and also set the interrupt priority.

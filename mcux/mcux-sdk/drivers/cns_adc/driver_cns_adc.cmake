@@ -1,4 +1,4 @@
-#Description: ADC Driver; user_visible: True
+#Description: CNS_ADC Driver; user_visible: True
 include_guard(GLOBAL)
 message("driver_cns_adc component is included.")
 

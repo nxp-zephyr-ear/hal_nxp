@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -107,10 +107,12 @@ void ADC_Init(ADC_Type *base, const adc_config_t *config)
 
     tmp32 = base->ADC_REG_ANA;
     tmp32 &= ~(ADC_ADC_REG_ANA_VREF_SEL_MASK | ADC_ADC_REG_ANA_SINGLEDIFF_MASK | ADC_ADC_REG_ANA_INBUF_GAIN_MASK |
-               ADC_ADC_REG_ANA_INBUF_EN_MASK | ADC_ADC_REG_ANA_BIAS_SEL_MASK | ADC_ADC_REG_ANA_RES_SEL_MASK);
+               ADC_ADC_REG_ANA_INBUF_EN_MASK | ADC_ADC_REG_ANA_BIAS_SEL_MASK | ADC_ADC_REG_ANA_RES_SEL_MASK |
+               ADC_ADC_REG_ANA_INBUF_CHOP_EN_MASK);
     tmp32 |= ADC_ADC_REG_ANA_VREF_SEL(config->vrefSource) | ADC_ADC_REG_ANA_SINGLEDIFF(config->inputMode) |
              ADC_ADC_REG_ANA_INBUF_GAIN(config->inputGain) | ADC_ADC_REG_ANA_INBUF_EN(config->enableInputGainBuffer) |
-             ADC_ADC_REG_ANA_BIAS_SEL(config->powerMode) | ADC_ADC_REG_ANA_RES_SEL(config->resolution);
+             ADC_ADC_REG_ANA_BIAS_SEL(config->powerMode) | ADC_ADC_REG_ANA_RES_SEL(config->resolution) |
+             ADC_ADC_REG_ANA_INBUF_CHOP_EN(config->enableInputBufferChop);
     base->ADC_REG_ANA = tmp32;
 
     base->ADC_REG_RESULT_BUF = (base->ADC_REG_RESULT_BUF & ~(ADC_ADC_REG_RESULT_BUF_WIDTH_SEL_MASK)) |
@@ -169,6 +171,7 @@ void ADC_GetDefaultConfig(adc_config_t *config)
     config->triggerSource         = kADC_TriggerSourceSoftware;
     config->inputGain             = kADC_InputGain1;
     config->enableInputGainBuffer = false;
+    config->enableInputBufferChop = true;
 
     config->resultWidth   = kADC_ResultWidth16;
     config->fifoThreshold = kADC_FifoThresholdData1;
@@ -203,13 +206,13 @@ void ADC_SetScanChannel(ADC_Type *base, adc_scan_channel_t scanChannel, adc_chan
 {
     if (scanChannel < kADC_ScanChannel8)
     {
-        base->ADC_REG_SCN1 = (base->ADC_REG_SCN1 & ~(0xFUL << (4 * (uint32_t)scanChannel))) |
-                             ((uint32_t)channelSource << (4 * (uint32_t)scanChannel));
+        base->ADC_REG_SCN1 = (base->ADC_REG_SCN1 & ~(0xFUL << (uint32_t)(4UL * (uint32_t)scanChannel))) |
+                             ((uint32_t)channelSource << (uint32_t)(4UL * (uint32_t)scanChannel));
     }
     else
     {
-        base->ADC_REG_SCN2 = (base->ADC_REG_SCN2 & ~(0xFUL << (4 * ((uint32_t)scanChannel - 8UL)))) |
-                             ((uint32_t)channelSource << (4 * ((uint32_t)scanChannel - 8UL)));
+        base->ADC_REG_SCN2 = (base->ADC_REG_SCN2 & ~(0xFUL << (uint32_t)(4UL * ((uint32_t)scanChannel - 8UL)))) |
+                             ((uint32_t)channelSource << (uint32_t)(4UL * ((uint32_t)scanChannel - 8UL)));
     }
 }
 

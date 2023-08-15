@@ -70,7 +70,6 @@ void SDK_Free(void *ptr)
         void *pointer_value;
         uintptr_t unsigned_value;
     } p_free;
-
     p_free.pointer_value = ptr;
     mem_align_cb_t *p_cb = (mem_align_cb_t *)(p_free.unsigned_value - 4U);
 

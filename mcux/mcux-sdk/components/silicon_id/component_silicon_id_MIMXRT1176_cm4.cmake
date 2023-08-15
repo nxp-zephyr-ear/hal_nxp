@@ -11,5 +11,5 @@ target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
 )
 
 
-include(driver_common)
 include(component_silicon_id_rt1170)
+include(driver_common)

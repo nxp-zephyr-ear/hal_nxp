@@ -1,7 +1,7 @@
 //*****************************************************************************
 // RW610 startup code for use with MCUXpresso IDE
 //
-// Version : 230522
+// Version : 161122
 //*****************************************************************************
 //
 // Copyright 2016-2022 NXP
@@ -180,9 +180,9 @@ WEAK void BLE_MCI_INT6_IRQHandler(void);
 WEAK void BLE_MCI_INT7_IRQHandler(void);
 WEAK void PIN0_INT_IRQHandler(void);
 WEAK void PIN1_INT_IRQHandler(void);
-WEAK void CSS_IRQHandler(void);
-WEAK void CSS_GDET_IRQ_IRQHandler(void);
-WEAK void CSS_GDET_ERR_IRQHandler(void);
+WEAK void ELS_IRQHandler(void);
+WEAK void ELS_GDET_IRQ_IRQHandler(void);
+WEAK void ELS_GDET_ERR_IRQHandler(void);
 WEAK void PKC_IRQHandler(void);
 WEAK void PKC_ERR_IRQHandler(void);
 WEAK void CDOG_IRQHandler(void);
@@ -316,9 +316,9 @@ void BLE_MCI_INT6_DriverIRQHandler(void) ALIAS(IntDefaultHandler);
 void BLE_MCI_INT7_DriverIRQHandler(void) ALIAS(IntDefaultHandler);
 void PIN0_INT_DriverIRQHandler(void) ALIAS(IntDefaultHandler);
 void PIN1_INT_DriverIRQHandler(void) ALIAS(IntDefaultHandler);
-void CSS_DriverIRQHandler(void) ALIAS(IntDefaultHandler);
-void CSS_GDET_IRQ_DriverIRQHandler(void) ALIAS(IntDefaultHandler);
-void CSS_GDET_ERR_DriverIRQHandler(void) ALIAS(IntDefaultHandler);
+void ELS_DriverIRQHandler(void) ALIAS(IntDefaultHandler);
+void ELS_GDET_IRQ_DriverIRQHandler(void) ALIAS(IntDefaultHandler);
+void ELS_GDET_ERR_DriverIRQHandler(void) ALIAS(IntDefaultHandler);
 void PKC_DriverIRQHandler(void) ALIAS(IntDefaultHandler);
 void PKC_ERR_DriverIRQHandler(void) ALIAS(IntDefaultHandler);
 void CDOG_DriverIRQHandler(void) ALIAS(IntDefaultHandler);
@@ -386,12 +386,12 @@ void (* const g_pfnVectors[])(void) = {
     // Core Level - CM33
     &_vStackTop,                       // The initial stack pointer
     ResetISR,                          // The reset handler
-    NMI_Handler,                       // The NMI handler
-    HardFault_Handler,                 // The hard fault handler
-    MemManage_Handler,                 // The MPU fault handler
-    BusFault_Handler,                  // The bus fault handler
-    UsageFault_Handler,                // The usage fault handler
-    SecureFault_Handler,               // The secure fault handler
+    NMI_Handler,                       // NMI Handler
+    HardFault_Handler,                 // Hard Fault Handler
+    MemManage_Handler,                 // MPU Fault Handler
+    BusFault_Handler,                  // Bus Fault Handler
+    UsageFault_Handler,                // Usage Fault Handler
+    SecureFault_Handler,               // Secure Fault Handler
 #if (defined(__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE & 0x2))
     (void (*)())0x100000,                // Image length
 #else
@@ -399,11 +399,11 @@ void (* const g_pfnVectors[])(void) = {
 #endif
     __imghdr_imagetype,                // Image type
     0,                                 // Reserved
-    SVC_Handler,                       // SVCall handler
-    DebugMon_Handler,                  // Debug monitor handler
-    (void (*)())g_pfnVectors,              // Image load address
-    PendSV_Handler,                    // The PendSV handler
-    SysTick_Handler,                   // The SysTick handler
+    SVC_Handler,                       // SVCall Handler
+    DebugMon_Handler,                  // Debug Monitor Handler
+    (void (*)())g_pfnVectors,          // Image load address
+    PendSV_Handler,                    // PendSV Handler
+    SysTick_Handler,                   // SysTick Handler
 
     // Chip Level - RW610
     WDT0_IRQHandler,                          // 16 : Windowed watchdog timer 0 (CM33 watchdog)
@@ -508,9 +508,9 @@ void (* const g_pfnVectors[])(void) = {
     BLE_MCI_INT7_IRQHandler,                      // 115: reserved
     PIN0_INT_IRQHandler,                          // 116: From AON GPIO
     PIN1_INT_IRQHandler,                          // 117: From AON GPIO
-    CSS_IRQHandler,                          // 118: CSS
-    CSS_GDET_IRQ_IRQHandler,                      // 119: CSS IRQ line for GDET error
-    CSS_GDET_ERR_IRQHandler,                      // 120: CSS Ungated latched error
+    ELS_IRQHandler,                          // 118: ELS
+    ELS_GDET_IRQ_IRQHandler,                      // 119: ELS IRQ line for GDET error
+    ELS_GDET_ERR_IRQHandler,                      // 120: ELS Ungated latched error
     PKC_IRQHandler,                          // 121: PKC interrupt
     PKC_ERR_IRQHandler,                          // 122: PKC error
     CDOG_IRQHandler,                          // 123: Code watch dog timmer
@@ -1119,16 +1119,16 @@ WEAK void PIN1_INT_IRQHandler(void)
 {   PIN1_INT_DriverIRQHandler();
 }
 
-WEAK void CSS_IRQHandler(void)
-{   CSS_DriverIRQHandler();
+WEAK void ELS_IRQHandler(void)
+{   ELS_DriverIRQHandler();
 }
 
-WEAK void CSS_GDET_IRQ_IRQHandler(void)
-{   CSS_GDET_IRQ_DriverIRQHandler();
+WEAK void ELS_GDET_IRQ_IRQHandler(void)
+{   ELS_GDET_IRQ_DriverIRQHandler();
 }
 
-WEAK void CSS_GDET_ERR_IRQHandler(void)
-{   CSS_GDET_ERR_DriverIRQHandler();
+WEAK void ELS_GDET_ERR_IRQHandler(void)
+{   ELS_GDET_ERR_DriverIRQHandler();
 }
 
 WEAK void PKC_IRQHandler(void)
