@@ -32,6 +32,20 @@ extern "C" {
  */
 int PLATFORM_InitOt(void);
 
+/*!
+ * \brief Low level deinitialization for OpenThread/15.4, can be used to deinitialize 15.4 Controller
+ *
+ * \return int return status: >=0 for success, <0 for errors
+ */
+int PLATFORM_TerminateOt(void);
+
+/*!
+ * \brief Low level reset for OpenThread/15.4, can be used to reset the CPU2
+ *
+ * \return int return status: >=0 for success, <0 for errors
+ */
+int PLATFORM_ResetOt(void);
+
 #ifdef __cplusplus
 }
 #endif
