@@ -109,3 +109,5 @@ zephyr_linker_sources_ifdef(CONFIG_NOCACHE_MEMORY
   NOCACHE_SECTION
   nocache.ld
 )
+
+add_subdirectory(middleware)
