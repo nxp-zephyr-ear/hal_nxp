@@ -7,7 +7,7 @@
 #ifndef _FWK_CONFIG_H_
 #define _FWK_CONFIG_H_
 
-#include "mflash_drv.h" /* TODO remove this dependency */
+//#include "mflash_drv.h" /* TODO remove this dependency */
 
 #ifndef gPlatformUseHwParameter_d
 #define gPlatformUseHwParameter_d 0
