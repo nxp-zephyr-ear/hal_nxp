@@ -11,14 +11,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#ifdef CONFIG_NXP_OSA_ZEPHYR
+#ifdef __ZEPHYR__
 #include <zephyr/kernel.h>
 #else
 #include "FreeRTOS.h"
 #include "event_groups.h"
 #include "semphr.h"
 #include "fsl_debug_console.h"
-#endif /* CONFIG_NXP_OSA_ZEPHYR */
+#endif /* __ZEPHYR__ */
 
 #include "fsl_loader.h"
 #include "fsl_power.h"
@@ -41,11 +41,11 @@
 /* By default, wait maximum 1s for the controller to wake up */
 #ifndef PLATFORM_BLE_WAKE_UP_TIMEOUT_TICKS
 
-#ifdef CONFIG_NXP_OSA_ZEPHYR
+#ifdef __ZEPHYR__
 #define PLATFORM_BLE_WAKE_UP_TIMEOUT_TICKS Z_TIMEOUT_MS(1000)
 #else
 #define PLATFORM_BLE_WAKE_UP_TIMEOUT_TICKS (1000U / portTICK_PERIOD_MS)
-#endif/* CONFIG_NXP_OSA_ZEPHYR */
+#endif/* __ZEPHYR__ */
 
 #endif
 
@@ -91,13 +91,13 @@
  * like PowerSave Vendor Event */
 #define BLE_VENDOR_EVENT_HANDLE (true)
 
-#ifdef CONFIG_NXP_OSA_ZEPHYR
+#ifdef __ZEPHYR__
 
 #ifndef PRINTF
 #define PRINTF printk
 #endif
 
-#endif /* CONFIG_NXP_OSA_ZEPHYR */
+#endif /* __ZEPHYR__ */
 
 #define BLE_PS_DBG(...)      \
     do                       \
@@ -142,11 +142,11 @@
  *a delay of at least 20ms is required to continue sending annex100
  */
 #if defined(gPlatformDisableSetBtCalDataAnnex100_d) && (gPlatformDisableSetBtCalDataAnnex100_d == 0)
-#ifdef CONFIG_NXP_OSA_ZEPHYR
+#ifdef __ZEPHYR__
 #define BLE_RESET_DELAY_TICKS Z_TIMEOUT_MS(20)
 #else
 #define BLE_RESET_DELAY_TICKS (20U / portTICK_PERIOD_MS)
-#endif /* CONFIG_NXP_OSA_ZEPHYR */
+#endif /* __ZEPHYR__ */
 #endif
 
 /* -------------------------------------------------------------------------- */
@@ -280,13 +280,13 @@ static hal_rpmsg_config_t hci_rpmsg_config = {
 static bool               initialized    = false;
 static bool               hciInitialized = false;
 static volatile ble_ps_t  blePowerState  = ble_awake_state;
-#ifdef CONFIG_NXP_OSA_ZEPHYR
+#ifdef __ZEPHYR__
 static struct k_event wakeUpEventGroup;
 static struct k_mutex  bleMutexHandle;
 #else
 static EventGroupHandle_t wakeUpEventGroup;
 static SemaphoreHandle_t  bleMutexHandle;
-#endif /* CONFIG_NXP_OSA_ZEPHYR */
+#endif /* __ZEPHYR__ */
 static void (*hci_rx_callback)(uint8_t packetType, uint8_t *data, uint16_t len);
 
 /* -------------------------------------------------------------------------- */
@@ -301,7 +301,7 @@ int PLATFORM_InitBle(void)
      * The 'initialized' variable will be set to true only when the initialization is complete
      * We have to protect the initialization flow with a mutex to make sure the first task completes the initialization
      * before the second reads 'initialized' */
-#ifdef CONFIG_NXP_OSA_ZEPHYR
+#ifdef __ZEPHYR__
     int status = 0;
 
     k_mutex_init(&bleMutexHandle);
@@ -318,7 +318,7 @@ int PLATFORM_InitBle(void)
 
     status = xSemaphoreTake(bleMutexHandle, portMAX_DELAY);
     assert(status == pdTRUE);
-#endif /* CONFIG_NXP_OSA_ZEPHYR */
+#endif /* __ZEPHYR__ */
 
     do
     {
@@ -326,12 +326,12 @@ int PLATFORM_InitBle(void)
         {
             break;
         }
-#ifdef CONFIG_NXP_OSA_ZEPHYR
+#ifdef __ZEPHYR__
         k_event_init(&wakeUpEventGroup);
 #else
         wakeUpEventGroup = xEventGroupCreate();
         assert(wakeUpEventGroup != NULL);
-#endif /* CONFIG_NXP_OSA_ZEPHYR */
+#endif /* __ZEPHYR__ */
 
         /* Initialize BLE controller */
         ret = PLATFORM_InitControllers(connBle_c);
@@ -354,13 +354,13 @@ int PLATFORM_InitBle(void)
 
         initialized = true;
     } while (false);
-#ifdef CONFIG_NXP_OSA_ZEPHYR
+#ifdef __ZEPHYR__
     status = k_mutex_unlock(&bleMutexHandle);
     assert(status == 0);
 #else
     status = xSemaphoreGive(bleMutexHandle);
     assert(status == pdTRUE);
-#endif /* CONFIG_NXP_OSA_ZEPHYR */
+#endif /* __ZEPHYR__ */
     (void)status;
 
     return ret;
@@ -389,7 +389,7 @@ int PLATFORM_TerminateBle(void)
             break;
         }
 
-#ifndef CONFIG_NXP_OSA_ZEPHYR
+#ifndef __ZEPHYR__
         vEventGroupDelete(wakeUpEventGroup);
 #endif
 
@@ -454,11 +454,11 @@ int PLATFORM_StartHci(void)
 #if !defined(gPlatformDisableSetBtCalDataAnnex100_d) || (gPlatformDisableSetBtCalDataAnnex100_d == 0)
         /* After send annex55 to CPU2, CPU2 need reset,
            a delay of at least 20ms is required to continue sending annex100*/
-#ifdef CONFIG_NXP_OSA_ZEPHYR
+#ifdef __ZEPHYR__
         k_sleep(BLE_RESET_DELAY_TICKS);
 #else
         vTaskDelay(BLE_RESET_DELAY_TICKS);
-#endif /* CONFIG_NXP_OSA_ZEPHYR */
+#endif /* __ZEPHYR__ */
         /* Send the BT Cal Data annex100 to Controller */
         (void)PLATFORM_SetBtCalDataAnnex100();
 #endif
@@ -574,7 +574,7 @@ int PLATFORM_RequestBleWakeUp(void)
 
     /* The request can come from different tasks (BLE or OT), but only one request should be performed at the same
      * time. The mutex ensures only one task is waking up the CPU2 at a time. */
-#ifdef CONFIG_NXP_OSA_ZEPHYR
+#ifdef __ZEPHYR__
     uint32_t events = 0;
     if (k_mutex_lock(&bleMutexHandle, K_FOREVER) != 0)
     {
@@ -588,7 +588,7 @@ int PLATFORM_RequestBleWakeUp(void)
         /* shouldn't happen */
         assert(0);
     }
-#endif /* CONFIG_NXP_OSA_ZEPHYR */
+#endif /* __ZEPHYR__ */
     if (PLATFORM_IsBleAwake() == false)
     {
         /* Controller is in low power, we need to wake it up with PMU
@@ -602,7 +602,7 @@ int PLATFORM_RequestBleWakeUp(void)
         PMU_EnableBleWakeup(0x1U);
 
         /* Suspend the current task waiting for the Controller to be awake */
-#ifdef CONFIG_NXP_OSA_ZEPHYR
+#ifdef __ZEPHYR__
         events = k_event_wait(&wakeUpEventGroup, ble_awake_event, 1, PLATFORM_BLE_WAKE_UP_TIMEOUT_TICKS);
         if ((events & (uint32_t)ble_awake_event) == 0)
         {
@@ -615,14 +615,14 @@ int PLATFORM_RequestBleWakeUp(void)
         {
             ret = -1;
         }
-#endif /* CONFIG_NXP_OSA_ZEPHYR */
+#endif /* __ZEPHYR__ */
     }
 
-#ifdef CONFIG_NXP_OSA_ZEPHYR
+#ifdef __ZEPHYR__
     k_mutex_unlock(&bleMutexHandle);
 #else
     xSemaphoreGive(bleMutexHandle);
-#endif /* CONFIG_NXP_OSA_ZEPHYR */
+#endif /* __ZEPHYR__ */
 
     return ret;
 }
@@ -655,11 +655,11 @@ int PLATFORM_HandleControllerPowerState(void)
     ret = PLATFORM_HandleBlePowerStateEvent(ble_awake_event);
 
     /* Unblock any sending task waiting for wake up */
-#ifdef CONFIG_NXP_OSA_ZEPHYR
+#ifdef __ZEPHYR__
     k_event_post(&wakeUpEventGroup, ble_awake_event);
 #else
     (void)xEventGroupSetBits(wakeUpEventGroup, (EventBits_t)ble_awake_event);
-#endif /* CONFIG_NXP_OSA_ZEPHYR */
+#endif /* __ZEPHYR__ */
 
     return ret;
 }
@@ -907,11 +907,11 @@ static int PLATFORM_HandleBlePowerStateEvent(ble_ps_event_t psEvent)
                 case ble_asleep_event:
                     blePowerState = ble_asleep_state;
                     /* Make sure to clear wake up event */
-#ifdef CONFIG_NXP_OSA_ZEPHYR
+#ifdef __ZEPHYR__
                     k_event_clear(&wakeUpEventGroup, ble_awake_event);
 #else
                     (void)xEventGroupClearBits(wakeUpEventGroup, (EventBits_t)ble_awake_event);
-#endif /* CONFIG_NXP_OSA_ZEPHYR */
+#endif /* __ZEPHYR__ */
                     break;
 
                 default:
