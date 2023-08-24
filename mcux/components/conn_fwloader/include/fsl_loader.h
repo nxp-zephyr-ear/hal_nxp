@@ -9,10 +9,10 @@
 #define __FSL_LOADER_H__
 
 #include <stdint.h>
+#include "fsl_os_abstraction.h"
 #include "fsl_common.h"
 #include "fusemap.h"
 #include "fsl_ocotp.h"
-#include "fsl_os_abstraction.h"
 
 #ifndef PRINTF
 #define PRINTF printk
