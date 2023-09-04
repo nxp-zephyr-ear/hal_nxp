@@ -1733,6 +1733,7 @@ hal_rpmsg_status_t HAL_RpmsgInit(hal_rpmsg_handle_t handle, hal_rpmsg_config_t *
 #ifdef __ZEPHYR__
         Events = k_event_wait(&rpmsgQFlagsRef, RPMSG_EVENT_ENDPOINT_QUERY_RSP << imuHandle->imuLink,
                               0, K_FOREVER);
+        k_event_clear(&rpmsgQFlagsRef, RPMSG_EVENT_ENDPOINT_QUERY_RSP << imuHandle->imuLink);
 #else
         (void)OSA_EventWait((osa_event_handle_t)rpmsgQFlagsRef, RPMSG_EVENT_ENDPOINT_QUERY_RSP << imuHandle->imuLink, 0,
                             osaWaitForever_c, &Events);
