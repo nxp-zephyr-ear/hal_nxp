@@ -182,6 +182,15 @@ elseif (${MCUX_DEVICE} MATCHES "MIMXRT10[0-9][0-9]")
    include_driver_ifdef(CONFIG_PM_MCUX_PMU		pmu		driver_pmu)
 endif()
 
+
+if((${MCUX_DEVICE} MATCHES "RW61") AND (NOT DEFINED CONFIG_MINIMAL_LIBC))
+	# Whenever building for RW61x without minimal LIBC, use optimized memcpy.
+	# This will avoid issues with unaligned access to peripheral RAM regions
+	# caused by the memcpy implmentation in newlib
+	zephyr_library_sources(${CMAKE_CURRENT_LIST_DIR}/mcux-sdk/utilities/misc_utilities/fsl_memcpy.S)
+endif()
+
+
 if("${CONFIG_SOC_FAMILY}" STREQUAL "nxp_kinetis")
 
   include_driver_ifdef(CONFIG_SOC_FLASH_MCUX		flash		driver_flash)
