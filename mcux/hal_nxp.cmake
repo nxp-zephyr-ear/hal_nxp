@@ -183,6 +183,18 @@ elseif (${MCUX_DEVICE} MATCHES "MIMXRT10[0-9][0-9]")
    include_driver_ifdef(CONFIG_PM_MCUX_PMU		pmu		driver_pmu)
 endif()
 
+if(${MCUX_DEVICE} MATCHES "RW61")
+  zephyr_include_directories(${CMAKE_CURRENT_LIST_DIR}/mcux-sdk/components/els_pkc/src/platforms/redfinchSdk_sample)
+  zephyr_include_directories(${CMAKE_CURRENT_LIST_DIR}/mcux-sdk/components/els_pkc/src/platforms/redfinchSdk_sample/inc)
+  zephyr_include_directories(${CMAKE_CURRENT_LIST_DIR}/mcux-sdk/components/els_pkc/src/comps/mcuxCsslCPreProcessor/inc)
+  zephyr_include_directories(${CMAKE_CURRENT_LIST_DIR}/mcux-sdk/components/els_pkc/src/comps/mcuxCsslFlowProtection/inc)
+  zephyr_include_directories(${CMAKE_CURRENT_LIST_DIR}/mcux-sdk/components/els_pkc/src/comps/mcuxCsslSecureCounter/inc)
+  zephyr_include_directories(${CMAKE_CURRENT_LIST_DIR}/mcux-sdk/components/els_pkc/src/comps/mcuxClCore/inc)
+  zephyr_include_directories(${CMAKE_CURRENT_LIST_DIR}/mcux-sdk/components/els_pkc/src/comps/mcuxClEls/inc)
+  zephyr_library_sources(mcux-sdk/devices/RW612/drivers/fsl_ocotp.c)
+  zephyr_library_sources(mcux-sdk/components/els_pkc/src/comps/mcuxClEls/src/mcuxClEls_Common.c)
+  zephyr_library_sources(mcux-sdk/components/els_pkc/src/comps/mcuxClEls/src/mcuxClEls_GlitchDetector.c)
+endif()
 
 if((${MCUX_DEVICE} MATCHES "RW61") AND (NOT DEFINED CONFIG_MINIMAL_LIBC))
 	# Whenever building for RW61x without minimal LIBC, use optimized memcpy.
