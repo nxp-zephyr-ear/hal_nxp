@@ -217,6 +217,7 @@ static bool PLATFORM_IsBleAwake(void);
  */
 static hal_rpmsg_return_status_t PLATFORM_HciRpmsgRxCallback(void *param, uint8_t *data, uint32_t len);
 
+#ifndef __ZEPHYR__
 /*!
  * \brief Set BT Cal Data to Controller
  *
@@ -232,6 +233,14 @@ static int PLATFORM_SetBtCalData(void);
  */
 static int PLATFORM_SetBtCalDataAnnex100(void);
 #endif /* gPlatformDisableSetBtCalDataAnnex100_d */
+
+/*!
+ * \brief Send Host sleep config to Controller
+ *
+ * \return int return status: >=0 for success, <0 for errors
+ */
+static int PLATFORM_BleSetHostSleepConfig(void);
+#endif /* __ZEPHYR__ */
 
 /*!
  * \brief Handles supported Vendor Specific events received from Controller
@@ -252,13 +261,6 @@ static bool PLATFORM_HandleHciVendorEvent(uint8_t *eventData, uint32_t len);
  * \return int return status: >=0 for success, <0 for errors
  */
 static int PLATFORM_HandleBlePowerStateEvent(ble_ps_event_t psEvent);
-
-/*!
- * \brief Send Host sleep config to Controller
- *
- * \return int return status: >=0 for success, <0 for errors
- */
-static int PLATFORM_BleSetHostSleepConfig(void);
 
 void BLE_MCI_WAKEUP_DONE0_DriverIRQHandler(void);
 
@@ -448,6 +450,7 @@ int PLATFORM_StartHci(void)
         {
         }
 
+#ifndef __ZEPHYR__
 #if !defined(gPlatformDisableSetBtCalData_d) || (gPlatformDisableSetBtCalData_d == 0)
         /* Send the BT Cal Data to Controller */
         (void)PLATFORM_SetBtCalData();
@@ -470,6 +473,7 @@ int PLATFORM_StartHci(void)
         /* Allow Controller to enter low power */
         (void)PLATFORM_EnableBleLowPower();
 #endif
+#endif /* __ZEPHYR__ */
 
         hciInitialized = true;
     } while (false);
@@ -754,6 +758,7 @@ static hal_rpmsg_return_status_t PLATFORM_HciRpmsgRxCallback(void *param, uint8_
     return kStatus_HAL_RL_RELEASE;
 }
 
+#ifndef __ZEPHYR__
 static int PLATFORM_SetBtCalData(void)
 {
     int           ret = 0;
@@ -866,6 +871,30 @@ static int PLATFORM_SetBtCalDataAnnex100(void)
 }
 #endif /* gPlatformDisableSetBtCalDataAnnex100_d */
 
+static int PLATFORM_BleSetHostSleepConfig(void)
+{
+    int ret = 0;
+    /* This command must be sent before sending any power commands, likely
+     * after HCI init  */
+    uint8_t       buffer[1 + HCI_CMD_PACKET_HEADER_LENGTH + HCI_CMD_BT_HOST_SLEEP_CONFIG_PARAM_LENGTH];
+    uint16_t      opcode = get_opcode(HCI_CMD_VENDOR_OCG, HCI_CMD_BT_HOST_SLEEP_CONFIG_OCF);
+    const uint8_t params[HCI_CMD_BT_HOST_SLEEP_CONFIG_PARAM_LENGTH] = {
+        0xFFU, // BT_HIU_WAKEUP_INBAND
+        0xFFU, // BT_HIU_WAKE_GAP_WAIT_FOR_IRQ
+    };
+
+    PLATFORM_FillInHciCmdMsg(buffer, opcode, (uint8_t)sizeof(params), params);
+
+    ret = PLATFORM_SendHciMessage(buffer, sizeof(buffer));
+    if (ret != 0)
+    {
+        ret = -1;
+    }
+
+    return ret;
+}
+#endif /* __ZEPHYR__ */
+
 static bool PLATFORM_HandleHciVendorEvent(uint8_t *eventData, uint32_t len)
 {
     uint8_t vEventType = eventData[0];
@@ -937,29 +966,6 @@ static int PLATFORM_HandleBlePowerStateEvent(ble_ps_event_t psEvent)
         default:
             ret = -1;
             break;
-    }
-
-    return ret;
-}
-
-static int PLATFORM_BleSetHostSleepConfig(void)
-{
-    int ret = 0;
-    /* This command must be sent before sending any power commands, likely
-     * after HCI init  */
-    uint8_t       buffer[1 + HCI_CMD_PACKET_HEADER_LENGTH + HCI_CMD_BT_HOST_SLEEP_CONFIG_PARAM_LENGTH];
-    uint16_t      opcode = get_opcode(HCI_CMD_VENDOR_OCG, HCI_CMD_BT_HOST_SLEEP_CONFIG_OCF);
-    const uint8_t params[HCI_CMD_BT_HOST_SLEEP_CONFIG_PARAM_LENGTH] = {
-        0xFFU, // BT_HIU_WAKEUP_INBAND
-        0xFFU, // BT_HIU_WAKE_GAP_WAIT_FOR_IRQ
-    };
-
-    PLATFORM_FillInHciCmdMsg(buffer, opcode, (uint8_t)sizeof(params), params);
-
-    ret = PLATFORM_SendHciMessage(buffer, sizeof(buffer));
-    if (ret != 0)
-    {
-        ret = -1;
     }
 
     return ret;
