@@ -292,6 +292,88 @@ static SemaphoreHandle_t  bleMutexHandle;
 static void (*hci_rx_callback)(uint8_t packetType, uint8_t *data, uint16_t len);
 
 /* -------------------------------------------------------------------------- */
+/*                                Public memory                               */
+/* -------------------------------------------------------------------------- */
+
+const uint8_t hci_cal_data_params[HCI_CMD_STORE_BT_CAL_DATA_PARAM_LENGTH] = {
+    0x00U,                            //  Sequence Number : 0x00
+    0x00U,                            //  Action : 0x00
+    0x01U,                            //  Type : Not use CheckSum
+    0x1CU,                            //  File Length : 0x1C
+    0x37U,                            //  BT Annex Type : BT CFG
+    0x71U,                            //  Checksum : 0x71
+    0x1CU,                            //  Annex Length LSB: 0x001C
+    0x00U,                            //  Annex Length MSB: 0x001C
+    0xFFU,                            //  Pointer For Next Annex[0] : 0xFFFFFFFF
+    0xFFU,                            //  Pointer For Next Annex[1] : 0xFFFFFFFF
+    0xFFU,                            //  Pointer For Next Annex[2] : 0xFFFFFFFF
+    0xFFU,                            //  Pointer For Next Annex[3] : 0xFFFFFFFF
+    0x01U,                            //  Annex Version : 0x01
+    0x7CU,                            //  External Xtal Calibration Value : 0x7C
+    0x04U,                            //  Initial TX Power : 0x04
+    BT_CAL_DATA_ANNEX_FRONT_END_LOSS, //  Front End Loss : 0x02 or 0x03
+    0x28U,                            //  BT Options :
+                                        //              BIT[0] Force Class 2 operation = 0
+                                        //              BIT[1] Disable Pwr Control for class 2= 0
+                                        //              BIT[2] MiscFlag(to indicagte external XTAL) = 0
+                                        //              BIT[3] Used Internal Sleep Clock = 1
+                                        //              BIT[4] BT AOA localtion support = 0
+                                        //              BIT[5] Force Class 1 mode = 1
+                                        //              BIT[7:6] Reserved
+    0x00U,                            //  AOANumberOfAntennas: 0x00
+    0x00U,                            //  RSSI Golden Low : 0
+    0x00U,                            //  RSSI Golden High : 0
+    0xC0U,                            //  UART Baud Rate[0] : 0x002DC6C0(3000000)
+    0xC6U,                            //  UART Baud Rate[1] : 0x002DC6C0(3000000)
+    0x2DU,                            //  UART Baud Rate[2] : 0x002DC6C0(3000000)
+    0x00U,                            //  UART Baud Rate[3] : 0x002DC6C0(3000000)
+    0x00U,                            //  BdAddress[0] : 0x000000000000
+    0x00U,                            //  BdAddress[1] : 0x000000000000
+    0x00U,                            //  BdAddress[2] : 0x000000000000
+    0x00U,                            //  BdAddress[3] : 0x000000000000
+    0x00U,                            //  BdAddress[4] : 0x000000000000
+    0x00U,                            //  BdAddress[5] : 0x000000000000
+    0xF0U,                            //  Encr_Key_Len[3:0]: MinEncrKeyLen = 0x0
+                                        //  Encr_Key_Len[7:4]: MaxEncrKeyLen = 0xF
+#if defined(gPlatformEnableTxPowerChangeWithCountry_d) && (gPlatformEnableTxPowerChangeWithCountry_d == 0)
+    0x00U, //  RegionCode : 0x00
+#else
+    0x00U, //  Reserved : 0x00
+#endif /* gPlatformEnableTxPowerChangeWithCountry_d */
+};
+
+/*
+ * a.The following parameters are used in three cases,
+ *    1.For share antenna case or ant2 with external FEM(ble only case).
+ *    2.divesity case(enanble ant3)
+ *    3.divesity case(enanble ant4)
+ */
+uint8_t hci_cal_data_annex100_params[HCI_CMD_STORE_BT_CAL_DATA_PARAM_ANNEX100_LENGTH] = {
+    /*                   BT_HW_INFO   START              */
+    0x64U, //  Annex Type : 0x64
+    0x00U, //  CheckSum: Annex100 ignores checksum
+    0x10U, //  Length-In-Byte : 0x0010
+    0x00U, //  Length-In-Byte : 0x0010
+    0xFFU, // Pointer for next annex structure : 0xFFFFFFFF
+    0xFFU, // Pointer for next annex structure : 0xFFFFFFFF
+    0xFFU, // Pointer for next annex structure : 0xFFFFFFFF
+    0xFFU, // Pointer for next annex structure : 0xFFFFFFFF
+    0x01U, // Ext_PA Gain : Bit[7:1]   Ext_PA Present : Bit[0]
+#if defined(gPlatformEnableTxPowerChangeWithCountry_d) && (gPlatformEnableTxPowerChangeWithCountry_d == 0)
+    0x00U, // Ext_Ant Gain : Bit[7:1]   Ext_Ant Present : Bit[0]
+#else
+    0x00U, // Reserved
+#endif                                               /* gPlatformEnableTxPowerChangeWithCountry_d */
+    BT_CAL_DATA_ANNEX_100_EPA_FEM_MASK_LOW_BYTE, // BT_HW_INFO_EPA_FEM_Mask
+    0x00U,                                       // BT_HW_INFO_EPA_FEM_Mask
+    0x00U,                                       // Ext_LNA Present : Bit[0]   Ext_LNA Gain : Bit[7:1]
+    0x00U,                                       // Reserved
+    BT_CAL_DATA_ANNEX_100_LNA_FEM_MASK_LOW_BYTE, // BT / LE ext LNA FEM BITMASK
+    0x00U,                                       // BT / LE ext LNA FEM BITMASK
+    /*                   BT_HW_INFO   END              */
+};
+
+/* -------------------------------------------------------------------------- */
 /*                              Public functions                              */
 /* -------------------------------------------------------------------------- */
 
@@ -764,54 +846,8 @@ static int PLATFORM_SetBtCalData(void)
     int           ret = 0;
     uint8_t       buffer[1 + HCI_CMD_PACKET_HEADER_LENGTH + HCI_CMD_STORE_BT_CAL_DATA_PARAM_LENGTH];
     uint16_t      opcode = get_opcode(HCI_CMD_VENDOR_OCG, HCI_CMD_STORE_BT_CAL_DATA_OCF);
-    const uint8_t params[HCI_CMD_STORE_BT_CAL_DATA_PARAM_LENGTH] = {
-        0x00U,                            //  Sequence Number : 0x00
-        0x00U,                            //  Action : 0x00
-        0x01U,                            //  Type : Not use CheckSum
-        0x1CU,                            //  File Length : 0x1C
-        0x37U,                            //  BT Annex Type : BT CFG
-        0x71U,                            //  Checksum : 0x71
-        0x1CU,                            //  Annex Length LSB: 0x001C
-        0x00U,                            //  Annex Length MSB: 0x001C
-        0xFFU,                            //  Pointer For Next Annex[0] : 0xFFFFFFFF
-        0xFFU,                            //  Pointer For Next Annex[1] : 0xFFFFFFFF
-        0xFFU,                            //  Pointer For Next Annex[2] : 0xFFFFFFFF
-        0xFFU,                            //  Pointer For Next Annex[3] : 0xFFFFFFFF
-        0x01U,                            //  Annex Version : 0x01
-        0x7CU,                            //  External Xtal Calibration Value : 0x7C
-        0x04U,                            //  Initial TX Power : 0x04
-        BT_CAL_DATA_ANNEX_FRONT_END_LOSS, //  Front End Loss : 0x02 or 0x03
-        0x28U,                            //  BT Options :
-                                          //              BIT[0] Force Class 2 operation = 0
-                                          //              BIT[1] Disable Pwr Control for class 2= 0
-                                          //              BIT[2] MiscFlag(to indicagte external XTAL) = 0
-                                          //              BIT[3] Used Internal Sleep Clock = 1
-                                          //              BIT[4] BT AOA localtion support = 0
-                                          //              BIT[5] Force Class 1 mode = 1
-                                          //              BIT[7:6] Reserved
-        0x00U,                            //  AOANumberOfAntennas: 0x00
-        0x00U,                            //  RSSI Golden Low : 0
-        0x00U,                            //  RSSI Golden High : 0
-        0xC0U,                            //  UART Baud Rate[0] : 0x002DC6C0(3000000)
-        0xC6U,                            //  UART Baud Rate[1] : 0x002DC6C0(3000000)
-        0x2DU,                            //  UART Baud Rate[2] : 0x002DC6C0(3000000)
-        0x00U,                            //  UART Baud Rate[3] : 0x002DC6C0(3000000)
-        0x00U,                            //  BdAddress[0] : 0x000000000000
-        0x00U,                            //  BdAddress[1] : 0x000000000000
-        0x00U,                            //  BdAddress[2] : 0x000000000000
-        0x00U,                            //  BdAddress[3] : 0x000000000000
-        0x00U,                            //  BdAddress[4] : 0x000000000000
-        0x00U,                            //  BdAddress[5] : 0x000000000000
-        0xF0U,                            //  Encr_Key_Len[3:0]: MinEncrKeyLen = 0x0
-                                          //  Encr_Key_Len[7:4]: MaxEncrKeyLen = 0xF
-#if defined(gPlatformEnableTxPowerChangeWithCountry_d) && (gPlatformEnableTxPowerChangeWithCountry_d == 0)
-        0x00U, //  RegionCode : 0x00
-#else
-        0x00U, //  Reserved : 0x00
-#endif /* gPlatformEnableTxPowerChangeWithCountry_d */
-    };
 
-    PLATFORM_FillInHciCmdMsg(buffer, opcode, (uint8_t)sizeof(params), params);
+    PLATFORM_FillInHciCmdMsg(buffer, opcode, (uint8_t)sizeof(hci_cal_data_params), hci_cal_data_params);
 
     ret = PLATFORM_SendHciMessage(buffer, sizeof(buffer));
     if (ret != 0)
@@ -828,38 +864,8 @@ static int PLATFORM_SetBtCalDataAnnex100(void)
     int      ret = 0;
     uint8_t  bufferAnnex100[1 + HCI_CMD_PACKET_HEADER_LENGTH + HCI_CMD_STORE_BT_CAL_DATA_PARAM_ANNEX100_LENGTH];
     uint16_t opcodeAnnex100 = get_opcode(HCI_CMD_VENDOR_OCG, HCI_CMD_STORE_BT_CAL_DATA_ANNEX100_OCF);
-    /*
-     * a.The following parameters are used in three cases,
-     *    1.For share antenna case or ant2 with external FEM(ble only case).
-     *    2.divesity case(enanble ant3)
-     *    3.divesity case(enanble ant4)
-     */
-    uint8_t params[HCI_CMD_STORE_BT_CAL_DATA_PARAM_ANNEX100_LENGTH] = {
-        /*                   BT_HW_INFO   START              */
-        0x64U, //  Annex Type : 0x64
-        0x00U, //  CheckSum: Annex100 ignores checksum
-        0x10U, //  Length-In-Byte : 0x0010
-        0x00U, //  Length-In-Byte : 0x0010
-        0xFFU, // Pointer for next annex structure : 0xFFFFFFFF
-        0xFFU, // Pointer for next annex structure : 0xFFFFFFFF
-        0xFFU, // Pointer for next annex structure : 0xFFFFFFFF
-        0xFFU, // Pointer for next annex structure : 0xFFFFFFFF
-        0x01U, // Ext_PA Gain : Bit[7:1]   Ext_PA Present : Bit[0]
-#if defined(gPlatformEnableTxPowerChangeWithCountry_d) && (gPlatformEnableTxPowerChangeWithCountry_d == 0)
-        0x00U, // Ext_Ant Gain : Bit[7:1]   Ext_Ant Present : Bit[0]
-#else
-        0x00U, // Reserved
-#endif                                               /* gPlatformEnableTxPowerChangeWithCountry_d */
-        BT_CAL_DATA_ANNEX_100_EPA_FEM_MASK_LOW_BYTE, // BT_HW_INFO_EPA_FEM_Mask
-        0x00U,                                       // BT_HW_INFO_EPA_FEM_Mask
-        0x00U,                                       // Ext_LNA Present : Bit[0]   Ext_LNA Gain : Bit[7:1]
-        0x00U,                                       // Reserved
-        BT_CAL_DATA_ANNEX_100_LNA_FEM_MASK_LOW_BYTE, // BT / LE ext LNA FEM BITMASK
-        0x00U,                                       // BT / LE ext LNA FEM BITMASK
-        /*                   BT_HW_INFO   END              */
-    };
 
-    PLATFORM_FillInHciCmdMsg(bufferAnnex100, opcodeAnnex100, (uint8_t)sizeof(params), params);
+    PLATFORM_FillInHciCmdMsg(bufferAnnex100, opcodeAnnex100, (uint8_t)sizeof(hci_cal_data_annex100_params), hci_cal_data_annex100_params);
 
     ret = PLATFORM_SendHciMessage(bufferAnnex100, sizeof(bufferAnnex100));
     if (ret != 0)
