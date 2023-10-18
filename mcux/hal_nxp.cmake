@@ -303,3 +303,7 @@ if(CONFIG_ENTROPY_MCUX_CSS)
   zephyr_include_directories(${CMAKE_CURRENT_LIST_DIR}/mcux-sdk/components/css_pkc/src/comps/mcuxClSession/inc)
   include(component_css)
 endif()
+
+if(CONFIG_MCUX_ELS_PKC)
+    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/mcux-sdk/components/els_pkc)
+endif()

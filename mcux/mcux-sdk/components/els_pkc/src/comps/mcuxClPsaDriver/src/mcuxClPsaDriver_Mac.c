@@ -30,19 +30,19 @@
 #include <internal/mcuxClPsaDriver_Internal.h>
 
 static psa_status_t mcuxClPsaDriver_psa_driver_wrapper_mac_setupLayer_internal(
-        psa_mac_operation_t *operation,
+        els_pkc_mac_operation_t *operation,
         mcuxClKey_Descriptor_t *pKey,
         psa_algorithm_t alg);
 
 MCUX_CSSL_ANALYSIS_START_PATTERN_DESCRIPTIVE_IDENTIFIER()
 psa_status_t mcuxClPsaDriver_psa_driver_wrapper_mac_updateLayer(
-    psa_mac_operation_t *operation,
+    els_pkc_mac_operation_t *operation,
     const uint8_t *input,
     size_t input_length )
 MCUX_CSSL_ANALYSIS_STOP_PATTERN_DESCRIPTIVE_IDENTIFIER()
 {
     MCUX_CSSL_ANALYSIS_START_PATTERN_REINTERPRET_MEMORY_OF_OPAQUE_TYPES()
-    mcuxClPsaDriver_ClnsData_Mac_t * pClnsMacData = (mcuxClPsaDriver_ClnsData_Mac_t *) operation->ctx.clns_data;
+    mcuxClPsaDriver_ClnsData_Mac_t * pClnsMacData = (mcuxClPsaDriver_ClnsData_Mac_t *) operation->clns_data;
     MCUX_CSSL_ANALYSIS_STOP_PATTERN_REINTERPRET_MEMORY()
     /* No support for multipart Hmac in CL */
     if(PSA_ALG_IS_HMAC(pClnsMacData->alg) == true)
@@ -130,9 +130,9 @@ MCUX_CSSL_ANALYSIS_STOP_PATTERN_DESCRIPTIVE_IDENTIFIER()
     }
 
     // INIT
-    struct psa_mac_operation_s operation = psa_mac_operation_init();
+    els_pkc_mac_operation_t operation = ELS_PKC_PSA_MAC_OPERATION_INIT;
     MCUX_CSSL_ANALYSIS_START_PATTERN_REINTERPRET_MEMORY_OF_OPAQUE_TYPES()
-    mcuxClPsaDriver_ClnsData_Mac_t * pClnsMacData = (mcuxClPsaDriver_ClnsData_Mac_t *) operation.ctx.clns_data;
+    mcuxClPsaDriver_ClnsData_Mac_t * pClnsMacData = (mcuxClPsaDriver_ClnsData_Mac_t *) operation.clns_data;
     MCUX_CSSL_ANALYSIS_STOP_PATTERN_REINTERPRET_MEMORY()
 
     /* Set alg in clns_data for update and finalize */
@@ -177,9 +177,9 @@ MCUX_CSSL_ANALYSIS_STOP_PATTERN_DESCRIPTIVE_IDENTIFIER()
 
     /* Call the mcuxClMac_process */
     MCUX_CSSL_FP_FUNCTION_CALL_BEGIN(processResult, processToken, mcuxClMac_process(&session,
-MCUX_CSSL_ANALYSIS_START_PATTERN_REINTERPRET_MEMORY_OF_OPAQUE_TYPES()
+MCUX_CSSL_ANALYSIS_START_CAST_TO_MORE_SPECIFIC_TYPE()
                                                                                   (mcuxClMac_Context_t *) &pClnsMacData->ctx,
-MCUX_CSSL_ANALYSIS_STOP_PATTERN_REINTERPRET_MEMORY()
+MCUX_CSSL_ANALYSIS_STOP_CAST_TO_MORE_SPECIFIC_TYPE()
                                                                                   input,
                                                                                   input_length));
 
@@ -193,7 +193,9 @@ MCUX_CSSL_ANALYSIS_STOP_PATTERN_REINTERPRET_MEMORY()
     uint32_t outputSize = 0u;
 	uint8_t tempMaxMac[MCUXCLMAC_MAX_OUTPUT_SIZE];
     MCUX_CSSL_FP_FUNCTION_CALL_BEGIN(finishResult, finishToken, mcuxClMac_finish(&session,
+MCUX_CSSL_ANALYSIS_START_CAST_TO_MORE_SPECIFIC_TYPE()
                                                                                (mcuxClMac_Context_t *) &pClnsMacData->ctx,
+MCUX_CSSL_ANALYSIS_STOP_CAST_TO_MORE_SPECIFIC_TYPE()
                                                                                tempMaxMac,
                                                                                &outputSize
                                                                                ));
@@ -263,14 +265,14 @@ MCUX_CSSL_ANALYSIS_STOP_PATTERN_REINTERPRET_MEMORY()
 
 MCUX_CSSL_ANALYSIS_START_PATTERN_DESCRIPTIVE_IDENTIFIER()
 psa_status_t mcuxClPsaDriver_psa_driver_wrapper_mac_finalizeLayer(
-    psa_mac_operation_t *operation,
+    els_pkc_mac_operation_t *operation,
     uint8_t *mac,
     size_t mac_size,
     size_t *mac_length)
 MCUX_CSSL_ANALYSIS_STOP_PATTERN_DESCRIPTIVE_IDENTIFIER()
 {
     MCUX_CSSL_ANALYSIS_START_PATTERN_REINTERPRET_MEMORY_OF_OPAQUE_TYPES()
-    mcuxClPsaDriver_ClnsData_Mac_t * pClnsMacData = (mcuxClPsaDriver_ClnsData_Mac_t *) operation->ctx.clns_data;
+    mcuxClPsaDriver_ClnsData_Mac_t * pClnsMacData = (mcuxClPsaDriver_ClnsData_Mac_t *) operation->clns_data;
     MCUX_CSSL_ANALYSIS_STOP_PATTERN_REINTERPRET_MEMORY()
     /* No support for multipart Hmac in CL */
     if(PSA_ALG_IS_HMAC(pClnsMacData->alg) == true)
@@ -341,20 +343,19 @@ MCUX_CSSL_ANALYSIS_STOP_PATTERN_DESCRIPTIVE_IDENTIFIER()
 {
     if(attributes->core.type == PSA_KEY_TYPE_AES)
     {
+        MCUX_CSSL_ANALYSIS_START_PATTERN_SWITCH_STATEMENT_RETURN_TERMINATION()
         switch(PSA_ALG_FULL_LENGTH_MAC(alg))
         {
             //AES based algorithms and paddings
             case PSA_ALG_CMAC:
                 return mcuxClMac_Mode_CMAC;
-                break;
             case PSA_ALG_CBC_MAC:
                 /* PSA standard does not specify CBC-MAC with padding. ISO Padding Method2 was chosen here because it is the most commonly used padding for CBC-MAC. */
                 return mcuxClMac_Mode_CBCMAC_PaddingISO9797_1_Method2;
-                break;
             default:
                 return NULL;
-                break;
         }
+        MCUX_CSSL_ANALYSIS_STOP_PATTERN_SWITCH_STATEMENT_RETURN_TERMINATION()
     }
     else if(PSA_ALG_IS_HMAC(alg) == true)
     {
@@ -374,7 +375,7 @@ MCUX_CSSL_ANALYSIS_STOP_PATTERN_DESCRIPTIVE_IDENTIFIER()
 }
 
 static psa_status_t mcuxClPsaDriver_psa_driver_wrapper_mac_setupLayer_internal(
-        psa_mac_operation_t *operation,
+        els_pkc_mac_operation_t *operation,
         mcuxClKey_Descriptor_t *pKey,
         psa_algorithm_t alg)
 {
@@ -407,7 +408,7 @@ static psa_status_t mcuxClPsaDriver_psa_driver_wrapper_mac_setupLayer_internal(
 
     /* Create input in a way supported by mcuxClMac_init */
     MCUX_CSSL_ANALYSIS_START_SUPPRESS_REINTERPRET_MEMORY("Cast needed because ctx was created from size define")
-    mcuxClPsaDriver_ClnsData_Mac_t * pClnsMacData = (mcuxClPsaDriver_ClnsData_Mac_t *) operation->ctx.clns_data;
+    mcuxClPsaDriver_ClnsData_Mac_t * pClnsMacData = (mcuxClPsaDriver_ClnsData_Mac_t *) operation->clns_data;
     MCUX_CSSL_ANALYSIS_STOP_SUPPRESS_REINTERPRET_MEMORY()
 
     MCUX_CSSL_FP_FUNCTION_CALL_BEGIN(result, token, mcuxClMac_init(&session,
@@ -432,8 +433,6 @@ MCUX_CSSL_ANALYSIS_STOP_PATTERN_REINTERPRET_MEMORY()
         return PSA_ERROR_CORRUPTION_DETECTED;
     }
     MCUX_CSSL_FP_FUNCTION_CALL_END();
-    /*if reach this place, it is properly handled already, so id have to be set*/
-    operation->id = psa_driver_wrapper_get_clns_operation_id();
 
     /* Return with success */
     return PSA_SUCCESS;
@@ -444,13 +443,13 @@ psa_status_t mcuxClPsaDriver_psa_driver_wrapper_mac_setupLayer(
     const psa_key_attributes_t *attributes,
     const uint8_t *key_buffer,
     size_t key_buffer_size,
-    psa_mac_operation_t *operation,
+    els_pkc_mac_operation_t *operation,
     psa_algorithm_t alg )
 MCUX_CSSL_ANALYSIS_STOP_PATTERN_DESCRIPTIVE_IDENTIFIER()
 {
     psa_status_t status = PSA_ERROR_CORRUPTION_DETECTED;
     MCUX_CSSL_ANALYSIS_START_PATTERN_REINTERPRET_MEMORY_OF_OPAQUE_TYPES()
-    mcuxClPsaDriver_ClnsData_Mac_t * pClnsMacData = (mcuxClPsaDriver_ClnsData_Mac_t *) operation->ctx.clns_data;
+    mcuxClPsaDriver_ClnsData_Mac_t * pClnsMacData = (mcuxClPsaDriver_ClnsData_Mac_t *) operation->clns_data;
     MCUX_CSSL_ANALYSIS_STOP_PATTERN_REINTERPRET_MEMORY()
     
     /* Set alg in clns_data for update and finalize */
@@ -483,11 +482,11 @@ MCUX_CSSL_ANALYSIS_STOP_PATTERN_DESCRIPTIVE_IDENTIFIER()
 }
 
 MCUX_CSSL_ANALYSIS_START_PATTERN_DESCRIPTIVE_IDENTIFIER()
-psa_status_t mcuxClPsaDriver_psa_driver_wrapper_mac_abort(psa_mac_operation_t *operation)
+psa_status_t mcuxClPsaDriver_psa_driver_wrapper_mac_abort(els_pkc_mac_operation_t *operation)
 MCUX_CSSL_ANALYSIS_STOP_PATTERN_DESCRIPTIVE_IDENTIFIER()
 {
     MCUX_CSSL_ANALYSIS_START_PATTERN_REINTERPRET_MEMORY_OF_OPAQUE_TYPES()
-	mcuxClPsaDriver_ClnsData_Mac_t * pClnsMacData = (mcuxClPsaDriver_ClnsData_Mac_t *) operation->ctx.clns_data;
+	mcuxClPsaDriver_ClnsData_Mac_t * pClnsMacData = (mcuxClPsaDriver_ClnsData_Mac_t *) operation->clns_data;
     MCUX_CSSL_ANALYSIS_STOP_PATTERN_REINTERPRET_MEMORY()
 
 	if(PSA_SUCCESS !=  mcuxClPsaDriver_psa_driver_wrapper_UpdateKeyStatusUnload(&pClnsMacData->keydesc))
@@ -495,10 +494,17 @@ MCUX_CSSL_ANALYSIS_STOP_PATTERN_DESCRIPTIVE_IDENTIFIER()
 		return PSA_ERROR_GENERIC_ERROR;
 	}
 
-	mcuxClMemory_clear((uint8_t *) pClnsMacData,
-					  MCUXCLPSADRIVER_CLNSDATA_MAC_SIZE,
-					  MCUXCLPSADRIVER_CLNSDATA_MAC_SIZE);
-		 
+    MCUX_CSSL_FP_FUNCTION_CALL_VOID_BEGIN(tokenClear, mcuxClMemory_clear((uint8_t *)pClnsMacData,
+                                                                       MCUXCLPSADRIVER_CLNSDATA_MAC_SIZE,
+                                                                       MCUXCLPSADRIVER_CLNSDATA_MAC_SIZE));
+
+    if (MCUX_CSSL_FP_FUNCTION_CALLED(mcuxClMemory_clear) != tokenClear)
+    {
+        return PSA_ERROR_CORRUPTION_DETECTED;
+    }
+
+    MCUX_CSSL_FP_FUNCTION_CALL_VOID_END();
+	 
     /* Return with success */
     return PSA_SUCCESS;
 }

@@ -65,14 +65,20 @@ MCUX_CSSL_FP_PROTECTED_TYPE(void) mcuxClMemory_copy (uint8_t *pDst, uint8_t cons
     for (; ((i + sizeof(uint32_t)) <= length) && ((i + sizeof(uint32_t)) <= bufLength); i += sizeof(uint32_t))
     {
         MCUX_CSSL_ANALYSIS_COVERITY_START_FALSE_POSITIVE(INTEGER_OVERFLOW, "p32Dst will be in the valid range pDst[0 ~ bufLength] and pSrc will be in the valid range pSrc[0 ~ length].")
-        uint32_t crtWordVal = ((uint32_t)*(pSrc + 3) << 24) | ((uint32_t)*(pSrc + 2) << 16) | ((uint32_t)*(pSrc + 1) << 8) | (uint32_t)*pSrc;
+        /* Volatile keyword is added to avoid any chance of optimization (i.e. full word read) */
+        uint32_t crtWordVal = (uint32_t)*(volatile const uint8_t *)pSrc;
+        pSrc++;
         MCUX_CSSL_FP_LOOP_ITERATION(mcuxClMemory_copy_loop);
-        *p32Dst = crtWordVal;
+        crtWordVal |= (uint32_t)*(volatile const uint8_t *)pSrc << 8u;
+        pSrc++;
         MCUX_CSSL_FP_LOOP_ITERATION(mcuxClMemory_copy_loop);
-        p32Dst++;
+        crtWordVal |= (uint32_t)*(volatile const uint8_t *)pSrc << 16u;
+        pSrc++;
         MCUX_CSSL_FP_LOOP_ITERATION(mcuxClMemory_copy_loop);
-        pSrc += sizeof(uint32_t);
+        crtWordVal |= (uint32_t)*(volatile const uint8_t *)pSrc << 24u;
+        pSrc++;
         MCUX_CSSL_FP_LOOP_ITERATION(mcuxClMemory_copy_loop);
+        *p32Dst++ = crtWordVal;
         MCUX_CSSL_ANALYSIS_COVERITY_STOP_FALSE_POSITIVE(INTEGER_OVERFLOW)
     }
 
@@ -92,6 +98,109 @@ MCUX_CSSL_FP_PROTECTED_TYPE(void) mcuxClMemory_copy (uint8_t *pDst, uint8_t cons
                               length - i,
                               MCUX_CSSL_FP_LOOP_ITERATIONS(mcuxClMemory_copy_loop,
                                                           ((length <= bufLength) ? length : bufLength)));
+}
+
+MCUX_CSSL_FP_FUNCTION_DEF(mcuxClMemory_copy_reversed)
+MCUX_CSSL_FP_PROTECTED_TYPE(void) mcuxClMemory_copy_reversed (uint8_t *pDst, uint8_t const *pSrc, size_t length, size_t bufLength)
+{
+    MCUX_CSSL_FP_FUNCTION_ENTRY(mcuxClMemory_copy_reversed);
+    uint32_t len = length;
+    uint32_t diff;
+
+    MCUX_CSSL_ANALYSIS_START_SUPPRESS_INTEGER_OVERFLOW("diff is non-negative distance between pSrc and pDst, caculated according to platform architecture.")
+    if (pDst > pSrc)
+    {
+        diff = (uint32_t)pDst - (uint32_t)pSrc;
+    }
+    else
+    {
+        diff = (uint32_t)pSrc - (uint32_t)pDst;
+    }
+    MCUX_CSSL_ANALYSIS_STOP_SUPPRESS_INTEGER_OVERFLOW()
+
+    if (bufLength < length)
+    {
+        length = bufLength;
+    }
+
+    MCUX_CSSL_FP_LOOP_DECL(mcuxClMemory_copy_reversed_loop);
+
+    //non-overlap case
+    if (diff >= length)
+    {
+        diff = length;
+    }
+
+    uint8_t *pDstBt;
+    const uint8_t *pSrcBt;
+    if (pSrc > pDst)
+    {
+        // first copy the non-overlop part
+        MCUX_CSSL_ANALYSIS_START_SUPPRESS_INTEGER_OVERFLOW("pDstBt will be in the valid range pDst[0 ~ bufLength] and pSrc will be in the valid range pSrc[0 ~ length].")
+        pSrcBt = pSrc + len - 1U;
+        pDstBt = (uint8_t *)pDst;
+
+        while (len > length - diff)
+        {
+            *pDstBt = *pSrcBt;
+            pDstBt++;
+            pSrcBt--;
+            len--;
+            MCUX_CSSL_FP_LOOP_ITERATION(mcuxClMemory_copy_reversed_loop);
+        }
+        MCUX_CSSL_ANALYSIS_STOP_SUPPRESS_INTEGER_OVERFLOW()
+        //then swap the overlap part
+        MCUX_CSSL_ANALYSIS_START_SUPPRESS_INTEGER_OVERFLOW("pDstBt2 will be in the valid range pDst[0 ~ bufLength].")
+        uint8_t *pDstBt2 = pDstBt + len - 1u;
+        while (len > 1U)
+        {
+            uint8_t tempByte = *pDstBt2;
+            *pDstBt2 = *pDstBt;
+            pDstBt2--;
+            MCUX_CSSL_FP_LOOP_ITERATION(mcuxClMemory_copy_reversed_loop);
+            *pDstBt = tempByte;
+            pDstBt++;
+            len -= 2U;
+            MCUX_CSSL_FP_LOOP_ITERATION(mcuxClMemory_copy_reversed_loop);
+        }
+        MCUX_CSSL_ANALYSIS_STOP_SUPPRESS_INTEGER_OVERFLOW()
+    }
+    else
+    {
+        // first copy the non-overlop part
+        MCUX_CSSL_ANALYSIS_START_SUPPRESS_INTEGER_OVERFLOW("pDstBt will be in the valid range pDst[0 ~ bufLength].")
+        pDstBt = (uint8_t *)pDst + len - 1U;
+        pSrcBt = pSrc;
+
+        while (len > length - diff)
+        {
+            *pDstBt = *pSrcBt;
+            pDstBt--;
+            pSrcBt++;
+            len--;
+            MCUX_CSSL_FP_LOOP_ITERATION(mcuxClMemory_copy_reversed_loop);
+        }
+        MCUX_CSSL_ANALYSIS_STOP_SUPPRESS_INTEGER_OVERFLOW()
+        //then swap the overlap part
+        MCUX_CSSL_ANALYSIS_START_SUPPRESS_INTEGER_OVERFLOW("pDstBt2 will be in the valid range pDst[0 ~ bufLength], pDstBt will be in the valid range pDst[0 ~ bufLength].")
+        uint8_t *pDstBt2 = pDstBt - len + 1u;
+        while (len > 1U)
+        {
+            uint8_t tempByte = *pDstBt2;
+            *pDstBt2 = *pDstBt;
+            pDstBt2++;
+            MCUX_CSSL_FP_LOOP_ITERATION(mcuxClMemory_copy_reversed_loop);
+            *pDstBt = tempByte;
+            pDstBt--;
+            len -= 2U;
+            MCUX_CSSL_FP_LOOP_ITERATION(mcuxClMemory_copy_reversed_loop);
+        }
+        MCUX_CSSL_ANALYSIS_STOP_SUPPRESS_INTEGER_OVERFLOW()
+    }
+
+    /* update SC and return */
+    MCUX_CSSL_FP_FUNCTION_EXIT_VOID(mcuxClMemory_copy_reversed,
+                              MCUX_CSSL_FP_LOOP_ITERATIONS(mcuxClMemory_copy_reversed_loop, (length - len)));
 }
 
 MCUX_CSSL_FP_FUNCTION_DEF(mcuxClMemory_set)
