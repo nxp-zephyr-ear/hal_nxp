@@ -886,6 +886,39 @@ hal_rpmsg_status_t HAL_ImuAddWlanTxPacket(uint8_t imuLink, uint8_t *txBuf, uint3
     return rpmsgStatus;
 }
 
+hal_rpmsg_status_t HAL_ImuAddWlanTxPacketExt(uint8_t imuLink, uint8_t *txBuf, uint32_t length,
+    void (*cb)(void *destAddr, void *srcAddr, uint32_t len))
+{
+    hal_rpmsg_status_t rpmsgStatus = kStatus_HAL_RpmsgSuccess;
+    hal_imu_handle_t *imuHandle;
+    uint8_t *wlan_tx_buf;
+
+    assert((uint8_t)kIMU_LinkMax > imuLink);
+    assert(NULL != txBuf);
+    assert(0U != length);
+    imuHandle = &imuHandleCh[imuLink];
+
+    if (imuHandle->imuMsgBufIdx > IMU_PAYLOAD_SIZE - 1U)
+    {
+        return kStatus_HAL_RpmsgError;
+    }
+
+    wlan_tx_buf = HAL_ImuGetWlanTxBuf(imuHandle);
+
+    if (NULL == wlan_tx_buf)
+    {
+        return kStatus_HAL_RpmsgError;
+    }
+
+    // To be DMAed
+    cb(wlan_tx_buf, txBuf, length);
+
+    imuHandle->imuMsgBuf[imuHandle->imuMsgBufIdx] = (uint32_t)wlan_tx_buf;
+    imuHandle->imuMsgBufIdx++;
+
+    return rpmsgStatus;
+}
+
 hal_rpmsg_status_t HAL_ImuSendMultiTxData(uint8_t imuLink)
 {
     hal_rpmsg_status_t rpmsgStatus = kStatus_HAL_RpmsgSuccess;
