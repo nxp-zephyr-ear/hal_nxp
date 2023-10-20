@@ -34,6 +34,7 @@ target_include_directories(
         comps/mcuxClRsa/inc
         comps/mcuxClSession/inc
         comps/mcuxClTrng/inc
+        comps/mcuxClTrng/inc/internal
         comps/mcuxCsslCPreProcessor/inc
         comps/mcuxCsslDataIntegrity/inc
         # comps/mcuxCsslFlowProtection/ex/inc
@@ -353,7 +354,7 @@ target_sources(
         comps/mcuxClSession/src/size/size.c
 
         # comps/mcuxClTrng/src/mcuxClTrng_ELS.c
-        # comps/mcuxClTrng/src/mcuxClTrng_SA_TRNG.c
+        comps/mcuxClTrng/src/mcuxClTrng_SA_TRNG.c
 
         # comps/mcuxCsslFlowProtection/ex/mcuxCsslFlowProtection_example.c
         # comps/mcuxCsslMemory/ex/data_invariant_memory_compare.c

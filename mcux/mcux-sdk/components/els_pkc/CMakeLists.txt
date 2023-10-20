@@ -15,7 +15,7 @@ target_link_options(
 )
 
 target_include_directories(McuxElsPkc
-    PUBLIC
+    PRIVATE
         # SDK driver header files
         ../../drivers/common
         # psa/crypto.h and psa/crypto_types.h
@@ -34,9 +34,14 @@ if(CONFIG_SOC_SERIES_RW6XX)
     ) 
 
     target_include_directories(McuxElsPkc
+        PRIVATE
+            # cmsis required to build els_pkc
+            src/platforms/rw61x/cmsis_cortex_m_5_5_1/inc
+    )
+
+    target_include_directories(McuxElsPkc
         PUBLIC
             src/platforms/rw61x/
-            src/platforms/rw61x/cmsis_cortex_m_5_5_1/inc
             src/platforms/rw61x/inc
             ../../devices/RW612
             ../../devices/RW612/drivers
@@ -49,22 +54,7 @@ if(CONFIG_SOC_SERIES_RW6XX)
     )
 endif()
 
-
-install(TARGETS McuxElsPkc
-        EXPORT McuxElsPkcTargets
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-)
-
-install(EXPORT McuxElsPkcTargets
-        FILE McuxElsPkcTargets.cmake
-        NAMESPACE McuxElsPkc::
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/McuxElsPkcTargets
-)
-
-export(EXPORT McuxElsPkcTargets
+export(TARGETS McuxElsPkc
     FILE "${CMAKE_CURRENT_BINARY_DIR}/McuxElsPkcTargets.cmake"
     NAMESPACE McuxElsPkc::
 )

@@ -307,3 +307,7 @@ endif()
 if(CONFIG_MCUX_ELS_PKC)
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/mcux-sdk/components/els_pkc)
 endif()
+
+if(CONFIG_MCUX_PSA_CRYPTO_DRIVER_ELS_PKC)
+    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/mcux-sdk/components/psa_crypto_driver)
+endif()

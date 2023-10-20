@@ -1,0 +1,73 @@
+/*
+ * Copyright 2022-2023 NXP
+ * All rights reserved.
+ *
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
+
+/** \file mcux_psa_els_pkc_key_generation.c
+ *
+ * This file contains the implementation of the entry points associated to the
+ * key generation (i.e. random generation and extraction of public keys) as
+ * described by the PSA Cryptoprocessor Driver interface specification
+ *
+ */
+#include "mcuxClEls.h"
+#include "mcuxClPsaDriver_Functions.h"
+#include "mcux_psa_els_pkc_key_generation.h"
+
+psa_status_t els_pkc_transparent_generate_key(const psa_key_attributes_t *attributes,
+                                               uint8_t *key_buffer, size_t key_buffer_size,
+                                               size_t *key_buffer_length)
+{
+    /* The driver handles multiple storage locations,
+    call it first then default to builtin driver */
+    return  mcuxClPsaDriver_psa_driver_wrapper_key_generate(
+                attributes, key_buffer, key_buffer_size, key_buffer_length );
+}
+
+psa_status_t els_pkc_transparent_export_public_key(const psa_key_attributes_t *attributes,
+                                               const uint8_t *key_buffer,
+                                               size_t key_buffer_size, uint8_t *data,
+                                               size_t data_size, size_t *data_length)
+{
+    
+    /* The driver handles multiple storage locations,                        
+    call it first then default to builtin driver */                          
+    return mcuxClPsaDriver_psa_driver_wrapper_export_public_key(attributes,
+                                                      key_buffer,
+                                                      key_buffer_size,
+                                                      data,
+                                                      data_size,
+                                                      data_length);
+}
+      
+psa_status_t els_pkc_transparent_export_key(const psa_key_attributes_t *attributes,
+                                               const uint8_t *key_buffer,
+                                               size_t key_buffer_size, uint8_t *data,
+                                               size_t data_size, size_t *data_length)
+{
+    return mcuxClPsaDriver_psa_driver_wrapper_exportKey(attributes,
+                                                      key_buffer,
+                                                      key_buffer_size,
+                                                      data,
+                                                      data_size,
+                                                      data_length);
+}
+
+psa_status_t els_pkc_transparent_import_key(const psa_key_attributes_t *attributes,
+    const uint8_t *data, size_t data_length, uint8_t *key_buffer,
+    size_t key_buffer_size, size_t *key_buffer_length,  size_t *bits)
+{
+    (void) attributes;
+    (void) data;
+    (void) data_length;
+    (void) key_buffer;
+    (void) key_buffer_size;
+    (void) key_buffer_length;
+    (void) bits;
+    
+    return  PSA_ERROR_NOT_SUPPORTED;
+}
+/** @} */ // end of psa_key_generation
