@@ -32,7 +32,7 @@
 #include <wifi.h>
 
 static wlan_chanlist_t chanlist_2g_cfg = {
-    .num_chans = 14,
+    .num_chans = 11,
     .chan_info[0] =
         {
             .chan_num                     = 1,
@@ -99,24 +99,9 @@ static wlan_chanlist_t chanlist_2g_cfg = {
             .chan_freq                    = 2462,
             .passive_scan_or_radar_detect = false,
         },
-    .chan_info[11] =
-        {
-            .chan_num                     = 12,
-            .chan_freq                    = 2467,
-            .passive_scan_or_radar_detect = true,
-        },
-    .chan_info[12] =
-        {
-            .chan_num                     = 13,
-            .chan_freq                    = 2472,
-            .passive_scan_or_radar_detect = true,
-        },
-    .chan_info[13] =
-        {
-            .chan_num                     = 14,
-            .chan_freq                    = 2484,
-            .passive_scan_or_radar_detect = true,
-        },
+    .chan_info[11] = {0},
+    .chan_info[12] = {0},
+    .chan_info[13] = {0},
     .chan_info[14] = {0},
     .chan_info[15] = {0},
     .chan_info[16] = {0},
