@@ -239,7 +239,7 @@ static psa_status_t parse_psa_import_command(const uint8_t *data, size_t data_si
     {
         tag        = *cmd_ptr;
         psa_status = get_tag(&cmd_ptr, end, &cmd_len, tag);
-        PSA_DRIVER_SUCCESS_OR_EXIT_MSG("get_tag failed: 0x%08lx", psa_status);
+        PSA_DRIVER_SUCCESS_OR_EXIT_MSG("get_tag failed: 0x%x", psa_status);
 
         switch (tag)
         {
@@ -319,7 +319,7 @@ static bool is_ns_owned_key(mbedtls_svc_key_id_t key_id)
 #if !defined (MBEDTLS_PSA_CRYPTO_KEY_ID_ENCODES_OWNER)
     return 0;
 #else
-    PRINTF("key_id.id: 0x%08lx, .owner: 0x%08lx", key_id.MBEDTLS_PRIVATE(key_id), key_id.MBEDTLS_PRIVATE(owner));
+    PRINTF("key_id.id: 0x%x, .owner: 0x%x", key_id.MBEDTLS_PRIVATE(key_id), key_id.MBEDTLS_PRIVATE(owner));
     return key_id.MBEDTLS_PRIVATE(owner) < 0;
 #endif
 }
@@ -783,7 +783,7 @@ static psa_status_t execute_kdelete_step(mbedtls_svc_key_id_t key_id, const key_
     PSA_DRIVER_ASSERT_OR_EXIT_STATUS_MSG(step != NULL, PSA_ERROR_INVALID_ARGUMENT, "Invalid input pointer");
 
     psa_status = mcuxClPsaDriver_Oracle_ElsUtils_KeyDelete(step->kdelete.target_key_slot);
-    PSA_DRIVER_SUCCESS_OR_EXIT_MSG("mcuxClPsaDriver_Oracle_ElsUtils_KeyDelete failed: 0x%08lx", psa_status);
+    PSA_DRIVER_SUCCESS_OR_EXIT_MSG("mcuxClPsaDriver_Oracle_ElsUtils_KeyDelete failed: 0x%x", psa_status);
     free_key_in_slot_handler(step->kdelete.target_key_slot);
 exit:
     return psa_status;
@@ -935,23 +935,23 @@ psa_status_t mcuxClPsaDriver_Oracle_Utils_ExecuteKeyRecipe(mbedtls_svc_key_id_t 
 #if defined(MCUXCL_FEATURE_ELS_KEY_MGMT_KEYPROV)
             case OP_KEYPROV:
                 execute_keyprov_step(key_id, step, target_key_slot);
-                PSA_DRIVER_SUCCESS_OR_EXIT_MSG("execute_keyprov_recipe returned 0x%08lx", psa_status);
+                PSA_DRIVER_SUCCESS_OR_EXIT_MSG("execute_keyprov_recipe returned 0x%x", psa_status);
                 break;
 #endif /* MCUXCL_FEATURE_ELS_KEY_MGMT_KEYPROV */
             case OP_CKDF:
                 psa_status = execute_ckdf_step(key_id, step, target_key_slot);
-                PSA_DRIVER_SUCCESS_OR_EXIT_MSG("execute_ckdf_recipe returned 0x%08lx", psa_status);
+                PSA_DRIVER_SUCCESS_OR_EXIT_MSG("execute_ckdf_recipe returned 0x%x", psa_status);
                 break;
             case OP_KEYGEN:
                 psa_status = execute_keygen_step(key_id, step, target_key_slot);
-                PSA_DRIVER_SUCCESS_OR_EXIT_MSG("execute_ckdf_recipe returned 0x%08lx", psa_status);
+                PSA_DRIVER_SUCCESS_OR_EXIT_MSG("execute_ckdf_recipe returned 0x%x", psa_status);
                 break;
             case OP_KDELETE:
                 psa_status = execute_kdelete_step(key_id, step);
-                PSA_DRIVER_SUCCESS_OR_EXIT_MSG("execute_kdelete_recipe returned 0x%08lx", psa_status);
+                PSA_DRIVER_SUCCESS_OR_EXIT_MSG("execute_kdelete_recipe returned 0x%x", psa_status);
                 break;
             default:
-                PSA_DRIVER_ERROR("Unknown recipe operation: 0x%08x", step->operation);
+                PSA_DRIVER_ERROR("Unknown recipe operation: 0x%x", step->operation);
                 goto exit;
         }
     }

@@ -15,7 +15,7 @@ target_compile_options(
 
 target_link_options(
     McuxPsaCryptoDriverElsPkc
-    PUBLIC
+    PRIVATE
         ${TOOLCHAIN_LD_FLAGS}
 )
 

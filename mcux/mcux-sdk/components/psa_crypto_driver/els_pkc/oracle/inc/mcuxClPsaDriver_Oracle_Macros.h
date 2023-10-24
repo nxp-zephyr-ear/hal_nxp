@@ -12,12 +12,9 @@
 #ifndef _MCUXCLPSADRIVER_ORACLE_MACROS_
 #define _MCUXCLPSADRIVER_ORACLE_MACROS_
 
-#include <common.h>
-
-#ifdef TFM_SPM_LOG_LEVEL
-#undef PRINTF
+#ifndef PRINTF
 #define PRINTF printf
-#endif /* TFM_SPM_LOG_LEVEL */
+#endif
 
 #define PSA_DRIVER_ERROR(...)                          \
     for (;;)                                           \
@@ -41,7 +38,7 @@
     }
 
 #define PSA_DRIVER_SUCCESS_OR_EXIT() \
-    PSA_DRIVER_SUCCESS_OR_EXIT_MSG("psa_status is not success but [0x%08x]", psa_status)
+    PSA_DRIVER_SUCCESS_OR_EXIT_MSG("psa_status is not success but [0x%x]", psa_status)
 
 #define PSA_DRIVER_SET_STATUS_SUCCESS_AND_EXIT() \
     psa_status = PSA_SUCCESS;                    \
