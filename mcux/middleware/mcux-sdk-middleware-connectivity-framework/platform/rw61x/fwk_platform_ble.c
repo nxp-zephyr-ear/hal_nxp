@@ -689,7 +689,7 @@ int PLATFORM_RequestBleWakeUp(void)
 
         /* Suspend the current task waiting for the Controller to be awake */
 #ifdef __ZEPHYR__
-        events = k_event_wait(&wakeUpEventGroup, ble_awake_event, 1, PLATFORM_BLE_WAKE_UP_TIMEOUT_TICKS);
+        events = k_event_wait(&wakeUpEventGroup, ble_awake_event, 0, PLATFORM_BLE_WAKE_UP_TIMEOUT_TICKS);
         if ((events & (uint32_t)ble_awake_event) == 0)
         {
             ret = -1;
