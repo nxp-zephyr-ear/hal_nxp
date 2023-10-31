@@ -65,7 +65,7 @@
 #include "mcux_psa_els_pkc_opaque_aead.h"
 #include "mcux_psa_els_pkc_opaque_mac.h"
 
-#include "mcuxClPsaDriver_Oracle_Macros.h"
+#include "mcuxClPsaDriver_Oracle_Interface_key_locations.h"
 
 #define PSA_CRYPTO_ELS_PKC_LOCATION_S50_ENC_STORAGE_KEY   PSA_KEY_LOCATION_S50_ENC_STORAGE_KEY
 #define PSA_CRYPTO_ELS_PKC_LOCATION_S50_ENC_STORAGE_DATA  PSA_KEY_LOCATION_S50_ENC_STORAGE_DATA

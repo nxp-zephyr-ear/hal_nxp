@@ -12,10 +12,32 @@
 #ifndef _MCUXCLPSADRIVER_ORACLE_MACROS_
 #define _MCUXCLPSADRIVER_ORACLE_MACROS_
 
-#ifndef PRINTF
-#define PRINTF printf
-#endif
+#include "mcuxClPsaDriver_Oracle_Interface_key_locations.h"
 
+#ifndef PRINTF
+#ifdef __ZEPHYR__
+#ifdef PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER
+#include "tfm_sp_log.h"
+#else /* PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER */
+#include <zephyr/sys/printk.h>
+#define PRINTF printk
+#endif /* PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER */
+
+#else /* __ZEPHYR__ */
+
+#ifdef PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER
+#include "tfm_sp_log.h"
+#define PRINTF LOG_ERRFMT
+#else /* standalone mbedtls usage case*/
+#include <stdio.h>
+#define PRINTF printf
+#endif /* PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER */
+#endif /* __ZEPHYR__ */
+#endif /* PRINTF */
+
+#if defined (PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) && defined (__ZEPHYR__)
+#define PSA_DRIVER_ERROR(...)
+#else
 #define PSA_DRIVER_ERROR(...)                          \
     for (;;)                                           \
     {                                                  \
@@ -24,6 +46,7 @@
         PRINTF("\r\n");                                \
         break;                                         \
     }
+#endif
 
 #define PSA_DRIVER_EXIT_STATUS_MSG(STATUS, ...) \
     psa_status = STATUS;                        \
@@ -53,32 +76,4 @@
 #define PSA_DRIVER_ASSERT_BUFFER_SIZE_OR_EXIT_STATUS_MSG(BASE, LENGTH, END, STATUS, ...) \
     PSA_DRIVER_ASSERT_OR_EXIT_STATUS_MSG(((BASE + LENGTH) > BASE) && ((BASE + LENGTH) <= END), STATUS, __VA_ARGS__)
 
-// common flags
-#define PSA_KEY_LOCATION_NXP_FLAG              0x400000U
-#define PSA_KEY_LOCATION_EL2GO_FLAG            0x200000U
-#define PSA_KEY_LOCATION_S50_FLAG              0x000001U
-#define PSA_KEY_LOCATION_COMMON_FLAG           (PSA_KEY_LOCATION_VENDOR_FLAG | PSA_KEY_LOCATION_NXP_FLAG | PSA_KEY_LOCATION_EL2GO_FLAG | PSA_KEY_LOCATION_S50_FLAG)
-
-// key/data
-#define PSA_KEY_LOCATION_KEY_FLAG              0x000000
-#define PSA_KEY_LOCATION_DATA_FLAG             0x008000
-
-// blob/encrypted
-#define PSA_KEY_LOCATION_BLOB_STORAGE_FLAG     0x000000
-#define PSA_KEY_LOCATION_ENC_STORAGE_FLAG      0x000100
-#define PSA_KEY_LOCATION_TEMP_STORAGE_FLAG     0x000200
-#define PSA_KEY_LOCATION_KEY_GEN_STORAGE_FLAG  0x000300
-
-#define PSA_KEY_LOCATION_S50_ENC_STORAGE_KEY         ((psa_key_location_t)(PSA_KEY_LOCATION_COMMON_FLAG | PSA_KEY_LOCATION_ENC_STORAGE_FLAG | PSA_KEY_LOCATION_KEY_FLAG))
-#define PSA_KEY_LOCATION_S50_ENC_STORAGE_DATA         ((psa_key_location_t)(PSA_KEY_LOCATION_COMMON_FLAG | PSA_KEY_LOCATION_ENC_STORAGE_FLAG | PSA_KEY_LOCATION_DATA_FLAG))
-#define MCUXCLPSADRIVER_IS_S50_ENC_STORAGE(location) (((location) == PSA_KEY_LOCATION_S50_ENC_STORAGE_KEY) || ((location) == PSA_KEY_LOCATION_S50_ENC_STORAGE_DATA))
-
-#define PSA_KEY_LOCATION_S50_BLOB_STORAGE             ((psa_key_location_t)(PSA_KEY_LOCATION_COMMON_FLAG | PSA_KEY_LOCATION_BLOB_STORAGE_FLAG | PSA_KEY_LOCATION_KEY_FLAG))
-#define MCUXCLPSADRIVER_IS_S50_BLOB_STORAGE(location) ((location) == PSA_KEY_LOCATION_S50_BLOB_STORAGE)
-
-#define PSA_KEY_LOCATION_S50_TEMP_STORAGE             ((psa_key_location_t)(PSA_KEY_LOCATION_COMMON_FLAG | PSA_KEY_LOCATION_TEMP_STORAGE_FLAG | PSA_KEY_LOCATION_KEY_FLAG))
-#define MCUXCLPSADRIVER_IS_S50_TEMP_STORAGE(location) ((location) == PSA_KEY_LOCATION_S50_TEMP_STORAGE)
-
-#define PSA_KEY_LOCATION_S50_KEY_GEN_STORAGE          ((psa_key_location_t)(PSA_KEY_LOCATION_COMMON_FLAG | PSA_KEY_LOCATION_KEY_GEN_STORAGE_FLAG | PSA_KEY_LOCATION_KEY_FLAG))
-#define MCUXCLPSADRIVER_IS_S50_KEY_GEN_STORAGE(location) ((location) == PSA_KEY_LOCATION_S50_KEY_GEN_STORAGE)
 #endif //_MCUXCLPSADRIVER_ORACLE_MACROS_

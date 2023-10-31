@@ -24,7 +24,7 @@
 #if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
 #include "tfm_crypto_defs.h"
 #include "tfm_plat_crypto_keys.h"
-#include "tfm_builtin_key_ids_rw61x.h"
+#include "tfm_builtin_key_ids.h"
 #endif /* PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER */
 
 #include "mcuxClPsaDriver_Oracle_ElsUtils.h"
@@ -421,36 +421,36 @@ psa_status_t mcuxClPsaDriver_Oracle_GetBuiltinKeyBuffer(psa_key_attributes_t *at
     }
     psa_key_usage_t usage        = psa_get_key_usage_flags(attributes);
 
-/* If TF-M Builtin keys are being used in project,
- then use rw61x specific plat builtin keys */
-#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
-
-    /* Retrieve the usage policy based on the key_id and the user of the key */
-    const tfm_plat_builtin_key_policy_t *policy_table = NULL;
-    size_t number_of_keys = tfm_plat_builtin_key_get_policy_table_ptr(&policy_table);
-
-    for (size_t idx = 0; idx < number_of_keys; idx++) {
-        if (policy_table[idx].key_id == MBEDTLS_SVC_KEY_ID_GET_KEY_ID(key_id)) {
-            if (policy_table[idx].per_user_policy == 0) {
-                usage = policy_table[idx].usage;
-            } else {
-                /* The policy depedends also on the user of the key */
-                size_t num_users = policy_table[idx].per_user_policy;
-                const tfm_plat_builtin_key_per_user_policy_t *p_policy = policy_table[idx].policy_ptr;
-
-                for (size_t j = 0; j < num_users; j++) {
-                    if (p_policy[j].user == MBEDTLS_SVC_KEY_ID_GET_OWNER_ID(key_id)) {
-                        usage = p_policy[j].usage;
-                        break;
-                    }
-                }
-            }
-            break;
-        }
-    }
-
-#endif /* PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER */
-    psa_set_key_usage_flags(attributes, usage);
+    // TF-M 1.8??
+    // /* If TF-M Builtin keys are being used in project,
+    //  then use rw61x specific plat builtin keys */
+    // #if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+    //     /* Retrieve the usage policy based on the key_id and the user of the key */
+    //     const tfm_plat_builtin_key_policy_t *policy_table = NULL;
+    //     size_t number_of_keys = tfm_plat_builtin_key_get_policy_table_ptr(&policy_table);
+    // 
+    //     for (size_t idx = 0; idx < number_of_keys; idx++) {
+    //         if (policy_table[idx].key_id == MBEDTLS_SVC_KEY_ID_GET_KEY_ID(key_id)) {
+    //             if (policy_table[idx].per_user_policy == 0) {
+    //                 usage = policy_table[idx].usage;
+    //             } else {
+    //                 /* The policy depedends also on the user of the key */
+    //                 size_t num_users = policy_table[idx].per_user_policy;
+    //                 const tfm_plat_builtin_key_per_user_policy_t *p_policy = policy_table[idx].policy_ptr;
+    // 
+    //                 for (size_t j = 0; j < num_users; j++) {
+    //                     if (p_policy[j].user == MBEDTLS_SVC_KEY_ID_GET_OWNER_ID(key_id)) {
+    //                         usage = p_policy[j].usage;
+    //                         break;
+    //                     }
+    //                 }
+    //             }
+    //             break;
+    //         }
+    //     }
+    // 
+    // #endif /* PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER */
+    //     psa_set_key_usage_flags(attributes, usage);
 
     switch (MBEDTLS_SVC_KEY_ID_GET_KEY_ID(key_id))
     {

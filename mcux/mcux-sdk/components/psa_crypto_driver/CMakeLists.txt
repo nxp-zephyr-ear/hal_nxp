@@ -4,6 +4,8 @@
 #
 #-------------------------------------------------------------------------------
 
+find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+
 add_library(McuxPsaCryptoDriverElsPkc) 
 
 target_compile_options(
@@ -51,6 +53,55 @@ target_include_directories(McuxPsaCryptoDriverElsPkc
         "$<TARGET_PROPERTY:McuxElsPkc,INTERFACE_INCLUDE_DIRECTORIES>"
 )
 
+if(CONFIG_BUILD_WITH_TFM)
+    target_compile_definitions(
+        McuxPsaCryptoDriverElsPkc 
+        PRIVATE
+            MBEDTLS_PSA_CRYPTO_KEY_ID_ENCODES_OWNER
+            MBEDTLS_PSA_CRYPTO_BUILTIN_KEYS
+            PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER
+            # The buildin key for initial attestation is only included if TF-M is 
+            # built with initial attestation support enabled.
+            $<$<BOOL:TFM_PARTITION_INITIAL_ATTESTATION>:TFM_PARTITION_INITIAL_ATTESTATION>
+            TFM_PARTITION_LOG_LEVEL=TFM_PARTITION_LOG_LEVEL_ERROR
+    )
+
+    # If built from zephyr, we know where TF-M is located:
+    if(ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR)
+        target_include_directories(McuxPsaCryptoDriverElsPkc
+            PRIVATE
+                ${ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR}/interface/include
+                ${ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR}/platform/include
+                ${ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR}/secure_fw/partitions/lib/runtime/include
+                ${ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR}/secure_fw/partitions/crypto
+                ${ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR}/secure_fw/partitions/crypto/psa_driver_api
+        )
+
+    endif()
+
+    if(CONFIG_SOC_SERIES_RW6XX)
+        if(ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR)
+            target_include_directories(McuxPsaCryptoDriverElsPkc
+                PRIVATE
+                    ${ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR}/platform/ext/target/nxp/rdrw61x/Device/Include
+            )
+        endif()
+    endif()
+else()
+    if(CONFIG_SOC_SERIES_RW6XX)
+        target_include_directories(McuxPsaCryptoDriverElsPkc
+            PRIVATE
+                # include zephyr directories include path
+                "$<TARGET_PROPERTY:zephyr,INTERFACE_INCLUDE_DIRECTORIES>"
+        )
+        target_compile_options(
+            McuxPsaCryptoDriverElsPkc 
+            PRIVATE
+                "$<TARGET_PROPERTY:zephyr_interface,INTERFACE_COMPILE_OPTIONS>"
+        )
+    endif()
+
+endif()
 
 if(CONFIG_SOC_SERIES_RW6XX)
 

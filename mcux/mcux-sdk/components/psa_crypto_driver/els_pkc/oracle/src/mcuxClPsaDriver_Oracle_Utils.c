@@ -720,7 +720,7 @@ static psa_status_t execute_ckdf_step(mbedtls_svc_key_id_t key_id,
 
     *target_key_id = get_usable_key_slot(step->ckdf.target_key_slot, &step->ckdf.key_properties);
     PSA_DRIVER_ASSERT_OR_EXIT_STATUS_MSG(*target_key_id < MCUXCLELS_KEY_SLOTS, PSA_ERROR_BAD_STATE,
-                                         "No usable keyslot found (%ld)", step->ckdf.target_key_slot);
+                                         "No usable keyslot found (%d)", step->ckdf.target_key_slot);
 
     psa_status = mcuxClPsaDriver_Oracle_ElsUtils_Ckdf(step->ckdf.source_key_slot, *target_key_id,
                                                       step->ckdf.key_properties, step->ckdf.derivation_data);
@@ -755,7 +755,7 @@ static psa_status_t execute_keygen_step(mbedtls_svc_key_id_t key_id,
     {
         *target_key_id = get_usable_key_slot(step->keygen.target_key_slot, &step->keygen.key_properties);
         PSA_DRIVER_ASSERT_OR_EXIT_STATUS_MSG(*target_key_id < MCUXCLELS_KEY_SLOTS, PSA_ERROR_BAD_STATE,
-                                             "No usable keyslot found (%ld)", step->keygen.target_key_slot);
+                                             "No usable keyslot found (%d)", step->keygen.target_key_slot);
     }
 
     public_key = mbedtls_calloc(1, PUBLIC_KEY_SIZE);
