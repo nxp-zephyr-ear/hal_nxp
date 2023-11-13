@@ -176,36 +176,7 @@ extern "C" {
  * @brief Initializes the user configuration structure to default values.
  *
  * This function initializes the configuration structure to default values. The default
- * values are as follows.
- * @code
- *     userConfig->lock = 0;
- *     userConfig->clockMode = kTRNG_ClockModeRingOscillator;
- *     userConfig->ringOscDiv = kTRNG_RingOscDiv0;  Or  to other kTRNG_RingOscDiv[2|8] depending on the platform.
- *     userConfig->sampleMode = kTRNG_SampleModeRaw;
- *     userConfig->entropyDelay = 3200;
- *     userConfig->sampleSize = 2500;
- *     userConfig->sparseBitLimit = 63;
- *     userConfig->retryCount = 1;
- *     userConfig->longRunMaxLimit = 32;
- *     userConfig->monobitLimit.maximum = 317;
- *     userConfig->monobitLimit.minimum = 195;
- *     userConfig->runBit1Limit.maximum = 107;
- *     userConfig->runBit1Limit.minimum = 27;
- *     userConfig->runBit2Limit.maximum = 62;
- *     userConfig->runBit2Limit.minimum = 7;
- *     userConfig->runBit3Limit.maximum = 39;
- *     userConfig->runBit3Limit.minimum = 0;
- *     userConfig->runBit4Limit.maximum = 26;
- *     userConfig->runBit4Limit.minimum = 0;
- *     userConfig->runBit5Limit.maximum = 18;
- *     userConfig->runBit5Limit.minimum = 0;
- *     userConfig->runBit6PlusLimit.maximum = 17;
- *     userConfig->runBit6PlusLimit.minimum = 0;
- *     userConfig->pokerLimit.maximum = 1600;
- *     userConfig->pokerLimit.minimum = 1030;
- *     userConfig->frequencyCountLimit.maximum = 30000;
- *     userConfig->frequencyCountLimit.minimum = 1600;
- * @endcode
+ * values are platform dependent.
  *
  * @param userConfig   User configuration structure.
  * @return If successful, returns the kStatus_TRNG_Success. Otherwise, it returns an error.
