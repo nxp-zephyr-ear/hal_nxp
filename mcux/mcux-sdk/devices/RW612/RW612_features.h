@@ -1,7 +1,7 @@
 /*
 ** ###################################################################
 **     Version:             rev. 1.0, 2021-03-16
-**     Build:               b230614
+**     Build:               b230908
 **
 **     Abstract:
 **         Chip specific module features.
@@ -107,6 +107,8 @@
 #define FSL_FEATURE_SOC_POWERQUAD_COUNT (1)
 /* @brief PUF availability on the SoC. */
 #define FSL_FEATURE_SOC_PUF_COUNT (1)
+/* @brief RF_SYSCON availability on the SoC. */
+#define FSL_FEATURE_SOC_RF_SYSCON_COUNT (1)
 /* @brief ROMC availability on the SoC. */
 #define FSL_FEATURE_SOC_ROMC_COUNT (1)
 /* @brief RSTCTL0 availability on the SoC. */
@@ -412,6 +414,8 @@
 #define FSL_FEATURE_TRNG_HAS_NO_TRNG_SBLIM (1)
 /* @brief TRNG supports reset control. */
 #define FSL_FEATURE_TRNG_HAS_RSTCTL (1)
+/* @brief TRNG supports dual oscillator mode. */
+#define FSL_FEATURE_TRNG_HAS_DUAL_OSCILATORS (1)
 
 /* USB module features */
 
