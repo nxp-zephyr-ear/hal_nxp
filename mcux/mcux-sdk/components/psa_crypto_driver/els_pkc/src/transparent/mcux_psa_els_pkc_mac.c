@@ -16,6 +16,9 @@
 #include "mcuxClEls.h"
 #include "mcuxClPsaDriver_Functions.h"
 #include "mcux_psa_els_pkc_mac.h"
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+#include "mcux_psa_els_pkc_common_init.h"
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
 /*
  * Entry points for MAC computation and verification as described by the PSA
  *  Cryptoprocessor Driver interface specification
@@ -28,7 +31,15 @@ psa_status_t els_pkc_transparent_mac_compute(const psa_key_attributes_t *attribu
                              uint8_t *mac, size_t mac_size,
                              size_t *mac_length)
 {
-    return mcuxClPsaDriver_psa_driver_wrapper_mac_computeLayer(
+    psa_status_t status;
+
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+    if (mcux_mutex_lock(&els_pkc_hwcrypto_mutex)) {
+        return kStatus_Fail;
+    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
+    status = mcuxClPsaDriver_psa_driver_wrapper_mac_computeLayer(
                                         attributes,
                                         key_buffer,
                                         key_buffer_size,
@@ -38,6 +49,14 @@ psa_status_t els_pkc_transparent_mac_compute(const psa_key_attributes_t *attribu
                                         mac,
                                         mac_size,
                                         mac_length);
+
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+    if (mcux_mutex_unlock(&els_pkc_hwcrypto_mutex)) {
+        return kStatus_Fail;
+    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
+    return status;
 }
 
 
@@ -53,11 +72,27 @@ psa_status_t els_pkc_transparent_mac_sign_setup(els_pkc_transparent_mac_operatio
                                 const uint8_t *key_buffer,
                                 size_t key_buffer_size, psa_algorithm_t alg)
 {
-    return mcuxClPsaDriver_psa_driver_wrapper_mac_setupLayer(attributes,
-                                                              key_buffer,
-                                                              key_buffer_size,
-                                                              operation,
-                                                              alg);
+    psa_status_t status;
+
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+    if (mcux_mutex_lock(&els_pkc_hwcrypto_mutex)) {
+        return kStatus_Fail;
+    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
+    status = mcuxClPsaDriver_psa_driver_wrapper_mac_setupLayer(attributes,
+                                                               key_buffer,
+                                                               key_buffer_size,
+                                                               operation,
+                                                               alg);
+
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+    if (mcux_mutex_unlock(&els_pkc_hwcrypto_mutex)) {
+        return kStatus_Fail;
+    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
+    return status;
 }
 
 psa_status_t els_pkc_transparent_mac_verify_setup(els_pkc_transparent_mac_operation_t *operation,
@@ -65,19 +100,51 @@ psa_status_t els_pkc_transparent_mac_verify_setup(els_pkc_transparent_mac_operat
                                   const uint8_t *key_buffer,
                                   size_t key_buffer_size, psa_algorithm_t alg)
 {
-    return mcuxClPsaDriver_psa_driver_wrapper_mac_setupLayer(attributes,
-                                                              key_buffer,
-                                                              key_buffer_size,
-                                                              operation,
-                                                              alg);
+    psa_status_t status;
+
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+    if (mcux_mutex_lock(&els_pkc_hwcrypto_mutex)) {
+        return kStatus_Fail;
+    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
+    status = mcuxClPsaDriver_psa_driver_wrapper_mac_setupLayer(attributes,
+                                                               key_buffer,
+                                                               key_buffer_size,
+                                                               operation,
+                                                               alg);
+
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+    if (mcux_mutex_unlock(&els_pkc_hwcrypto_mutex)) {
+        return kStatus_Fail;
+    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
+    return status;
 }
 
 psa_status_t els_pkc_transparent_mac_update(els_pkc_transparent_mac_operation_t *operation,
                             const uint8_t *input, size_t input_length)
 {
-    return mcuxClPsaDriver_psa_driver_wrapper_mac_updateLayer(operation,
-                                                              input,
-                                                              input_length);
+    psa_status_t status;
+
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+    if (mcux_mutex_lock(&els_pkc_hwcrypto_mutex)) {
+        return kStatus_Fail;
+    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
+    status = mcuxClPsaDriver_psa_driver_wrapper_mac_updateLayer(operation,
+                                                                input,
+                                                                input_length);
+
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+    if (mcux_mutex_unlock(&els_pkc_hwcrypto_mutex)) {
+        return kStatus_Fail;
+    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
+    return status;
 }
 
 psa_status_t els_pkc_transparent_mac_sign_finish(els_pkc_transparent_mac_operation_t *operation,
@@ -85,10 +152,23 @@ psa_status_t els_pkc_transparent_mac_sign_finish(els_pkc_transparent_mac_operati
                                  size_t *mac_length)
 {
     uint8_t macCalc[MCUXCLMAC_MAX_OUTPUT_SIZE];
-    psa_status_t status = mcuxClPsaDriver_psa_driver_wrapper_mac_finalizeLayer(operation,
+
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+    if (mcux_mutex_lock(&els_pkc_hwcrypto_mutex)) {
+        return kStatus_Fail;
+    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
+        psa_status_t status = mcuxClPsaDriver_psa_driver_wrapper_mac_finalizeLayer(operation,
                                                                                macCalc,
                                                                                mac_size,
                                                                                NULL);
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+    if (mcux_mutex_unlock(&els_pkc_hwcrypto_mutex)) {
+        return kStatus_Fail;
+    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
     if (status == PSA_SUCCESS)
     {
         for(unsigned int i = 0u; i < mac_size; i++)
@@ -104,6 +184,13 @@ psa_status_t els_pkc_transparent_mac_verify_finish(els_pkc_transparent_mac_opera
                                    const uint8_t *mac, size_t mac_length)
 {
     uint8_t macCalc[ MCUXCLMAC_MAX_OUTPUT_SIZE];
+
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+    if (mcux_mutex_lock(&els_pkc_hwcrypto_mutex)) {
+        return kStatus_Fail;
+    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
     psa_status_t status = mcuxClPsaDriver_psa_driver_wrapper_mac_finalizeLayer(operation,
                                                                                macCalc,
                                                                                mac_length,
@@ -120,12 +207,35 @@ psa_status_t els_pkc_transparent_mac_verify_finish(els_pkc_transparent_mac_opera
             return PSA_ERROR_INVALID_SIGNATURE;
         }
     }
+
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+    if (mcux_mutex_unlock(&els_pkc_hwcrypto_mutex)) {
+        return kStatus_Fail;
+    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
     return status;
 }
 
 psa_status_t els_pkc_transparent_mac_abort(els_pkc_transparent_mac_operation_t *operation)
 {
-    return mcuxClPsaDriver_psa_driver_wrapper_mac_abort(operation);
+    psa_status_t status;
+
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+    if (mcux_mutex_lock(&els_pkc_hwcrypto_mutex)) {
+        return kStatus_Fail;
+    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
+    status = mcuxClPsaDriver_psa_driver_wrapper_mac_abort(operation);
+
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+    if (mcux_mutex_unlock(&els_pkc_hwcrypto_mutex)) {
+        return kStatus_Fail;
+    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
+    return status;
 }
 
 /** @} */ // end of psa_mac

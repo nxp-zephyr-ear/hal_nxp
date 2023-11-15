@@ -65,6 +65,12 @@ psa_status_t els_pkc_get_entropy(uint32_t flags, size_t *estimate_bits,
         goto end;
     }
 
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+    if (mcux_mutex_lock(&els_pkc_hwcrypto_mutex)) {
+        return kStatus_Fail;
+    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
     /*
      * The order of functions in psa_crypto_init() is not correct as
      * driver init is called after call to random number generator. To
@@ -75,12 +81,6 @@ psa_status_t els_pkc_get_entropy(uint32_t flags, size_t *estimate_bits,
         return status;
     }
 
-#if defined(MBEDTLS_THREADING_C)
-    if (mbedtls_mutex_lock(&mbedtls_threading_hwcrypto_els_pkc_mutex) != 0) {
-        return PSA_ERROR_GENERIC_ERROR;
-    }
-#endif
-    
     /* Initialize trng */
     static bool rng_init_is_done = false;
     if(rng_init_is_done == false)
@@ -95,9 +95,9 @@ psa_status_t els_pkc_get_entropy(uint32_t flags, size_t *estimate_bits,
     /* Get random data from trng driver*/
     result = TRNG_GetRandomData(TRNG0, output, output_size);
 
-#if defined(MBEDTLS_THREADING_C)
-    if (mbedtls_mutex_unlock(&mbedtls_threading_hwcrypto_els_pkc_mutex) != 0) {
-        return PSA_ERROR_GENERIC_ERROR;
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+    if (mcux_mutex_unlock(&els_pkc_hwcrypto_mutex)) {
+        return kStatus_Fail;
     }
 #endif
 

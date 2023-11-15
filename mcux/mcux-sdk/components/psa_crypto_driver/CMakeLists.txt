@@ -25,7 +25,9 @@ target_include_directories(McuxPsaCryptoDriverElsPkc
     PRIVATE
         # SDK driver header files
         ../../drivers/common
-        
+        # zephyr includes for mutex protection
+        osal/zephyr
+        osal/.
         # psa/crypto.h and psa/crypto_types.h
         ../../../../../../crypto/mbedtls/include
         ../../../../../../crypto/mbedtls/include/psa
@@ -41,7 +43,6 @@ target_include_directories(McuxPsaCryptoDriverElsPkc
         els_pkc/include/common
         els_pkc/include/opaque
         els_pkc/include/transparent
-        osal/.
         els_pkc/oracle
         els_pkc/oracle/inc
             
@@ -166,5 +167,9 @@ target_link_libraries(McuxPsaCryptoDriverElsPkc
     PRIVATE
         McuxElsPkc
 )
+
+if (CONFIG_MCUX_PSA_CRYPTO_DRIVER_ELS_PKC_THREAD)
+    add_compile_definitions(PSA_CRYPTO_DRIVER_THREAD_EN)
+endif()
 
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/osal)

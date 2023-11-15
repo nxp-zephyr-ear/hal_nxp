@@ -14,8 +14,7 @@
  * This file contains the generic mutex definitions
  *
  */
-
-#include "fsl_common.h"
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
 #include "osal_mutex_platform.h"
 
 #ifdef __cplusplus
@@ -59,4 +58,5 @@ int mcux_mutex_unlock(mcux_mutex_t *mutex);
 }
 #endif
 
+#endif /* PSA_CRYPTO_DRIVER_THREAD_EN */
 #endif /* OSAL_MUTEX_H */

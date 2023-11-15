@@ -17,14 +17,20 @@
  */
 
 #include "psa/crypto.h"
-#include "fsl_common.h"
+
+/* MUTEX FOR HW Modules*/
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
 #include "osal_mutex.h"
-
-
+#else
+#include "fsl_common.h"
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+ 
 #include "mcuxClEls.h"
 
 /* MUTEX FOR HW Modules*/
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
 extern mcux_mutex_t els_pkc_hwcrypto_mutex;
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
 
 #ifdef __cplusplus
 extern "C" {

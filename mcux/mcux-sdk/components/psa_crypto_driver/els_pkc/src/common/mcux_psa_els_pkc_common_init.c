@@ -11,14 +11,15 @@
 #include "mcux_psa_els_pkc_common_init.h" /* ELE Crypto port layer */
 
 
-
 /******************************************************************************/
 /*************************** Mutex ********************************************/
 /******************************************************************************/
 /*
  * Define global mutexes for HW accelerator
  */
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
 mcux_mutex_t els_pkc_hwcrypto_mutex;
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
 
 /******************************************************************************/
 /******************** CRYPTO_InitHardware *************************************/
@@ -93,34 +94,35 @@ static status_t els_pkc_close_handles(void)
 status_t CRYPTO_InitHardware(void)
 {
     status_t result = kStatus_Fail;
-#if defined(PSA_ELS_PKC_SD_NVM_MANAGER)
-    els_pkc_nvm_manager_t manager;
-    manager.nvm_read = sd_file_read;
-    manager.nvm_write = sd_file_write;
-#endif
 
     if (g_isCryptoHWInitialized == true) {
         return 0;
     }
 
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
     /* Mutex for access to els_pkc_crypto HW */
     if (mcux_mutex_init(&els_pkc_hwcrypto_mutex)) {
         return kStatus_Fail;
     }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
 
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
     if ((result = mcux_mutex_lock(&els_pkc_hwcrypto_mutex)) != 0) {
         return kStatus_Fail;
     }
-    
-    /* Initilize the els_pkc hardware*/
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
+    /* Initialize the els_pkc hardware*/
     result = els_pkc_init_hardware();
     if (result != kStatus_Success) {
         els_pkc_close_handles();
     }
 
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
     if (mcux_mutex_unlock(&els_pkc_hwcrypto_mutex)) {
         return kStatus_Fail;
     }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
 
     return result;
 }
@@ -139,9 +141,11 @@ status_t CRYPTO_DeinitHardware(void)
         return 0;
     }
 
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
     if (mcux_mutex_lock(&els_pkc_hwcrypto_mutex)) {
         return kStatus_Fail;
     }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
 
     /* close the els_pkc handles*/
     result = els_pkc_close_handles();
@@ -149,13 +153,11 @@ status_t CRYPTO_DeinitHardware(void)
         g_isCryptoHWInitialized = false;
     }
 
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
     if (mcux_mutex_unlock(&els_pkc_hwcrypto_mutex)) {
         return kStatus_Fail;
     }
-
-    if (result == kStatus_Success) {
-        mcux_mutex_free(&els_pkc_hwcrypto_mutex);
-    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
 
     return result;
 }

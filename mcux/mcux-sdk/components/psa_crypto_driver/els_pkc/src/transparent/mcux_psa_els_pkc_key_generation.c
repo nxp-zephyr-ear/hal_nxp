@@ -17,14 +17,35 @@
 #include "mcuxClPsaDriver_Functions.h"
 #include "mcux_psa_els_pkc_key_generation.h"
 
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+#include "mcux_psa_els_pkc_common_init.h"
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
 psa_status_t els_pkc_transparent_generate_key(const psa_key_attributes_t *attributes,
                                                uint8_t *key_buffer, size_t key_buffer_size,
                                                size_t *key_buffer_length)
 {
+    psa_status_t status;
+
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+    if (mcux_mutex_lock(&els_pkc_hwcrypto_mutex)) {
+        return kStatus_Fail;
+    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
     /* The driver handles multiple storage locations,
     call it first then default to builtin driver */
-    return  mcuxClPsaDriver_psa_driver_wrapper_key_generate(
-                attributes, key_buffer, key_buffer_size, key_buffer_length );
+    status = mcuxClPsaDriver_psa_driver_wrapper_key_generate(
+                    attributes, key_buffer, key_buffer_size, key_buffer_length );
+
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+    if (mcux_mutex_unlock(&els_pkc_hwcrypto_mutex)) {
+        return kStatus_Fail;
+    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
+    return status;
+
 }
 
 psa_status_t els_pkc_transparent_export_public_key(const psa_key_attributes_t *attributes,
@@ -32,15 +53,30 @@ psa_status_t els_pkc_transparent_export_public_key(const psa_key_attributes_t *a
                                                size_t key_buffer_size, uint8_t *data,
                                                size_t data_size, size_t *data_length)
 {
-    
-    /* The driver handles multiple storage locations,                        
-    call it first then default to builtin driver */                          
-    return mcuxClPsaDriver_psa_driver_wrapper_export_public_key(attributes,
-                                                      key_buffer,
-                                                      key_buffer_size,
-                                                      data,
-                                                      data_size,
-                                                      data_length);
+    psa_status_t status;
+
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+    if (mcux_mutex_lock(&els_pkc_hwcrypto_mutex)) {
+        return kStatus_Fail;
+    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
+    /* The driver handles multiple storage locations,
+    call it first then default to builtin driver */
+    status = mcuxClPsaDriver_psa_driver_wrapper_export_public_key(attributes,
+                                                        key_buffer,
+                                                        key_buffer_size,
+                                                        data,
+                                                        data_size,
+                                                        data_length);
+
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+    if (mcux_mutex_unlock(&els_pkc_hwcrypto_mutex)) {
+        return kStatus_Fail;
+    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
+    return status;
 }
       
 psa_status_t els_pkc_transparent_export_key(const psa_key_attributes_t *attributes,
@@ -48,12 +84,28 @@ psa_status_t els_pkc_transparent_export_key(const psa_key_attributes_t *attribut
                                                size_t key_buffer_size, uint8_t *data,
                                                size_t data_size, size_t *data_length)
 {
-    return mcuxClPsaDriver_psa_driver_wrapper_exportKey(attributes,
-                                                      key_buffer,
-                                                      key_buffer_size,
-                                                      data,
-                                                      data_size,
-                                                      data_length);
+    psa_status_t status;
+
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+    if (mcux_mutex_lock(&els_pkc_hwcrypto_mutex)) {
+        return kStatus_Fail;
+    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
+    status = mcuxClPsaDriver_psa_driver_wrapper_exportKey(attributes,
+                                                        key_buffer,
+                                                        key_buffer_size,
+                                                        data,
+                                                        data_size,
+                                                        data_length);
+
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+    if (mcux_mutex_unlock(&els_pkc_hwcrypto_mutex)) {
+        return kStatus_Fail;
+    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
+    return status;
 }
 
 psa_status_t els_pkc_transparent_import_key(const psa_key_attributes_t *attributes,

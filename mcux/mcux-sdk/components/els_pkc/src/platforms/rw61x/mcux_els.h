@@ -11,7 +11,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "fsl_common.h"
 #include <ip_platform.h>
 
 /*!
@@ -20,13 +19,9 @@
  */
 
 /*******************************************************************************
- * Definitions
+ * Type Definitions
  ******************************************************************************/
-enum
-{
-    kStatus_SlotUnavailable =
-        MAKE_STATUS(kStatusGroup_ELS_PKC, 0), /*!< Key slot is not available to be used as PRNG kick-off. */
-};
+typedef int32_t status_t;
 /*******************************************************************************
  * API
  ******************************************************************************/
