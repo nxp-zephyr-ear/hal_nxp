@@ -15,29 +15,13 @@
 #include "mcuxClPsaDriver_Oracle_Interface_key_locations.h"
 
 #ifndef PRINTF
-#ifdef __ZEPHYR__
 #ifdef PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER
-#include "tfm_sp_log.h"
-#else /* PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER */
-#include <zephyr/sys/printk.h>
-#define PRINTF printk
-#endif /* PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER */
-
-#else /* __ZEPHYR__ */
-
-#ifdef PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER
-#include "tfm_sp_log.h"
-#define PRINTF LOG_ERRFMT
+/* oracle is part of TF-M S */
+#define PRINTF(...)
+#define PSA_DRIVER_ERROR(...)
 #else /* standalone mbedtls usage case*/
 #include <stdio.h>
 #define PRINTF printf
-#endif /* PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER */
-#endif /* __ZEPHYR__ */
-#endif /* PRINTF */
-
-#if defined (PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) && defined (__ZEPHYR__)
-#define PSA_DRIVER_ERROR(...)
-#else
 #define PSA_DRIVER_ERROR(...)                          \
     for (;;)                                           \
     {                                                  \
@@ -46,7 +30,9 @@
         PRINTF("\r\n");                                \
         break;                                         \
     }
-#endif
+#endif /* PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER */
+#endif /* PRINTF */
+
 
 #define PSA_DRIVER_EXIT_STATUS_MSG(STATUS, ...) \
     psa_status = STATUS;                        \

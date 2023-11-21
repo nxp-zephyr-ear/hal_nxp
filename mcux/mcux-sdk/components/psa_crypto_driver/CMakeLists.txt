@@ -61,18 +61,20 @@ if(CONFIG_BUILD_WITH_TFM)
             MBEDTLS_PSA_CRYPTO_KEY_ID_ENCODES_OWNER
             MBEDTLS_PSA_CRYPTO_BUILTIN_KEYS
             PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER
-            # The buildin key for initial attestation is only included if TF-M is 
+            # The builtin key for initial attestation is only included if TF-M is 
             # built with initial attestation support enabled.
             $<$<BOOL:TFM_PARTITION_INITIAL_ATTESTATION>:TFM_PARTITION_INITIAL_ATTESTATION>
-            TFM_PARTITION_LOG_LEVEL=TFM_PARTITION_LOG_LEVEL_ERROR
+            MBEDTLS_CONFIG_FILE="${CONFIG_TFM_MBEDCRYPTO_CONFIG_PATH}" 
     )
 
     # If built from zephyr, we know where TF-M is located:
     if(ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR)
         target_include_directories(McuxPsaCryptoDriverElsPkc
             PRIVATE
+                ${ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR}/config
                 ${ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR}/interface/include
                 ${ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR}/platform/include
+                ${ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR}/secure_fw/include
                 ${ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR}/secure_fw/partitions/lib/runtime/include
                 ${ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR}/secure_fw/partitions/crypto
                 ${ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR}/secure_fw/partitions/crypto/psa_driver_api
