@@ -25,6 +25,14 @@ target_include_directories(McuxElsPkc
         ../../../../../../crypto/mbedtls/library
 )
 
+if(CONFIG_BUILD_WITH_TFM)
+    target_compile_options(
+        McuxElsPkc
+        PUBLIC
+            ${COMPILER_CP_FLAG}
+    )
+endif()
+
 if(CONFIG_SOC_SERIES_RW6XX)
 
     target_compile_definitions(

@@ -4,7 +4,9 @@
 #
 #-------------------------------------------------------------------------------
 
-find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+if(NOT CONFIG_BUILD_WITH_TFM)
+    find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+endif()
 
 add_library(McuxPsaCryptoDriverElsPkc) 
 
@@ -25,15 +27,21 @@ target_include_directories(McuxPsaCryptoDriverElsPkc
     PRIVATE
         # SDK driver header files
         ../../drivers/common
-        # zephyr includes for mutex protection
-        osal/zephyr
-        osal/.
         # psa/crypto.h and psa/crypto_types.h
         ../../../../../../crypto/mbedtls/include
         ../../../../../../crypto/mbedtls/include/psa
         # for psa driver wrapper
         ../../../../../../crypto/mbedtls/library
 )
+
+if(NOT CONFIG_BUILD_WITH_TFM)
+target_include_directories(McuxPsaCryptoDriverElsPkc
+    PRIVATE
+        # zephyr includes for mutex protection
+        osal/zephyr
+        osal/.
+)
+endif()
 
 target_include_directories(McuxPsaCryptoDriverElsPkc
     PUBLIC
@@ -55,6 +63,12 @@ target_include_directories(McuxPsaCryptoDriverElsPkc
 )
 
 if(CONFIG_BUILD_WITH_TFM)
+    target_compile_options(
+        McuxPsaCryptoDriverElsPkc
+        PUBLIC
+            ${COMPILER_CP_FLAG}
+    )
+    set(TFM_SOURCE_DIR ${CMAKE_SOURCE_DIR})
     target_compile_definitions(
         McuxPsaCryptoDriverElsPkc 
         PRIVATE
@@ -64,31 +78,25 @@ if(CONFIG_BUILD_WITH_TFM)
             # The builtin key for initial attestation is only included if TF-M is 
             # built with initial attestation support enabled.
             $<$<BOOL:TFM_PARTITION_INITIAL_ATTESTATION>:TFM_PARTITION_INITIAL_ATTESTATION>
-            MBEDTLS_CONFIG_FILE="${CONFIG_TFM_MBEDCRYPTO_CONFIG_PATH}" 
+            MBEDTLS_CONFIG_FILE="${TFM_MBEDCRYPTO_CONFIG_PATH}"
     )
 
-    # If built from zephyr, we know where TF-M is located:
-    if(ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR)
-        target_include_directories(McuxPsaCryptoDriverElsPkc
-            PRIVATE
-                ${ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR}/config
-                ${ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR}/interface/include
-                ${ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR}/platform/include
-                ${ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR}/secure_fw/include
-                ${ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR}/secure_fw/partitions/lib/runtime/include
-                ${ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR}/secure_fw/partitions/crypto
-                ${ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR}/secure_fw/partitions/crypto/psa_driver_api
-        )
-
-    endif()
+    target_include_directories(McuxPsaCryptoDriverElsPkc
+        PRIVATE
+            ${TFM_SOURCE_DIR}/config
+            ${TFM_SOURCE_DIR}/interface/include
+            ${TFM_SOURCE_DIR}/platform/include
+            ${TFM_SOURCE_DIR}/secure_fw/include
+            ${TFM_SOURCE_DIR}/secure_fw/partitions/lib/runtime/include
+            ${TFM_SOURCE_DIR}/secure_fw/partitions/crypto
+            ${TFM_SOURCE_DIR}/secure_fw/partitions/crypto/psa_driver_api
+    )
 
     if(CONFIG_SOC_SERIES_RW6XX)
-        if(ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR)
-            target_include_directories(McuxPsaCryptoDriverElsPkc
-                PRIVATE
-                    ${ZEPHYR_TRUSTED_FIRMWARE_M_MODULE_DIR}/platform/ext/target/nxp/rdrw61x/Device/Include
-            )
-        endif()
+        target_include_directories(McuxPsaCryptoDriverElsPkc
+            PRIVATE
+                ${TFM_SOURCE_DIR}/platform/ext/target/nxp/rdrw61x/Device/Include
+        )
     endif()
 else()
     if(CONFIG_SOC_SERIES_RW6XX)
