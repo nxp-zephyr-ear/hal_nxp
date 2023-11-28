@@ -4,3 +4,12 @@ build:
   kconfig-ext: True
   settings:
     dts_root: .
+blobs:
+  # - path: img/rw61x/rw610_sb_wifi_v2.bin.bin
+  #   sha256:
+  #   type: img
+  #   version: '1.0.0'
+  #   license-path: ./LICENSE.txt
+  #   url:
+  #   description: "RW61x cpu1 wifi prebuilt firmware"
+  #   doc-url:
