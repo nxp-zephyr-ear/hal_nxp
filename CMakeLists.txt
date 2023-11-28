@@ -16,3 +16,5 @@ add_subdirectory_ifdef(
   CONFIG_HAS_S32_HAL
   s32
   )
+
+add_subdirectory(zephyr/src)
