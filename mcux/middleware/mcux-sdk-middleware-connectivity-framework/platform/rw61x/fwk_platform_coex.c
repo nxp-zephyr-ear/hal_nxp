@@ -24,12 +24,24 @@
 #endif
 
 #if (defined gPlatformMonolithicApp_d && (gPlatformMonolithicApp_d != 0))
+#if CONFIG_WIFI
 extern const uint32_t fw_cpu1[];
-extern const uint32_t fw_cpu2_ble[];
-extern const uint32_t fw_cpu2_combo[];
 #define WIFI_FW_ADDRESS  (uint32_t) & fw_cpu1[0]
+#else
+#define WIFI_FW_ADDRESS  0U
+#endif
+#if CONFIG_BT
+extern const uint32_t fw_cpu2_ble[];
 #define BLE_FW_ADDRESS   (uint32_t) & fw_cpu2_ble[0]
+#else
+#define BLE_FW_ADDRESS   0U
+#endif
+#if __ZEPHYR__
+#define COMBO_FW_ADDRESS 0U
+#else
+extern const uint32_t fw_cpu2_combo[];
 #define COMBO_FW_ADDRESS (uint32_t) & fw_cpu2_combo[0]
+#endif
 #else
 #define WIFI_FW_ADDRESS  0U
 #define BLE_FW_ADDRESS   0U
