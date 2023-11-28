@@ -13,10 +13,12 @@
 
 #include "fwk_platform_coex.h"
 #include "fsl_loader.h"
+#include "fwk_config.h"
 
 /* -------------------------------------------------------------------------- */
 /*                               Private macros                               */
 /* -------------------------------------------------------------------------- */
+
 #ifndef gPlatformMonolithicApp_d
 #define gPlatformMonolithicApp_d 0
 #endif
