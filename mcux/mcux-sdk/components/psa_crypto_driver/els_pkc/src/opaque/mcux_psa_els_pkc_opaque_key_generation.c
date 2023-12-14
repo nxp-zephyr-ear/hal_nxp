@@ -180,27 +180,15 @@ size_t els_pkc_opaque_size_function(const psa_key_attributes_t *attributes,
     size_t key_buffer_size=0;
     if(false == (MCUXCLPSADRIVER_IS_LOCAL_STORAGE(location)) )
     {
-#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
-    if (mcux_mutex_lock(&els_pkc_hwcrypto_mutex)) {
-        return kStatus_Fail;
-    }
-#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
-
         psa_status_t status = mcuxClPsaDriver_Oracle_GetKeyBufferSizeFromKeyData(
                     attributes,
                     data,
                     data_length,
-                    &key_buffer_size); //todo, check if parameter being passed is fine?
-        if (PSA_ERROR_NOT_SUPPORTED != status)
+                    &key_buffer_size);
+        if (PSA_SUCCESS != status)
         {
             key_buffer_size = 0;
         }
-
-#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
-    if (mcux_mutex_unlock(&els_pkc_hwcrypto_mutex)) {
-        return kStatus_Fail;
-    }
-#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
     }
     return key_buffer_size;
 }
