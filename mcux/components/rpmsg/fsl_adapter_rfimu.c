@@ -454,6 +454,15 @@ hal_rpmsg_status_t HAL_ImuLinkIsUp(uint8_t imuLink)
     }
 }
 
+void HAL_ImuResetWlanTxq(uint8_t imuLink)
+{
+    hal_imu_handle_t *imuHandle = NULL;
+
+    imuHandle = &imuHandleCh[imuLink];
+    imuHandle->wlanTxqCtl.writeIndex  = 0;
+    imuHandle->wlanTxqCtl.readIndex   = 0;
+}
+
 static hal_rpmsg_status_t HAL_ImuSendMsgBlockingCommon(
     hal_imu_handle_t *imuHandle, uint8_t type, uint8_t subtype, uint8_t *data, uint32_t length, bool lockTxFifo)
 {

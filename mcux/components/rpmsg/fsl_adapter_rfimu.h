@@ -605,6 +605,13 @@ hal_rpmsg_status_t HAL_ImuGetTaskLock(void);
  */
 hal_rpmsg_status_t HAL_ImuPutTaskLock(void);
 
+/*!
+ * @brief Reset imu readIndex and writeIndex to 0.
+ *
+ * This function reset the imu txq.
+ */
+void HAL_ImuResetWlanTxq(uint8_t imuLink);
+
 #if defined(__cplusplus)
 }
 #endif

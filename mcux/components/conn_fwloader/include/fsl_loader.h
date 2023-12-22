@@ -40,7 +40,10 @@
 #define SECURE_TERM_FA_PART_OPEN     (0xc3c36a6au)
 #define SECURE_OEM_FA_PART_OPEN      (0xc3c3a6a6u)
 
-#define LOADER_RAW_BINARY_FORMAT (0x72617762U)
+#define LOADER_RAW_BINARY_FORMAT      (0x72617762U)
+#ifdef CONFIG_FW_VDLLV2
+#define LOADER_VDLL_RAW_BINARY_FORMAT (0x76646c6cU)
+#endif
 
 /*! @brief partition table constants. */
 #define WIFI_IMAGE_SIZE_MAX (0xa0000U)
@@ -657,6 +660,10 @@ typedef enum
     LOAD_WIFI_FIRMWARE = 1,
     LOAD_BLE_FIRMWARE,
     LOAD_15D4_FIRMWARE,
+#ifdef CONFIG_FW_VDLLV2
+    LOAD_WIFI_VDLL_FIRMWARE,
+#endif
+    LOAD_TYPE_MAX,
 } LOAD_Target_Type;
 
 void power_on_device(LOAD_Target_Type loadTarget);

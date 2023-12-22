@@ -70,6 +70,9 @@ static api_core_context_t s_api_core_context = {0};
 static ldr_Context_v3_t s_sbloader_context;
 static uint8_t packetBuf[512] = {0};
 nboot_context_t g_nbootCtx    = {0};
+#ifdef CONFIG_FW_VDLLV2
+static uint32_t vdll_image_base = 0;
+#endif
 
 static bootloader_tree_v0_t *g_bootloaderTree_v0;
 static bootloader_tree_v1_t *g_bootloaderTree_v1;
@@ -218,7 +221,6 @@ nboot_status_t nboot_hal_get_secure_firmware_version(uint32_t *fwVer, LOAD_Targe
 
     return kStatus_NBOOT_Success;
 }
-
 ////////////////////////////////////////////////////////////////////////////
 //! @brief fw download
 ////////////////////////////////////////////////////////////////////////////
@@ -245,6 +247,13 @@ status_t sb3_fw_download(LOAD_Target_Type loadTarget, uint32_t flag, uint32_t so
     {
         magic_pattern_addr = (volatile uint32_t *)CPU2_MAGIC_PATTERN_ADDR;
     }
+#ifdef CONFIG_FW_VDLLV2
+    else if (LOAD_WIFI_VDLL_FIRMWARE == loadTarget)
+    {
+        status = load_service(loadTarget, sourceAddr);
+        return status;
+    }
+#endif
     else
     {
         return status;
@@ -863,7 +872,10 @@ status_t loader_process_sb_file(uint32_t readOffset)
     s_api_core_context.sbloaderCtx = &s_sbloader_context;
     s_api_core_context.nbootCtx    = &g_nbootCtx;
     bool elsFlag                   = false;
-    uint32_t CSS_CTRL_context = 0;
+    uint32_t CSS_CTRL_context      = 0;
+#ifdef CONFIG_FW_VDLLV2
+    uint32_t counter;
+#endif
 
     do
     {
@@ -919,6 +931,21 @@ status_t loader_process_sb_file(uint32_t readOffset)
             else if (status == (status_t)kStatusRomLdrPendingJumpCommand)
             {
                 status = sbloader_finalize(&s_api_core_context);
+#ifdef CONFIG_FW_VDLLV2
+                assert((readOffset & 0x3) == 0);
+                for (counter=0; counter<(packetLength+7)>>2; counter++)
+                {
+                    if( *(uint32_t *)readOffset == TAG_SB_V3)
+                    {
+                        vdll_image_base = readOffset;
+                        break;
+                    }
+                    else
+                    {
+                        readOffset += 4;
+                    }
+                }
+#endif 
                 break;
             }
             else
@@ -978,19 +1005,37 @@ status_t loader_process_raw_file(uint32_t readOffset)
     uint32_t code_size;
     uint32_t *data_ptr = (uint32_t *)readOffset;
 
-    do
+#ifdef CONFIG_FW_VDLLV2
+    if ( (*data_ptr == LOADER_RAW_BINARY_FORMAT) && (*(data_ptr+1) == LOADER_VDLL_RAW_BINARY_FORMAT) )
     {
-        if (*data_ptr != LOADER_RAW_BINARY_FORMAT)
-        {
-            break;
-        }
-
         src_addr  = data_ptr + 4;
         dst_addr  = (uint32_t *)*(data_ptr + 2);
         code_size = *(data_ptr + 3);
         (void)memcpy(dst_addr, src_addr, code_size);
-        data_ptr += 4 + (code_size >> 2U);
-    } while (true);
+    }
+    else
+#endif
+    {
+        do
+        {
+            if (*data_ptr != LOADER_RAW_BINARY_FORMAT)
+            {
+                break;
+            }
+#ifdef CONFIG_FW_VDLLV2
+            else if (*(data_ptr+1) == LOADER_VDLL_RAW_BINARY_FORMAT)
+            {
+                vdll_image_base = (uint32_t) data_ptr;
+                break;
+            }
+#endif
+            src_addr  = data_ptr + 4;
+            dst_addr  = (uint32_t *)*(data_ptr + 2);
+            code_size = *(data_ptr + 3);
+            (void)memcpy(dst_addr, src_addr, code_size);
+            data_ptr += 4 + (code_size >> 2U);
+        } while (true);
+    }
 
     return status;
 }
@@ -1064,6 +1109,14 @@ status_t load_service(LOAD_Target_Type loadTarget, uint32_t sourceAddr)
             pt_b_ptr = (nboot_sb3_header_t *)(sourceAddr + Z154_IMAGE_SIZE_MAX);
         }
     }
+#ifdef CONFIG_FW_VDLLV2
+    else if (LOAD_WIFI_VDLL_FIRMWARE == loadTarget)
+    {
+        assert (vdll_image_base != 0);
+        pt_a_ptr = (nboot_sb3_header_t *)(vdll_image_base + sourceAddr);
+        pt_b_ptr = NULL;
+    }
+#endif
     else
     {
         return kStatus_Fail;
@@ -1115,16 +1168,21 @@ status_t load_service(LOAD_Target_Type loadTarget, uint32_t sourceAddr)
         }
     }
 
-    if (nboot_hal_get_secure_firmware_version(&firmwareVersion, loadTarget) != kStatus_NBOOT_Success)
+#ifdef CONFIG_FW_VDLLV2
+    if (LOAD_WIFI_VDLL_FIRMWARE != loadTarget)
+#endif
     {
-        return kStatus_Fail;
+        if (nboot_hal_get_secure_firmware_version(&firmwareVersion, loadTarget) != kStatus_NBOOT_Success)
+        {
+            return kStatus_Fail;
+        }
+
+        // imu init may be called before or after load_service(), not sure user will do in which sequence.
+        // If imu init is before load_service(), it is not appropriate do Power-Off here, then comment out Power-Off.
+        // power_off_device(); // tempararily comment out for PDM Non-UPF version
+
+        power_on_device(loadTarget);
     }
-
-    // imu init may be called before or after load_service(), not sure user will do in which sequence.
-    // If imu init is before load_service(), it is not appropriate do Power-Off here, then comment out Power-Off.
-    // power_off_device(); // tempararily comment out for PDM Non-UPF version
-
-    power_on_device(loadTarget);
 
     /* Check partition TAG and select active partition */
     if ((pt_a_ptr->magic != TAG_SB_V3) && (pt_b_ptr->magic != TAG_SB_V3))
@@ -1135,10 +1193,17 @@ status_t load_service(LOAD_Target_Type loadTarget, uint32_t sourceAddr)
     else if ((pt_a_ptr->magic == TAG_SB_V3) && (pt_b_ptr->magic != TAG_SB_V3))
     {
         active_pt_ptr = pt_a_ptr;
-        if (active_pt_ptr->firmwareVersion < firmwareVersion)
+#ifdef CONFIG_FW_VDLLV2
+        if (LOAD_WIFI_VDLL_FIRMWARE != loadTarget)
         {
-            return kStatus_Fail;
+#endif
+            if (active_pt_ptr->firmwareVersion < firmwareVersion)
+            {
+                return kStatus_Fail;
+            }
+#ifdef CONFIG_FW_VDLLV2
         }
+#endif
         status = loader_process_sb_file((uint32_t)active_pt_ptr);
     }
     else if ((pt_a_ptr->magic != TAG_SB_V3) && (pt_b_ptr->magic == TAG_SB_V3))
