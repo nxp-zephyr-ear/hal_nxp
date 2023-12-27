@@ -437,6 +437,8 @@ int PLATFORM_InitBle(void)
         NVIC_SetPriority(BLE_MCI_WAKEUP_DONE0_IRQn, MCI_WAKEUP_DONE_PRIORITY);
 
         initialized = true;
+        /* after re-init cpu2, Reset blePowerState to ble_awake_state. */
+        blePowerState = ble_awake_state;
     } while (false);
 #ifdef __ZEPHYR__
     status = k_mutex_unlock(&bleMutexHandle);
@@ -478,6 +480,8 @@ int PLATFORM_TerminateBle(void)
 #endif
 
         initialized = false;
+        /* after shutdown cpu2, Reset hciInitialized to false. */
+        hciInitialized = false;
     } while (false);
 
     return ret;
@@ -508,10 +512,6 @@ int PLATFORM_ResetBle(void)
                 break;
             }
         }
-
-        /* after re-init cpu2, Reset blePowerState to ble_awake_state. */
-        blePowerState = ble_awake_state;
-
     } while (false);
 
     return ret;
@@ -677,6 +677,10 @@ int PLATFORM_RequestBleWakeUp(void)
 #endif /* __ZEPHYR__ */
     if (PLATFORM_IsBleAwake() == false)
     {
+        /* After operate menu 130, there is a pending interrupt, 
+         * before enableIRQ, clear pending interrupt */
+        NVIC_ClearPendingIRQ(BLE_MCI_WAKEUP_DONE0_IRQn);
+
         /* Controller is in low power, we need to wake it up with PMU
          * and wait for the wake up done interrupt to make sure it is
          * completely awake and ready to receive a message */
@@ -777,9 +781,15 @@ static int PLATFORM_TerminateHciLink(void)
 
     do
     {
+        /* Force wake up CPU2 before send IMU_MSG_CONTROL_SHUTDOWN in HAL_ImuDeinit() */
+        PMU_EnableBleWakeup(0x1U);
+
         /* Deinitialize IMU first
          * Ignoring return value because kStatus_HAL_RpmsgError means it was already deinitialize */
         (void)HAL_ImuDeinit(kIMU_LinkCpu2Cpu3, 0);
+
+        /* Clear CPU2 wake up bit after HAL_ImuDeinit() */
+        PMU_DisableBleWakeup(0x1U);
 
         /* Deinitialize RPMSG first */
         if (HAL_RpmsgDeinit(hci_rpmsg_handle) != kStatus_HAL_RpmsgSuccess)
