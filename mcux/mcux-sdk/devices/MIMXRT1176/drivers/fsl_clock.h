@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 NXP
+ * Copyright 2019-2023 NXP
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -40,7 +40,7 @@
 /*! @name Driver version */
 /*@{*/
 /*! @brief CLOCK driver version. */
-#define FSL_CLOCK_DRIVER_VERSION (MAKE_VERSION(2, 5, 3))
+#define FSL_CLOCK_DRIVER_VERSION (MAKE_VERSION(2, 5, 4))
 
 /* Definition for delay API in clock driver, users can redefine it to the real application. */
 #ifndef SDK_DEVICE_MAXIMUM_CPU_CLOCK_FREQUENCY
@@ -485,9 +485,9 @@
     }
 
 /*! @brief Clock ip name array for XBARA. */
-#define XBARA_CLOCKS \
-    {                \
-        kCLOCK_Xbar1 \
+#define XBARA_CLOCKS                   \
+    {                                  \
+        kCLOCK_IpInvalid, kCLOCK_Xbar1 \
     }
 
 /*! @brief Clock ip name array for XBARB. */
@@ -2712,7 +2712,7 @@ void CLOCK_DeinitSysPll1(void);
 /*!
  * @brief Set System PLL1 output frequency in GPC mode.
  *
- * @param config Pointer to @ref clock_sys_pll1_gpc_config_t.
+ * @param config Pointer to System PLL1 configure structure.
  */
 void CLOCK_GPC_SetSysPll1OutputFreq(const clock_sys_pll1_gpc_config_t *config);
 
@@ -2853,7 +2853,7 @@ void CLOCK_DeinitVideoPll(void);
 /*!
  * @brief Set Video PLL output frequency in GPC mode.
  *
- * @param config Pointer to clock_audio_pll_gpc_config_t structure.
+ * @param config Pointer to Vidoe PLL configure structure.
  */
 void CLOCK_GPC_SetVideoPllOutputFreq(const clock_video_pll_gpc_config_t *config);
 /*!

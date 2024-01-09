@@ -69,7 +69,7 @@ typedef uint32_t iped_prince_rounds_t;
 
 enum _iped_status
 {
-    kStatus_IPED_RegionIsLocked = MAKE_STATUS(kStatusGroup_IPED, 0x1u),
+    kStatus_IPED_RegionIsLocked = MAKE_STATUS(kStatusGroup_IPED, 0x1),
 };
 
 /*******************************************************************************
@@ -118,14 +118,14 @@ static inline void IPED_EncryptDisable(FLEXSPI_Type *base)
 static inline void IPED_SetLock(FLEXSPI_Type *base, iped_region_t region)
 {
     /* Unlock soft-lock first */
-    base->IPEDCTXCTRL[0] = (base->IPEDCTXCTRL[0] & (uint32_t)~(FLEXSPI_IPEDCTXCTRL_CTX0_FREEZE0_MASK << (region * 2u))) |
-                           (uint32_t)(IPED_RW_ENABLE_VAL << (region * 2u));
+    base->IPEDCTXCTRL[0] = (base->IPEDCTXCTRL[0] & ~(FLEXSPI_IPEDCTXCTRL_CTX0_FREEZE0_MASK << (region * 2UL))) |
+                           (IPED_RW_ENABLE_VAL << (region * 2UL));
     /* Lock region settings */
-    base->IPEDCTXCTRL[1] = (base->IPEDCTXCTRL[1] & (uint32_t)~(FLEXSPI_IPEDCTXCTRL_CTX0_FREEZE1_MASK << (region * 2u))) |
-                           (uint32_t)(IPED_RW_DISABLE_VAL << (region * 2u));
+    base->IPEDCTXCTRL[1] = (base->IPEDCTXCTRL[1] & ~(FLEXSPI_IPEDCTXCTRL_CTX0_FREEZE1_MASK << (region * 2UL))) |
+                           (IPED_RW_DISABLE_VAL << (region * 2UL));
     /* Re-enable soft-lock */
-    base->IPEDCTXCTRL[0] = (base->IPEDCTXCTRL[0] & (uint32_t)~(FLEXSPI_IPEDCTXCTRL_CTX0_FREEZE0_MASK << (region * 2u))) |
-                           (uint32_t)(IPED_RW_DISABLE_VAL << (region * 2u));
+    base->IPEDCTXCTRL[0] = (base->IPEDCTXCTRL[0] & ~(FLEXSPI_IPEDCTXCTRL_CTX0_FREEZE0_MASK << (region * 2UL))) |
+                           (IPED_RW_DISABLE_VAL << (region * 2UL));
 }
 
 /*!
@@ -136,8 +136,8 @@ static inline void IPED_SetLock(FLEXSPI_Type *base, iped_region_t region)
  */
 static inline bool IPED_IsRegionLocked(FLEXSPI_Type *base, iped_region_t region)
 {
-    uint32_t freeze_mask    = (uint32_t)(FLEXSPI_IPEDCTXCTRL_CTX0_FREEZE1_MASK << (region * 2u));
-    uint32_t rw_enable_mask = (uint32_t)(IPED_RW_ENABLE_VAL << (region * 2u));
+    uint32_t freeze_mask    = (FLEXSPI_IPEDCTXCTRL_CTX0_FREEZE1_MASK << (region * 2UL));
+    uint32_t rw_enable_mask = (IPED_RW_ENABLE_VAL << (region * 2UL));
     return ((base->IPEDCTXCTRL[1] & freeze_mask) != (rw_enable_mask));
 }
 

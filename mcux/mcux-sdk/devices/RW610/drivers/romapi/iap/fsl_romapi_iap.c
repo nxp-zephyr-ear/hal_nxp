@@ -31,7 +31,7 @@ status_t iap_api_deinit(api_core_context_t *coreCtx)
 status_t iap_mem_init(api_core_context_t *coreCtx)
 {
     assert(IAP_API_TREE);
-    return IAP_API_TREE->mem_init(coreCtx);
+    return IAP_API_TREE->mem_init_api(coreCtx);
 }
 
 status_t iap_mem_write(

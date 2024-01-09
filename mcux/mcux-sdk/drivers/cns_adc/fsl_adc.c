@@ -108,11 +108,11 @@ void ADC_Init(ADC_Type *base, const adc_config_t *config)
     tmp32 = base->ADC_REG_ANA;
     tmp32 &= ~(ADC_ADC_REG_ANA_VREF_SEL_MASK | ADC_ADC_REG_ANA_SINGLEDIFF_MASK | ADC_ADC_REG_ANA_INBUF_GAIN_MASK |
                ADC_ADC_REG_ANA_INBUF_EN_MASK | ADC_ADC_REG_ANA_BIAS_SEL_MASK | ADC_ADC_REG_ANA_RES_SEL_MASK |
-               ADC_ADC_REG_ANA_INBUF_CHOP_EN_MASK);
+               ADC_ADC_REG_ANA_INBUF_CHOP_EN_MASK | ADC_ADC_REG_ANA_CHOP_EN_MASK);
     tmp32 |= ADC_ADC_REG_ANA_VREF_SEL(config->vrefSource) | ADC_ADC_REG_ANA_SINGLEDIFF(config->inputMode) |
              ADC_ADC_REG_ANA_INBUF_GAIN(config->inputGain) | ADC_ADC_REG_ANA_INBUF_EN(config->enableInputGainBuffer) |
              ADC_ADC_REG_ANA_BIAS_SEL(config->powerMode) | ADC_ADC_REG_ANA_RES_SEL(config->resolution) |
-             ADC_ADC_REG_ANA_INBUF_CHOP_EN(config->enableInputBufferChop);
+             ADC_ADC_REG_ANA_INBUF_CHOP_EN(config->enableInputBufferChop) | ADC_ADC_REG_ANA_CHOP_EN(config->enableChop);
     base->ADC_REG_ANA = tmp32;
 
     base->ADC_REG_RESULT_BUF = (base->ADC_REG_RESULT_BUF & ~(ADC_ADC_REG_RESULT_BUF_WIDTH_SEL_MASK)) |
@@ -177,6 +177,7 @@ void ADC_GetDefaultConfig(adc_config_t *config)
     config->fifoThreshold = kADC_FifoThresholdData1;
     config->enableDMA     = false;
     config->enableADC     = false;
+    config->enableChop    = true;
 }
 
 /*!

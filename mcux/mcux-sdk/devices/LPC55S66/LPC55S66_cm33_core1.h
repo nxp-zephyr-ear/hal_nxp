@@ -4736,6 +4736,47 @@ typedef struct {
   /** Array initializer of AHB_SECURE_CTRL peripheral base pointers */
   #define AHB_SECURE_CTRL_BASE_PTRS                { AHB_SECURE_CTRL }
 #endif
+/* AHB_SECURE_CTRL Mirror address */
+#if (defined(__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE & 0x2))
+  /** Peripheral AHB_SECURE_CTRL base address */
+  #define AHB_SECURE_CTRL_ALIAS1_BASE              (0x500AD000u)
+  /** Peripheral AHB_SECURE_CTRL base address */
+  #define AHB_SECURE_CTRL_ALIAS1_BASE_NS           (0x400AD000u)
+  /** Peripheral AHB_SECURE_CTRL base pointer */
+  #define AHB_SECURE_CTRL_ALIAS1                   ((AHB_SECURE_CTRL_Type *)AHB_SECURE_CTRL_ALIAS1_BASE)
+  /** Peripheral AHB_SECURE_CTRL base pointer */
+  #define AHB_SECURE_CTRL_ALIAS1_NS                ((AHB_SECURE_CTRL_Type *)AHB_SECURE_CTRL_ALIAS1_BASE_NS)
+  /** Peripheral AHB_SECURE_CTRL base address */
+  #define AHB_SECURE_CTRL_ALIAS2_BASE              (0x500AE000u)
+  /** Peripheral AHB_SECURE_CTRL base address */
+  #define AHB_SECURE_CTRL_ALIAS2_BASE_NS           (0x400AE000u)
+  /** Peripheral AHB_SECURE_CTRL base pointer */
+  #define AHB_SECURE_CTRL_ALIAS2                   ((AHB_SECURE_CTRL_Type *)AHB_SECURE_CTRL_ALIAS2_BASE)
+  /** Peripheral AHB_SECURE_CTRL base pointer */
+  #define AHB_SECURE_CTRL_ALIAS2_NS                ((AHB_SECURE_CTRL_Type *)AHB_SECURE_CTRL_ALIAS2_BASE_NS)
+  /** Peripheral AHB_SECURE_CTRL base address */
+  #define AHB_SECURE_CTRL_ALIAS3_BASE              (0x500AF000u)
+  /** Peripheral AHB_SECURE_CTRL base address */
+  #define AHB_SECURE_CTRL_ALIAS3_BASE_NS           (0x400AF000u)
+  /** Peripheral AHB_SECURE_CTRL base pointer */
+  #define AHB_SECURE_CTRL_ALIAS3                   ((AHB_SECURE_CTRL_Type *)AHB_SECURE_CTRL_ALIAS3_BASE)
+  /** Peripheral AHB_SECURE_CTRL base pointer */
+  #define AHB_SECURE_CTRL_ALIAS3_NS                ((AHB_SECURE_CTRL_Type *)AHB_SECURE_CTRL_ALIAS3_BASE_NS)
+#else
+  /** Peripheral AHB_SECURE_CTRL base address */
+  #define AHB_SECURE_CTRL_ALIAS1_BASE              (0x400AD000u)
+  /** Peripheral AHB_SECURE_CTRL base pointer */
+  #define AHB_SECURE_CTRL_ALIAS1                   ((AHB_SECURE_CTRL_Type *)AHB_SECURE_CTRL_ALIAS1_BASE)
+  /** Peripheral AHB_SECURE_CTRL base address */
+  #define AHB_SECURE_CTRL_ALIAS2_BASE              (0x400AE000u)
+  /** Peripheral AHB_SECURE_CTRL base pointer */
+  #define AHB_SECURE_CTRL_ALIAS2                   ((AHB_SECURE_CTRL_Type *)AHB_SECURE_CTRL_ALIAS2_BASE)
+  /** Peripheral AHB_SECURE_CTRL base address */
+  #define AHB_SECURE_CTRL_ALIAS3_BASE              (0x400AF000u)
+  /** Peripheral AHB_SECURE_CTRL base pointer */
+  #define AHB_SECURE_CTRL_ALIAS3                   ((AHB_SECURE_CTRL_Type *)AHB_SECURE_CTRL_ALIAS3_BASE)
+ #endif
+
 
 /*!
  * @}
@@ -7991,14 +8032,6 @@ typedef struct {
  */
 #define FLASH_CFPA_DCFG_CC_SOCU_PIN_FA_CMD_EN(x) (((uint32_t)(((uint32_t)(x)) << FLASH_CFPA_DCFG_CC_SOCU_PIN_FA_CMD_EN_SHIFT)) & FLASH_CFPA_DCFG_CC_SOCU_PIN_FA_CMD_EN_MASK)
 
-#define FLASH_CFPA_DCFG_CC_SOCU_PIN_ME_CMD_EN_MASK (0x100U)
-#define FLASH_CFPA_DCFG_CC_SOCU_PIN_ME_CMD_EN_SHIFT (8U)
-/*! ME_CMD_EN - Flash Mass Erase Command enable
- *  0b0..Use DAP to enable
- *  0b1..Fixed state
- */
-#define FLASH_CFPA_DCFG_CC_SOCU_PIN_ME_CMD_EN(x) (((uint32_t)(((uint32_t)(x)) << FLASH_CFPA_DCFG_CC_SOCU_PIN_ME_CMD_EN_SHIFT)) & FLASH_CFPA_DCFG_CC_SOCU_PIN_ME_CMD_EN_MASK)
-
 #define FLASH_CFPA_DCFG_CC_SOCU_PIN_CPU1_NIDEN_MASK (0x200U)
 #define FLASH_CFPA_DCFG_CC_SOCU_PIN_CPU1_NIDEN_SHIFT (9U)
 /*! CPU1_NIDEN - CPU1 (Micro cortex M33) non-invasive debug enable
@@ -8086,14 +8119,6 @@ typedef struct {
  *  0b1..Enable
  */
 #define FLASH_CFPA_DCFG_CC_SOCU_DFLT_FA_CMD_EN(x) (((uint32_t)(((uint32_t)(x)) << FLASH_CFPA_DCFG_CC_SOCU_DFLT_FA_CMD_EN_SHIFT)) & FLASH_CFPA_DCFG_CC_SOCU_DFLT_FA_CMD_EN_MASK)
-
-#define FLASH_CFPA_DCFG_CC_SOCU_DFLT_ME_CMD_EN_MASK (0x100U)
-#define FLASH_CFPA_DCFG_CC_SOCU_DFLT_ME_CMD_EN_SHIFT (8U)
-/*! ME_CMD_EN - Flash Mass Erase Command fixed state
- *  0b0..Disable
- *  0b1..Enable
- */
-#define FLASH_CFPA_DCFG_CC_SOCU_DFLT_ME_CMD_EN(x) (((uint32_t)(((uint32_t)(x)) << FLASH_CFPA_DCFG_CC_SOCU_DFLT_ME_CMD_EN_SHIFT)) & FLASH_CFPA_DCFG_CC_SOCU_DFLT_ME_CMD_EN_MASK)
 
 #define FLASH_CFPA_DCFG_CC_SOCU_DFLT_CPU1_NIDEN_MASK (0x200U)
 #define FLASH_CFPA_DCFG_CC_SOCU_DFLT_CPU1_NIDEN_SHIFT (9U)

@@ -54,7 +54,6 @@ static status_t RW61X_ManageWakeupSource(pm_wakeup_source_t *ws, bool enable);
  *  |  BUCK18                 |     ON      |     ON      |   ON/SLEEP  |     OFF     |
  *  |  BUCK11                 |     ON      |     ON      |   ON/SLEEP  |     OFF     |
  */
-extern const pm_device_option_t g_devicePMOption;
 const pm_device_option_t g_devicePMOption = {
     .states =
         {
@@ -149,7 +148,7 @@ static void RW61X_GetSleepConfig(pm_resc_mask_t *pSoftRescMask,
     for (i = 4; i <= 11; i++)
     {
         rescMask  = (pSoftRescMask->rescMask[0] >> (uint32_t)i) & 1U;
-        rescGroup = (pSysRescGroup->groupSlice[i / 8] >> (4U * (i % 8))) & 0xFU;
+        rescGroup = (pSysRescGroup->groupSlice[i / 8] >> (4U * ((uint32_t)i % 8U))) & 0xFU;
         if ((rescMask == 1U) && ((rescGroup & PM_RESOURCE_FULL_ON) != 0U))
         {
             cfg->pm2MemPuCfg |= 1UL << (32U - (uint32_t)i);
@@ -160,7 +159,7 @@ static void RW61X_GetSleepConfig(pm_resc_mask_t *pSoftRescMask,
     for (i = 12; i <= 26; i += 2)
     {
         rescMask  = (pSoftRescMask->rescMask[0] >> (uint32_t)i) & 1U;
-        rescGroup = (pSysRescGroup->groupSlice[i / 8] >> (4U * (i % 8))) & 0xFU;
+        rescGroup = (pSysRescGroup->groupSlice[i / 8] >> (4U * ((uint32_t)i % 8U))) & 0xFU;
         if ((rescMask == 1U) && ((rescGroup & PM_RESOURCE_FULL_ON) != 0U))
         {
             cfg->pm2MemPuCfg |= s_sramMask[i / 2 - 6];
@@ -169,13 +168,13 @@ static void RW61X_GetSleepConfig(pm_resc_mask_t *pSoftRescMask,
 
     /* PM2 Ana Pu control */
     rescMask  = (pSoftRescMask->rescMask[0] >> 28U) & 1U;
-    rescGroup = (pSysRescGroup->groupSlice[28 / 8] >> (4U * (28 % 8))) & 0xFU;
+    rescGroup = (pSysRescGroup->groupSlice[28 / 8] >> (4U * (28U % 8U))) & 0xFU;
     if ((rescMask == 1U) && ((rescGroup & PM_RESOURCE_FULL_ON) != 0U))
     {
         cfg->pm2AnaPuCfg |= (uint32_t)kPOWER_Pm2AnaPuGau | (uint32_t)kPOWER_Pm2AnaPuAnaTop;
     }
     rescMask  = (pSoftRescMask->rescMask[0] >> 29U) & 1U;
-    rescGroup = (pSysRescGroup->groupSlice[29 / 8] >> (4U * (29 % 8))) & 0xFU;
+    rescGroup = (pSysRescGroup->groupSlice[29 / 8] >> (4U * (29U % 8U))) & 0xFU;
     if ((rescMask == 1U) && ((rescGroup & PM_RESOURCE_FULL_ON) != 0U))
     {
         cfg->pm2AnaPuCfg |= (uint32_t)kPOWER_Pm2AnaPuUsb | (uint32_t)kPOWER_Pm2AnaPuAnaTop;
@@ -183,7 +182,7 @@ static void RW61X_GetSleepConfig(pm_resc_mask_t *pSoftRescMask,
 
     /* PM2 clock gate */
     rescMask     = (pSoftRescMask->rescMask[0] >> 2U) & 1U;
-    rescGroup    = (pSysRescGroup->groupSlice[2 / 8] >> (4U * (2 % 8))) & 0xFU;
+    rescGroup    = (pSysRescGroup->groupSlice[2 / 8] >> (4U * (2U % 8U))) & 0xFU;
     cfg->clkGate = (uint32_t)kPOWER_ClkGateAll;
     if ((rescMask == 1U) && ((rescGroup & PM_RESOURCE_FULL_ON) != 0U))
     {
@@ -195,14 +194,14 @@ static void RW61X_GetSleepConfig(pm_resc_mask_t *pSoftRescMask,
     for (i = 13; i <= 23; i += 2)
     {
         rescMask  = (pSoftRescMask->rescMask[0] >> (uint32_t)i) & 1U;
-        rescGroup = (pSysRescGroup->groupSlice[i / 8] >> (4U * (i % 8))) & 0xFU;
+        rescGroup = (pSysRescGroup->groupSlice[i / 8] >> (4U * ((uint32_t)i % 8U))) & 0xFU;
         if ((rescMask == 1U) && ((rescGroup & PM_RESOURCE_PARTABLE_ON1) != 0U))
         {
             cfg->memPdCfg &= ~(1UL << (((uint32_t)i - 13U) / 2U));
         }
     }
     rescMask  = (pSoftRescMask->rescMask[0] >> 27U) & 1U;
-    rescGroup = (pSysRescGroup->groupSlice[27 / 8] >> (4U * (27 % 8))) & 0xFU;
+    rescGroup = (pSysRescGroup->groupSlice[27 / 8] >> (4U * (27U % 8U))) & 0xFU;
     if ((rescMask == 1U) && ((rescGroup & PM_RESOURCE_PARTABLE_ON1) != 0U))
     {
         cfg->memPdCfg &= ~(1UL << 8U);
@@ -210,13 +209,13 @@ static void RW61X_GetSleepConfig(pm_resc_mask_t *pSoftRescMask,
 
     /* PM3 buck config */
     rescMask  = (pSoftRescMask->rescMask[0] >> 30U) & 1U;
-    rescGroup = (pSysRescGroup->groupSlice[30 / 8] >> (4U * (30 % 8))) & 0xFU;
+    rescGroup = (pSysRescGroup->groupSlice[30 / 8] >> (4U * (30U % 8U))) & 0xFU;
     if ((rescMask == 1U) && ((rescGroup & PM_RESOURCE_FULL_ON) != 0U))
     {
         cfg->pm3BuckCfg |= (uint32_t)kPOWER_Pm3Buck18;
     }
     rescMask  = (pSoftRescMask->rescMask[0] >> 31U) & 1U;
-    rescGroup = (pSysRescGroup->groupSlice[31 / 8] >> (4U * (31 % 8))) & 0xFU;
+    rescGroup = (pSysRescGroup->groupSlice[31 / 8] >> (4U * (31U % 8U))) & 0xFU;
     if ((rescMask == 1U) && ((rescGroup & PM_RESOURCE_FULL_ON) != 0U))
     {
         cfg->pm3BuckCfg |= (uint32_t)kPOWER_Pm3Buck11;

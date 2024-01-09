@@ -19,7 +19,7 @@
  ******************************************************************************/
 
 /*! @brief ADC driver version */
-#define FSL_ADC_DRIVER_VERSION (MAKE_VERSION(2, 0, 2)) /*!< Version 2.0.2. */
+#define FSL_ADC_DRIVER_VERSION (MAKE_VERSION(2, 1, 0)) /*!< Version 2.1.0. */
 
 /*!
  * @brief The enumeration of interrupts, this enumeration can be used to enable/disable interrupts.
@@ -71,9 +71,9 @@ enum _adc_status_flags
     kADC_FifoUnderrunRawFlag = 1UL << 13UL,       /*!< FIFO underrun interrupt mask, this flag will be captured
                                                       regardless the interrupt mask. */
 
-    kADC_ActiveStatusFlag       = 1UL << 14UL, /*!< ADC conversion active status flag. */
-    kADC_FIFONotEmptyStatusFlag = 1UL << 15UL, /*!< FIFO not empty status flag. */
-    kADC_FifoFullStatusFlag     = 1UL << 16UL, /*!< FIFO full status flag. */
+    kADC_ActiveStatusFlag       = 1UL << 14UL,    /*!< ADC conversion active status flag. */
+    kADC_FIFONotEmptyStatusFlag = 1UL << 15UL,    /*!< FIFO not empty status flag. */
+    kADC_FifoFullStatusFlag     = 1UL << 16UL,    /*!< FIFO full status flag. */
 };
 
 /*!
@@ -318,20 +318,20 @@ typedef enum _adc_scan_channel
  */
 typedef enum _adc_channel_source
 {
-    kADC_CH0   = 0U,  /*!< Single-ended mode, channel[0] and vssa */
-    kADC_CH1   = 1U,  /*!< Single-ended mode, channel[1] and vssa */
-    kADC_CH2   = 2U,  /*!< Single-ended mode, channel[2] and vssa */
-    kADC_CH3   = 3U,  /*!< Single-ended mode, channel[3] and vssa */
-    kADC_CH4   = 4U,  /*!< Single-ended mode, channel[4] and vssa */
-    kADC_CH5   = 5U,  /*!< Single-ended mode, channel[5] and vssa */
-    kADC_CH6   = 6U,  /*!< Single-ended mode, channel[6] and vssa */
-    kADC_CH7   = 7U,  /*!< Single-ended mode, channel[7] and vssa */
-    kADC_VBATS = 8U,  /*!< Single-ended mode, vbat_s and vssa */
-    kADC_VREF  = 9U,  /*!< Single-ended mode, vref_12 and vssa */
-    kADC_DACA  = 10U, /*!< Single-ended mode, daca and vssa */
-    kADC_DACB  = 11U, /*!< Single-ended mode, dacb and vssa */
-    kADC_VSSA  = 12U, /*!< Single-ended mode, vssa and vssa */
-    kADC_TEMPP = 15U, /*!< Single-ended mode, temp_p and vssa */
+    kADC_CH0   = 0U,          /*!< Single-ended mode, channel[0] and vssa */
+    kADC_CH1   = 1U,          /*!< Single-ended mode, channel[1] and vssa */
+    kADC_CH2   = 2U,          /*!< Single-ended mode, channel[2] and vssa */
+    kADC_CH3   = 3U,          /*!< Single-ended mode, channel[3] and vssa */
+    kADC_CH4   = 4U,          /*!< Single-ended mode, channel[4] and vssa */
+    kADC_CH5   = 5U,          /*!< Single-ended mode, channel[5] and vssa */
+    kADC_CH6   = 6U,          /*!< Single-ended mode, channel[6] and vssa */
+    kADC_CH7   = 7U,          /*!< Single-ended mode, channel[7] and vssa */
+    kADC_VBATS = 8U,          /*!< Single-ended mode, vbat_s and vssa */
+    kADC_VREF  = 9U,          /*!< Single-ended mode, vref_12 and vssa */
+    kADC_DACA  = 10U,         /*!< Single-ended mode, daca and vssa */
+    kADC_DACB  = 11U,         /*!< Single-ended mode, dacb and vssa */
+    kADC_VSSA  = 12U,         /*!< Single-ended mode, vssa and vssa */
+    kADC_TEMPP = 15U,         /*!< Single-ended mode, temp_p and vssa */
 
     kADC_CH0_CH1       = 0U,  /*!< Differential mode, channel[0] and channel[1] */
     kADC_CH2_CH3       = 1U,  /*!< Differential mode, channel[2] and channel[3] */
@@ -382,9 +382,9 @@ typedef struct _adc_config
     adc_clock_divider_t clockDivider : 5U; /*!< Analog 64M clock division ratio,
                                           please refer to @ref adc_clock_divider_t. */
     adc_analog_portion_power_mode_t powerMode : 1U;
-    adc_resolution_t resolution : 2U;   /*!< Configure ADC resolution, please refer to
-                                           @ref adc_resolution_t.  */
-    adc_warm_up_time_t warmupTime : 6U; /*!< Configure warm-up time.  */
+    adc_resolution_t resolution : 2U;      /*!< Configure ADC resolution, please refer to
+                                              @ref adc_resolution_t.  */
+    adc_warm_up_time_t warmupTime : 6U;    /*!< Configure warm-up time.  */
 
     /* ADC conversion related options. */
     adc_vref_source_t vrefSource : 2U;         /*!< Configure voltage reference source,
@@ -408,6 +408,10 @@ typedef struct _adc_config
     bool enableInputBufferChop : 1U;           /*!< Enable/Disable input buffer chopper:
                                                        - \b true Enable input buffer chopper;
                                                        - \b false Disable input buffer chopper. */
+
+    bool enableChop : 1U;                      /*!< Enable/Disable the ADC chopper:
+                                                                  - \b true Enable the chopper;
+                                                                  - \b false Disable the chopper. */
 
     /* ADC conversion result related options. */
     adc_result_width_t resultWidth : 1U;     /*!< Select result FIFO data packed format, please

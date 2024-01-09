@@ -30,31 +30,24 @@
      kCODEC_SupportPlayChannelRight0 | kCODEC_SupportPlayChannelRight1 | kCODEC_SupportPlayChannelRight2)
 
 /*! @brief wm8962 map protocol */
-#define HAL_WM8962_MAP_PROTOCOL(protocol)                 \
-    ((protocol) == kCODEC_BusI2S ?                        \
-         kWM8962_BusI2S :                                 \
-         (protocol) == kCODEC_BusLeftJustified ?          \
-         kWM8962_BusLeftJustified :                       \
-         (protocol) == kCODEC_BusRightJustified ?         \
-         kWM8962_BusRightJustified :                      \
-         (protocol) == kCODEC_BusPCMA ? kWM8962_BusPCMA : \
-                                        (protocol) == kCODEC_BusPCMB ? kWM8962_BusPCMB : kWM8962_BusI2S)
+#define HAL_WM8962_MAP_PROTOCOL(protocol)                                 \
+    ((protocol) == kCODEC_BusI2S            ? kWM8962_BusI2S :            \
+     (protocol) == kCODEC_BusLeftJustified  ? kWM8962_BusLeftJustified :  \
+     (protocol) == kCODEC_BusRightJustified ? kWM8962_BusRightJustified : \
+     (protocol) == kCODEC_BusPCMA           ? kWM8962_BusPCMA :           \
+     (protocol) == kCODEC_BusPCMB           ? kWM8962_BusPCMB :           \
+                                              kWM8962_BusI2S)
 
 /*! @brief wm8962 map module */
-#define HAL_WM8962_MAP_MODULE(module)                   \
-    ((module) == (uint32_t)kCODEC_ModuleADC ?           \
-         kWM8962_ModuleADC :                            \
-         (module) == (uint32_t)kCODEC_ModuleDAC ?       \
-         kWM8962_ModuleDAC :                            \
-         (module) == (uint32_t)kCODEC_ModuleHeadphone ? \
-         kWM8962_ModuleHeadphone :                      \
-         (module) == (uint32_t)kCODEC_ModuleMicbias ?   \
-         kWM8962_ModuleMICB :                           \
-         (module) == (uint32_t)kCODEC_ModuleMic ?       \
-         kWM8962_ModuleMIC :                            \
-         (module) == (uint32_t)kCODEC_ModuleLinein ?    \
-         kWM8962_ModuleLineIn :                         \
-         (module) == (uint32_t)kCODEC_ModuleSpeaker ? kWM8962_ModuleSpeaker : kWM8962_ModuleADC)
+#define HAL_WM8962_MAP_MODULE(module)                                         \
+    ((module) == (uint32_t)kCODEC_ModuleADC       ? kWM8962_ModuleADC :       \
+     (module) == (uint32_t)kCODEC_ModuleDAC       ? kWM8962_ModuleDAC :       \
+     (module) == (uint32_t)kCODEC_ModuleHeadphone ? kWM8962_ModuleHeadphone : \
+     (module) == (uint32_t)kCODEC_ModuleMicbias   ? kWM8962_ModuleMICB :      \
+     (module) == (uint32_t)kCODEC_ModuleMic       ? kWM8962_ModuleMIC :       \
+     (module) == (uint32_t)kCODEC_ModuleLinein    ? kWM8962_ModuleLineIn :    \
+     (module) == (uint32_t)kCODEC_ModuleSpeaker   ? kWM8962_ModuleSpeaker :   \
+                                                    kWM8962_ModuleADC)
 
 /*******************************************************************************
  * Prototypes
@@ -194,20 +187,18 @@ status_t HAL_CODEC_WM8962_SetMute(void *handle, uint32_t playChannel, bool isMut
 
     status_t retVal = kStatus_Success;
 
-#if 0
     if (((playChannel & (uint32_t)kWM8962_HeadphoneLeft) != 0U) ||
         ((playChannel & (uint32_t)kWM8962_HeadphoneRight) != 0U))
     {
         retVal = WM8962_SetModuleMute((wm8962_handle_t *)((uintptr_t)(((codec_handle_t *)handle)->codecDevHandle)),
-                                kWM8962_ModuleHeadphone, isMute);
+                                      kWM8962_ModuleHeadphone, isMute);
     }
 
     if (((playChannel & (uint32_t)kWM8962_SpeakerLeft) != 0U) || ((playChannel & (uint32_t)kWM8962_SpeakerRight) != 0U))
     {
         retVal = WM8962_SetModuleMute((wm8962_handle_t *)((uintptr_t)(((codec_handle_t *)handle)->codecDevHandle)),
-                                kWM8962_ModuleSpeaker, isMute);
+                                      kWM8962_ModuleSpeaker, isMute);
     }
-#endif
 
     return retVal;
 }
@@ -275,12 +266,12 @@ status_t HAL_CODEC_WM8962_SetPlay(void *handle, uint32_t playSource)
  *
  * param handle codec handle.
  * param cmd module control cmd, reference _codec_module_ctrl_cmd.
- * param data value to write, when cmd is kCODEC_ModuleRecordSourceChannel, the data should be a value combine
+ * param moduleData value to write, when cmd is kCODEC_ModuleRecordSourceChannel, the data should be a value combine
  *  of channel and source, please reference macro CODEC_MODULE_RECORD_SOURCE_CHANNEL(source, LP, LN, RP, RN), reference
  *  codec specific driver for detail configurations.
  * return kStatus_Success is success, else configure failed.
  */
-status_t HAL_CODEC_WM8962_ModuleControl(void *handle, uint32_t cmd, uint32_t data)
+status_t HAL_CODEC_WM8962_ModuleControl(void *handle, uint32_t cmd, uint32_t moduleData)
 {
     return kStatus_CODEC_NotSupport;
 }

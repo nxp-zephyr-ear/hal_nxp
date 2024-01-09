@@ -6,8 +6,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef _FSL_DMIC_H_
-#define _FSL_DMIC_H_
+#ifndef FSL_DMIC_H_
+#define FSL_DMIC_H_
 
 #include "fsl_common.h"
 
@@ -29,7 +29,7 @@
 
 /*! @brief DMIC driver version 2.3.2. */
 #define FSL_DMIC_DRIVER_VERSION (MAKE_VERSION(2, 3, 2))
-/*@}*/
+/*! @} */
 
 /*! @brief _dmic_status DMIC transfer status.*/
 enum
@@ -630,4 +630,4 @@ void DMIC_HwvadDisableIntCallback(DMIC_Type *base, dmic_hwvad_callback_t vadcb);
 
 /*! @}*/
 
-#endif /* __FSL_DMIC_H */
+#endif /* FSL_DMIC_H_ */

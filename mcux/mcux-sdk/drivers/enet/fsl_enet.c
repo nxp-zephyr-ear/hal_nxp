@@ -2193,7 +2193,7 @@ status_t ENET_GetRxFrame(ENET_Type *base, enet_handle_t *handle, enet_rx_frame_s
         if (0U != (curBuffDescrip->control & ENET_BUFFDESCRIPTOR_RX_LAST_MASK))
         {
             /* The last buffer descriptor stores the error status of this received frame. */
-            result = ENET_GetRxFrameErr((enet_rx_bd_struct_t *)(uint32_t)curBuffDescrip, &rxFrame->rxFrameError);
+            result = ENET_GetRxFrameErr((enet_rx_bd_struct_t *)(uintptr_t)curBuffDescrip, &rxFrame->rxFrameError);
             break;
         }
 
@@ -2335,7 +2335,7 @@ status_t ENET_GetRxFrame(ENET_Type *base, enet_handle_t *handle, enet_rx_frame_s
             /* Free the incomplete frame buffers. */
             while (index-- != 0U)
             {
-                handle->rxBuffFree(base, &rxFrame->rxBuffArray[index].buffer, handle->userData, ringId);
+                handle->rxBuffFree(base, rxFrame->rxBuffArray[index].buffer, handle->userData, ringId);
             }
 
             /* Update left buffers as ready for next coming frame */

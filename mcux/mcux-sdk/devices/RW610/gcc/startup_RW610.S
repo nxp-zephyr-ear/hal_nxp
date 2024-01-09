@@ -211,25 +211,24 @@ Reset_Handler:
     ldr    r2, =__data_start__
     ldr    r3, =__data_end__
 
-#if 1
-/* Here are two copies of loop implemenations. First one favors code size
- * and the second one favors performance. Default uses the first one.
- * Change to "#if 0" to use the second one */
 .LC0:
     cmp     r2, r3
     ittt    lt
     ldrlt   r0, [r1], #4
     strlt   r0, [r2], #4
     blt    .LC0
-#else
-    subs    r3, r2
-    ble    .LC1
-.LC0:
-    subs    r3, #4
-    ldr    r0, [r1, r3]
-    str    r0, [r2, r3]
-    bgt    .LC0
+
+#ifdef __STARTUP_INITIALIZE_RAMFUNCTION
+/* ram_function must directly follow __data_end__ */
+    ldr     r2, =__ram_function_start__
+    ldr     r3, =__ram_function_end__
+
 .LC1:
+    cmp     r2, r3
+    ittt    lt
+    ldrlt   r0, [r1], #4
+    strlt   r0, [r2], #4
+    blt    .LC1
 #endif
 
 #ifdef __STARTUP_CLEAR_BSS

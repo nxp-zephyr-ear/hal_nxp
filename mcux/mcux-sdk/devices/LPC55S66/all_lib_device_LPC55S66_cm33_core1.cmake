@@ -33,7 +33,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(utility_debug_console)
 #    include(utility_assert)
 #    include(driver_flexcomm_usart)
-#    include(device_CMSIS)
+#    
 #    include(driver_lpc_iocon)
 #    include(utilities_misc_utilities)
 #    include(driver_common)
@@ -42,7 +42,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(component_serial_manager)
 #    include(device_system_LPC55S66_cm33_core1)
 #    include(driver_power)
-#    include(CMSIS_Include_core_cm)
+#    include(CMSIS_Include_core_cm OPTIONAL)
 #    include(middleware_freertos-kernel_heap_4)
 #    include(driver_reset)
 #    include(component_serial_manager_uart_LPC55S69_cm33_core1)

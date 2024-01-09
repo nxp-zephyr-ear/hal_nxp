@@ -11,5 +11,5 @@ target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
 )
 
 
-include(driver_mipi_dsi)
 include(driver_lpc_smartdma)
+include(driver_mipi_dsi)

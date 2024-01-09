@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -71,12 +71,13 @@ static status_t WM8962_StartSequence(wm8962_handle_t *handle, wm8962_sequence_id
             delayUs = 2000U;
             break;
         default:
+            delayUs = 93000U;
             break;
     }
 
     WM8962_CHECK_RET(WM8962_WriteReg(handle, 0x57, 0x20U), ret);
-    WM8962_CHECK_RET(WM8962_WriteReg(handle, 0x5A, id), ret);
-    while (delayUs)
+    WM8962_CHECK_RET(WM8962_WriteReg(handle, 0x5A, (uint16_t)id), ret);
+    while (delayUs != 0U)
     {
         WM8962_CHECK_RET(WM8962_ReadReg(handle, 0x5D, &sequenceStat), ret);
         if ((sequenceStat & 1U) == 0U)
@@ -148,7 +149,7 @@ static status_t WM8962_SetInternalFllConfig(wm8962_handle_t *handle, const wm896
     WM8962_CHECK_RET(WM8962_GetClockDivider(fllConfig->fllReferenceClockFreq, WM8962_FLL_MAX_REFERENCE_CLOCK, &refDiv),
                      ret);
 
-    refClock = fllConfig->fllReferenceClockFreq / (1U << (refDiv & 3U));
+    refClock = fllConfig->fllReferenceClockFreq / (uint32_t)(1UL << (refDiv & 3U));
 
     if (refClock > 1000000U)
     {
@@ -209,38 +210,36 @@ static status_t WM8962_SetInternalFllConfig(wm8962_handle_t *handle, const wm896
     }
 
     fVCO     = (fllOutDiv + 1U) * outClk;
-    nDivider = fVCO / ((1U << fllRatio) * refClock);
+    nDivider = fVCO / ((uint32_t)(1UL << fllRatio) * refClock);
 
-    fllGCD = WM8962_GCD_FLL((1U << fllRatio) * refClock, fVCO);
+    fllGCD = WM8962_GCD_FLL((uint32_t)(1UL << fllRatio) * refClock, fVCO);
 
-    fllTheta  = (fVCO - nDivider * (1U << fllRatio) * refClock) / fllGCD;
-    fllLambda = ((1U << fllRatio) * refClock) / fllGCD;
+    fllTheta  = (fVCO - nDivider * (uint32_t)(1UL << fllRatio) * refClock) / fllGCD;
+    fllLambda = ((uint32_t)(1UL << fllRatio) * refClock) / fllGCD;
 
     /* FLL configurations */
-    WM8962_CHECK_RET(WM8962_ModifyReg(handle, WM8962_FLL_CTRL_2, 0x1FBU, refDiv | (fllOutDiv << 3U)), ret);
-    WM8962_CHECK_RET(WM8962_ModifyReg(handle, WM8962_FLL_CTRL_3, 7U, fllRatio), ret);
-    WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_FLL_CTRL_6, fllTheta), ret);
-    WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_FLL_CTRL_7, fllLambda), ret);
-    WM8962_CHECK_RET(WM8962_ModifyReg(handle, WM8962_FLL_CTRL_8, 0x3FFU, nDivider), ret);
-    WM8962_CHECK_RET(WM8962_ModifyReg(handle, WM8962_FLL_CTRL_1, 0x65U,
-                                      (fllConfig->fllClockSource == kWM8962_FLLClkSourceMCLK ? 0U : 0x20) | 0x5U),
-                     ret);
+    WM8962_CHECK_RET(WM8962_ModifyReg(handle, WM8962_FLL_CTRL_2, 0x1FBU, (uint16_t)(refDiv | (fllOutDiv << 3U))), ret);
+    WM8962_CHECK_RET(WM8962_ModifyReg(handle, WM8962_FLL_CTRL_3, 7U, (uint16_t)fllRatio), ret);
+    WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_FLL_CTRL_6, (uint16_t)fllTheta), ret);
+    WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_FLL_CTRL_7, (uint16_t)fllLambda), ret);
+    WM8962_CHECK_RET(WM8962_ModifyReg(handle, WM8962_FLL_CTRL_8, 0x3FFU, (uint16_t)nDivider), ret);
+    WM8962_CHECK_RET(
+        WM8962_ModifyReg(handle, WM8962_FLL_CTRL_1, 0x65U,
+                         (uint16_t)((fllConfig->fllClockSource == kWM8962_FLLClkSourceMCLK ? 0x0UL : 0x20UL) | 0x5UL)),
+        ret);
 
     /* Polling FLL lock status */
-    if (ret == kStatus_Success)
+    while (delayUs != 0U)
     {
-        while (delayUs)
+        WM8962_CHECK_RET(WM8962_ReadReg(handle, WM8962_INT_STATUS_2, &fllLock), ret);
+        if ((fllLock & 0x20U) == 0x20U)
         {
-            WM8962_CHECK_RET(WM8962_ReadReg(handle, WM8962_INT_STATUS_2, &fllLock), ret);
-            if ((fllLock & 0x20U) == 0x20U)
-            {
-                break;
-            }
-            SDK_DelayAtLeastUs(1000U, SDK_DEVICE_MAXIMUM_CPU_CLOCK_FREQUENCY);
-            delayUs -= 1000U;
+            break;
         }
-        ret = ((fllLock & 0x20U) == 0x20U) ? kStatus_Success : kStatus_Fail;
+        SDK_DelayAtLeastUs(1000U, SDK_DEVICE_MAXIMUM_CPU_CLOCK_FREQUENCY);
+        delayUs -= 1000U;
     }
+    ret = ((fllLock & 0x20U) == 0x20U) ? kStatus_Success : kStatus_Fail;
 
     return ret;
 }
@@ -296,7 +295,7 @@ static status_t WM8962_SetMasterClock(wm8962_handle_t *handle,
     {
         WM8962_CHECK_RET(WM8962_ModifyReg(handle, WM8962_CLOCK2, WM8962_CLOCK2_BCLK_DIV_MASK, (uint16_t)regDivider),
                          ret);
-        WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_IFACE2, bitWidth * 2U), ret);
+        WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_IFACE2, (uint16_t)(bitWidth * 2U)), ret);
     }
 
     return ret;
@@ -339,7 +338,9 @@ status_t WM8962_Init(wm8962_handle_t *handle, const wm8962_config_t *config)
         mclk = config->fllClock.fllOutputFreq;
         /* SYS clock source FLL */
         WM8962_CHECK_RET(WM8962_ModifyReg(handle, WM8962_CLOCK2, 0x20U, 0U), ret);
-        WM8962_CHECK_RET(WM8962_ModifyReg(handle, WM8962_CLOCK2, (3U << 9U) | 0x20U, ((uint16_t)1U << 9U) | 0x20), ret);
+        WM8962_CHECK_RET(
+            WM8962_ModifyReg(handle, WM8962_CLOCK2, (uint16_t)((3U << 9U) | 0x20U), (uint16_t)((1U << 9U) | 0x20U)),
+            ret);
     }
 
     /* DSP clock divider, maximum 24.576MHZ */
@@ -347,9 +348,9 @@ status_t WM8962_Init(wm8962_handle_t *handle, const wm8962_config_t *config)
     WM8962_CHECK_RET(WM8962_ModifyReg(handle, WM8962_CLOCK1, 3U << 9U, (uint16_t)(clockDiv << 9U)), ret);
     if (config->masterSlave)
     {
-        WM8962_CHECK_RET(
-            WM8962_SetMasterClock(handle, mclk / (1U << clockDiv), config->format.sampleRate, config->format.bitWidth),
-            ret);
+        WM8962_CHECK_RET(WM8962_SetMasterClock(handle, mclk / (uint32_t)(1UL << clockDiv), config->format.sampleRate,
+                                               config->format.bitWidth),
+                         ret);
         WM8962_CHECK_RET(WM8962_ModifyReg(handle, WM8962_IFACE0, 1U << 6U, 1U << 6U), ret);
     }
 
@@ -358,7 +359,7 @@ status_t WM8962_Init(wm8962_handle_t *handle, const wm8962_config_t *config)
 
     /* sysclk clock divider, maximum 12.288MHZ */
     WM8962_CHECK_RET(WM8962_ReadReg(handle, WM8962_CLOCK1, &clockDiv), ret);
-    sysClk = mclk / (1U << (clockDiv & 3U));
+    sysClk = mclk / (1UL << (clockDiv & 3U));
 
     /* set data route */
     WM8962_CHECK_RET(WM8962_SetDataRoute(handle, &config->route), ret);
@@ -380,7 +381,9 @@ status_t WM8962_Init(wm8962_handle_t *handle, const wm8962_config_t *config)
     /* input PGA volume */
     WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_LINVOL, 0x13F), ret);
     WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_RINVOL, 0x13F), ret);
-
+    /* Headphone volume */
+    WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_LOUT1, 0x16B), ret);
+    WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_ROUT1, 0x16B), ret);
     WM8962_CHECK_RET(WM8962_ConfigDataFormat(handle, sysClk, config->format.sampleRate, config->format.bitWidth), ret);
 
     return ret;
@@ -392,8 +395,6 @@ status_t WM8962_Deinit(wm8962_handle_t *handle)
 
     /* power down */
     WM8962_CHECK_RET(WM8962_StartSequence(handle, kWM8962_SequenceChipPowerDown), ret);
-
-    WM8962_CHECK_RET(CODEC_I2C_Deinit(handle->i2cHandle), ret);
 
     return ret;
 }
@@ -484,19 +485,23 @@ status_t WM8962_SetDataRoute(wm8962_handle_t *handle, const wm8962_route_config_
     status_t ret = kStatus_Success;
 
     /* Input PGA source */
-    WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_LEFT_INPUT_PGA, 0x10 | route->leftInputPGASource), ret);
-    WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_RIGHT_INPUT_PGA, 0x10 | route->rightInputPGASource), ret);
+    WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_LEFT_INPUT_PGA, (0x10U | (uint16_t)route->leftInputPGASource)),
+                     ret);
+    WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_RIGHT_INPUT_PGA, (0x10U | (uint16_t)route->rightInputPGASource)),
+                     ret);
 
     /* Input MIXER source */
-    WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_INPUTMIX,
-                                     ((route->leftInputMixerSource & 7U) << 3U) | (route->rightInputMixerSource & 7U)),
-                     ret);
+    WM8962_CHECK_RET(
+        WM8962_WriteReg(handle, WM8962_INPUTMIX,
+                        (uint16_t)(((route->leftInputMixerSource & 7U) << 3U) | (route->rightInputMixerSource & 7U))),
+        ret);
 
     /* Output MIXER source */
 
     if (route->leftSpeakerPGASource == kWM8962_OutputPGASourceMixer)
     {
-        WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_LEFT_SPEAKER_MIXER, route->leftSpeakerMixerSource), ret);
+        WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_LEFT_SPEAKER_MIXER, (uint16_t)route->leftSpeakerMixerSource),
+                         ret);
     }
     else
     {
@@ -505,7 +510,8 @@ status_t WM8962_SetDataRoute(wm8962_handle_t *handle, const wm8962_route_config_
 
     if (route->rightSpeakerPGASource == kWM8962_OutputPGASourceMixer)
     {
-        WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_RIGHT_SPEAKER_MIXER, route->rightSpeakerMixerSource), ret);
+        WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_RIGHT_SPEAKER_MIXER, (uint16_t)route->rightSpeakerMixerSource),
+                         ret);
     }
     else
     {
@@ -514,7 +520,8 @@ status_t WM8962_SetDataRoute(wm8962_handle_t *handle, const wm8962_route_config_
 
     if (route->leftHeadphonePGASource == kWM8962_OutputPGASourceMixer)
     {
-        WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_LEFT_HEADPHONE_MIXER, route->leftHeadphoneMixerSource), ret);
+        WM8962_CHECK_RET(
+            WM8962_WriteReg(handle, WM8962_LEFT_HEADPHONE_MIXER, (uint16_t)route->leftHeadphoneMixerSource), ret);
     }
     else
     {
@@ -523,7 +530,8 @@ status_t WM8962_SetDataRoute(wm8962_handle_t *handle, const wm8962_route_config_
 
     if (route->rightHeadphonePGASource == kWM8962_OutputPGASourceMixer)
     {
-        WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_RIGHT_HEADPHONE_MIXER, route->rightHeadphoneMixerSource), ret);
+        WM8962_CHECK_RET(
+            WM8962_WriteReg(handle, WM8962_RIGHT_HEADPHONE_MIXER, (uint16_t)route->rightHeadphoneMixerSource), ret);
     }
     else
     {
@@ -651,6 +659,7 @@ uint32_t WM8962_GetModuleVolume(wm8962_handle_t *handle, wm8962_module_t module)
 
 status_t WM8962_SetModuleMute(wm8962_handle_t *handle, wm8962_module_t module, bool isEnabled)
 {
+    uint16_t vol = 0;
     status_t ret = kStatus_Success;
     switch (module)
     {
@@ -660,13 +669,16 @@ status_t WM8962_SetModuleMute(wm8962_handle_t *handle, wm8962_module_t module, b
              */
             if (isEnabled)
             {
+                WM8962_CHECK_RET(WM8962_ReadReg(handle, WM8962_LADC, &handle->volume[kWM8962_ModuleADC]), ret);
+                WM8962_CHECK_RET(WM8962_ReadReg(handle, WM8962_RADC, &handle->volume[kWM8962_ModuleADC]), ret);
                 WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_LADC, 0x100), ret);
                 WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_RADC, 0x100), ret);
             }
             else
             {
-                WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_LADC, 0x1C3), ret);
-                WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_RADC, 0x1C3), ret);
+                vol = 0x100U | (uint16_t)handle->volume[kWM8962_ModuleADC];
+                WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_LADC, vol), ret);
+                WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_RADC, vol), ret);
             }
             break;
         case kWM8962_ModuleDAC:
@@ -675,13 +687,16 @@ status_t WM8962_SetModuleMute(wm8962_handle_t *handle, wm8962_module_t module, b
              */
             if (isEnabled)
             {
+                WM8962_CHECK_RET(WM8962_ReadReg(handle, WM8962_LDAC, &handle->volume[kWM8962_ModuleDAC]), ret);
+                WM8962_CHECK_RET(WM8962_ReadReg(handle, WM8962_RDAC, &handle->volume[kWM8962_ModuleDAC]), ret);
                 WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_LDAC, 0x100), ret);
                 WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_RDAC, 0x100), ret);
             }
             else
             {
-                WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_LDAC, 0x1FF), ret);
-                WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_RDAC, 0x1FF), ret);
+                vol = 0x100U | (uint16_t)handle->volume[kWM8962_ModuleDAC];
+                WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_LDAC, vol), ret);
+                WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_RDAC, vol), ret);
             }
             break;
         case kWM8962_ModuleHeadphone:
@@ -690,26 +705,32 @@ status_t WM8962_SetModuleMute(wm8962_handle_t *handle, wm8962_module_t module, b
              */
             if (isEnabled)
             {
+                WM8962_CHECK_RET(WM8962_ReadReg(handle, WM8962_LOUT1, &handle->volume[kWM8962_ModuleHeadphone]), ret);
+                WM8962_CHECK_RET(WM8962_ReadReg(handle, WM8962_ROUT1, &handle->volume[kWM8962_ModuleHeadphone]), ret);
                 WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_LOUT1, 0x100), ret);
                 WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_ROUT1, 0x100), ret);
             }
             else
             {
-                WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_LOUT1, 0x16F), ret);
-                WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_ROUT1, 0x16F), ret);
+                vol = 0x100U | (uint16_t)handle->volume[kWM8962_ModuleHeadphone];
+                WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_LOUT1, vol), ret);
+                WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_ROUT1, vol), ret);
             }
             break;
 
         case kWM8962_ModuleSpeaker:
             if (isEnabled)
             {
+                WM8962_CHECK_RET(WM8962_ReadReg(handle, WM8962_LOUT2, &handle->volume[kWM8962_ModuleSpeaker]), ret);
+                WM8962_CHECK_RET(WM8962_ReadReg(handle, WM8962_ROUT2, &handle->volume[kWM8962_ModuleSpeaker]), ret);
                 WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_LOUT2, 0x100), ret);
                 WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_ROUT2, 0x100), ret);
             }
             else
             {
-                WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_LOUT2, 0x16F), ret);
-                WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_ROUT2, 0x16f), ret);
+                vol = 0x100U | (uint16_t)handle->volume[kWM8962_ModuleSpeaker];
+                WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_LOUT2, vol), ret);
+                WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_ROUT2, vol), ret);
             }
             break;
         default:
@@ -723,6 +744,7 @@ status_t WM8962_ConfigDataFormat(wm8962_handle_t *handle, uint32_t sysclk, uint3
 {
     status_t retval = kStatus_Success;
     uint16_t val    = 0;
+    uint32_t ratio  = sysclk / sample_rate;
 
     /*
      * Slave mode (MS = 0), LRP = 0, 32bit WL, left justified (FORMAT[1:0]=0b01)
@@ -802,6 +824,53 @@ status_t WM8962_ConfigDataFormat(wm8962_handle_t *handle, uint32_t sysclk, uint3
 
     WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_ADDCTL3, val), retval);
 
+    switch (ratio)
+    {
+        case 64:
+            val = 0x00U;
+            break;
+        case 128:
+            val = 0x02U;
+            break;
+        case 192:
+            val = 0x04U;
+            break;
+        case 256:
+            val = 0x06U;
+            break;
+        case 384:
+            val = 0x08U;
+            break;
+        case 512:
+            val = 0x0AU;
+            break;
+        case 768:
+            val = 0x0CU;
+            break;
+        case 1024:
+            val = 0x0EU;
+            break;
+        case 1536:
+            val = 0x12U;
+            break;
+        case 3072:
+            val = 0x14U;
+            break;
+        case 6144:
+            val = 0x16U;
+            break;
+        default:
+            retval = kStatus_InvalidArgument;
+            break;
+    }
+
+    if (kStatus_Success != retval)
+    {
+        return retval;
+    }
+
+    WM8962_CHECK_RET(WM8962_WriteReg(handle, WM8962_CLK4, val), retval);
+
     return retval;
 }
 
@@ -809,7 +878,7 @@ status_t WM8962_WriteReg(wm8962_handle_t *handle, uint16_t reg, uint16_t val)
 {
     uint16_t buff = (uint16_t)(WM8962_SWAP_UINT16_BYTE_SEQUENCE(val) & 0xFFFFU);
 
-    return CODEC_I2C_Send(handle->i2cHandle, handle->config->slaveAddress, reg, 2U, (uint8_t *)(uint32_t)&buff, 2U);
+    return CODEC_I2C_Send(handle->i2cHandle, handle->config->slaveAddress, reg, 2U, (uint8_t *)(uintptr_t)&buff, 2U);
 }
 
 status_t WM8962_ReadReg(wm8962_handle_t *handle, uint16_t reg, uint16_t *val)

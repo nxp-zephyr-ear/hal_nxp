@@ -1,11 +1,11 @@
 /*
- * Copyright 2017-2022 NXP
+ * Copyright 2017-2023 NXP
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#ifndef _FSL_HASHCRYPT_H_
-#define _FSL_HASHCRYPT_H_
+#ifndef FSL_HASHCRYPT_H_
+#define FSL_HASHCRYPT_H_
 
 #include "fsl_common.h"
 
@@ -25,10 +25,10 @@ enum _hashcrypt_status
  * @{
  */
 /*! @name Driver version */
-/*@{*/
-/*! @brief HASHCRYPT driver version. Version 2.2.7.
+/*! @{ */
+/*! @brief HASHCRYPT driver version. Version 2.2.14.
  *
- * Current version: 2.2.7
+ * Current version: 2.2.14
  *
  * Change log:
  * - Version 2.0.0
@@ -77,9 +77,24 @@ enum _hashcrypt_status
  * - Version 2.2.7
  *   - Add data synchronization barrier inside HASHCRYPT_SHA_Update() to fix optimization issue on MCUX IDE release
  * target
+ * - Version 2.2.8
+ *   - Unify hashcrypt hashing behavior between aligned and unaligned input data
+ * - Version 2.2.9
+ *   - Add handling of set ERROR bit in the STATUS register
+ * - Version 2.2.10
+ *   - Fix missing error statement in hashcrypt_save_running_hash()
+ * - Version 2.2.11
+ *   - Fix incorrect SHA-256 calculation for long messages with reload
+ * - Version 2.2.12
+ *   - Fix hardfault issue on the Keil compiler due to unaligned memcpy() input on some optimization levels
+ * - Version 2.2.13
+ *   - Added function hashcrypt_seed_prng() which loading random number into PRNG_SEED register before AES operation for
+ * SCA protection
+ * - Version 2.2.14
+ *   - Modify function hashcrypt_get_data() to prevent issue with unaligned access
  */
-#define FSL_HASHCRYPT_DRIVER_VERSION (MAKE_VERSION(2, 2, 7))
-/*@}*/
+#define FSL_HASHCRYPT_DRIVER_VERSION (MAKE_VERSION(2, 2, 14))
+/*! @} */
 
 /*! @brief Algorithm definitions correspond with the values for Mode field in Control register !*/
 #define HASHCRYPT_MODE_SHA1   0x1
@@ -139,7 +154,7 @@ typedef enum _hashcrypt_key
 /*! @brief Specify HASHCRYPT's key resource. */
 struct _hashcrypt_handle
 {
-    uint32_t keyWord[8]; /*!< Copy of user key (set by HASHCRYPT_AES_SetKey(). */
+    uint32_t keyWord[8];     /*!< Copy of user key (set by HASHCRYPT_AES_SetKey(). */
     hashcrypt_aes_keysize_t keySize;
     hashcrypt_key_t keyType; /*!< For operations with key (such as AES encryption/decryption), specify key type. */
 } __attribute__((aligned));
@@ -531,4 +546,4 @@ status_t HASHCRYPT_SHA_UpdateNonBlocking(HASHCRYPT_Type *base,
 }
 #endif
 
-#endif /* _FSL_HASHCRYPT_H_ */
+#endif /* FSL_HASHCRYPT_H_ */

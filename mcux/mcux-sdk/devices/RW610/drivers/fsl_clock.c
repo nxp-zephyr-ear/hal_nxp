@@ -23,6 +23,8 @@
 #define CLOCK_KHZ(freq) ((freq)*1000UL)
 #define CLOCK_MHZ(freq) (CLOCK_KHZ(freq) * 1000UL)
 
+#define CLOCK_DTRNG_BUSY_RETRY (100000U)
+
 /*******************************************************************************
  * Variables
  ******************************************************************************/
@@ -100,12 +102,13 @@ static void CLOCK_Delay(uint32_t loop)
 {
     if (loop > 0U)
     {
-        __ASM volatile("MOV    R0, %0" : : "r"(loop));
         __ASM volatile(
             "1:                             \n"
-            "    SUBS   R0, R0, #1          \n"
-            "    CMP    R0, #0              \n"
-            "    BNE    1b                  \n");
+            "    SUBS   %0, %0, #1          \n"
+            "    CMP    %0, #0              \n"
+            "    BNE    1b                  \n"
+            :
+            : "r"(loop));
     }
 }
 
@@ -115,6 +118,22 @@ static void CLOCK_DelayUs(uint32_t us)
 
     instNum = ((SystemCoreClock + 999999UL) / 1000000UL) * us;
     CLOCK_Delay((instNum + 2U) / 3U);
+}
+
+static void CLOCK_WaitDtrngIdle(void)
+{
+    uint32_t retry = 0U;
+
+    /* Confirm if ELS is running */
+    if (((CLKCTL0->PSCCTL0 & CLKCTL0_PSCCTL0_ELS_MASK) != 0U) &&
+        ((RSTCTL0->PRSTCTL0 & RSTCTL0_PRSTCTL0_ELS_MASK) == 0U) && ((ELS->ELS_CTRL & ELS_ELS_CTRL_ELS_EN_MASK) != 0U))
+    {
+        while (((ELS->ELS_STATUS & ELS_ELS_STATUS_DTRNG_BUSY_MASK) != 0U) && (retry < CLOCK_DTRNG_BUSY_RETRY))
+        {
+            retry++;
+            CLOCK_DelayUs(1U);
+        }
+    }
 }
 
 /*! @brief  Return Frequency of t3pll_mci_48_60m_irc
@@ -311,6 +330,11 @@ void CLOCK_DisableClock(clock_ip_name_t clk)
     }
     else if (((uint32_t)clk & SYS_CLK_GATE_FLAG_MASK) != 0U)
     {
+        if (clk == kCLOCK_T3PllMci256mClk)
+        {
+            /* Must wait DTRNG to be idle to avoid wrong TRNG result */
+            CLOCK_WaitDtrngIdle();
+        }
         SYSCTL2->SOURCE_CLK_GATE |= SYS_CLK_GATE_BIT_MASK(clk);
     }
     else
@@ -1305,6 +1329,10 @@ void CLOCK_InitT3RefClk(clock_t3_mci_irc_config_t cnfg)
  */
 void CLOCK_DeinitT3RefClk(void)
 {
+    /* Ensure SystemCoreClock is up to date for accurate CLOCK_DelayUs() */
+    SystemCoreClockUpdate();
+    /* Must wait DTRNG to be idle to avoid wrong TRNG result */
+    CLOCK_WaitDtrngIdle();
     /* Gate all T3 output clocks */
     SYSCTL2->SOURCE_CLK_GATE |=
         SYSCTL2_SOURCE_CLK_GATE_T3PLL_MCI_48_60M_IRC_CG_MASK | SYSCTL2_SOURCE_CLK_GATE_T3PLL_MCI_256M_CG_MASK |
@@ -1313,8 +1341,6 @@ void CLOCK_DeinitT3RefClk(void)
     SYSCTL2->PLL_CTRL &= ~SYSCTL2_PLL_CTRL_T3_PDB_MASK;
 
     /* Wait PLL lock */
-    /* Ensure SystemCoreClock is up to date for accurate CLOCK_DelayUs() */
-    SystemCoreClockUpdate();
     CLOCK_DelayUs(1U);
 }
 

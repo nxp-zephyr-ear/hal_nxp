@@ -76,6 +76,7 @@ SECTIONS
     *(.glue_7)               /* glue arm to thumb code */
     *(.glue_7t)              /* glue thumb to arm code */
     *(.eh_frame)
+    *(CodeQuickAccess)       /* CodeQuickAccess sections */
     KEEP (*(.init))
     KEEP (*(.fini))
     . = ALIGN(4);
@@ -162,7 +163,6 @@ SECTIONS
     . = ALIGN(4);
     __DATA_RAM = .;
     __data_start__ = .;      /* create a global symbol at data start */
-    *(CodeQuickAccess)       /* CodeQuickAccess sections */
     *(DataQuickAccess)       /* DataQuickAccess sections */
     *(.data)                 /* .data sections */
     *(.data*)                /* .data* sections */
@@ -170,6 +170,10 @@ SECTIONS
     . = ALIGN(4);
     __data_end__ = .;        /* define a global symbol at data end */
   } > m_data
+
+  /* RAM function not needed here. Symbols here are to make startup_xx.S work */
+  __ram_function_start__ = __data_end__;
+  __ram_function_end__ = __data_end__;
 
   __DATA_END = __etext + (__data_end__ - __data_start__);
   _image_size = __DATA_END - __VECTOR_TABLE;

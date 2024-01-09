@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016, Freescale Semiconductor, Inc.
- * Copyright 2016-2019 NXP
+ * Copyright 2016-2019, 2022 NXP
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -8,9 +8,18 @@
 
 #include "fsl_dac.h"
 
+/*******************************************************************************
+ * Definitions
+ ******************************************************************************/
 /* Component ID definition, used by tools. */
 #ifndef FSL_COMPONENT_ID
 #define FSL_COMPONENT_ID "platform.drivers.dac_1"
+#endif
+
+#if defined(DAC_RSTS)
+#define DAC_RESETS_ARRAY DAC_RSTS
+#elif defined(DAC_RSTS_N)
+#define DAC_RESETS_ARRAY DAC_RSTS_N
 #endif
 
 /*******************************************************************************
@@ -33,6 +42,11 @@ static LPDAC_Type *const s_dacBases[] = LPDAC_BASE_PTRS;
 /*! @brief Pointers to DAC clocks for each instance. */
 static const clock_ip_name_t s_dacClocks[] = LPDAC_CLOCKS;
 #endif /* FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL */
+
+#if defined(DAC_RESETS_ARRAY)
+/* Reset array */
+static const reset_ip_name_t s_dacResets[] = DAC_RESETS_ARRAY;
+#endif
 
 /*******************************************************************************
  * Code
@@ -73,6 +87,10 @@ void DAC_Init(LPDAC_Type *base, const dac_config_t *config)
     /* Enable the clock. */
     CLOCK_EnableClock(s_dacClocks[DAC_GetInstance(base)]);
 #endif /* FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL */
+
+#if defined(DAC_RESETS_ARRAY)
+    RESET_ReleasePeripheralReset(s_dacResets[DAC_GetInstance(base)]);
+#endif
 
     /* Reset the logic. */
     DAC_SetReset(base, kDAC_ResetLogic);
@@ -139,7 +157,7 @@ void DAC_Init(LPDAC_Type *base, const dac_config_t *config)
     tmp32 |= LPDAC_GCR_LATCH_CYC(config->syncTime);
 #endif /* FSL_FEATURE_LPDAC_HAS_GCR_LATCH_CYC */
 #if defined(FSL_FEATURE_LPDAC_HAS_INTERNAL_REFERENCE_CURRENT) && FSL_FEATURE_LPDAC_HAS_INTERNAL_REFERENCE_CURRENT
-    tmp32 |= config->referenceCurrentSource;
+    tmp32 |= (uint32_t)config->referenceCurrentSource;
 #endif /* FSL_FEATURE_LPDAC_HAS_INTERNAL_REFERENCE_CURRENT */
     /* Set reference voltage source. */
     tmp32 |= LPDAC_GCR_DACRFS(config->referenceVoltageSource);

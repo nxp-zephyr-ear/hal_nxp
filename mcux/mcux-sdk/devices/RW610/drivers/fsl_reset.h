@@ -1,5 +1,5 @@
 /*
- * Copyright 2021, NXP
+ * Copyright 2021, 2023 NXP
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -25,8 +25,8 @@
 
 /*! @name Driver version */
 /*@{*/
-/*! @brief reset driver version 2.0.2. */
-#define FSL_RESET_DRIVER_VERSION (MAKE_VERSION(2, 0, 2))
+/*! @brief reset driver version 2.1.1. */
+#define FSL_RESET_DRIVER_VERSION (MAKE_VERSION(2, 1, 1))
 /*@}*/
 
 /*!
@@ -109,7 +109,7 @@ typedef enum _RSTCTL_RSTn
     } /* Reset bits for DMA peripheral */
 #define DMIC_RSTS             \
     {                         \
-        kDMIC0_RST_SHIFT_RSTn \
+        kDMIC_RST_SHIFT_RSTn  \
     } /* Reset bits for ADC peripheral */
 #define FLEXCOMM_RSTS                                                                                            \
     {                                                                                                            \
@@ -125,7 +125,7 @@ typedef enum _RSTCTL_RSTn
     } /* Reset bits for MRT peripheral */
 #define PINT_RSTS                \
     {                            \
-        kGPIO_INT_RST_SHIFT_RSTn \
+        kPINT_RST_SHIFT_RSTn     \
     } /* Reset bits for PINT peripheral */
 #define SCT_RSTS            \
     {                       \
@@ -140,10 +140,6 @@ typedef enum _RSTCTL_RSTn
     {                       \
         kUSB_RST_SHIFT_RSTn \
     } /* Reset bits for USB peripheral */
-#define USDHC_RSTS                                   \
-    {                                                \
-        kSDIO0_RST_SHIFT_RSTn, kSDIO1_RST_SHIFT_RSTn \
-    } /* Reset bits for SDIO peripheral */
 #define UTICK_RSTS            \
     {                         \
         kUTICK_RST_SHIFT_RSTn \
@@ -214,6 +210,19 @@ void RESET_ClearPeripheralReset(reset_ip_name_t peripheral);
  *                   and reset bit position in the reset register.
  */
 void RESET_PeripheralReset(reset_ip_name_t peripheral);
+
+/*!
+ * @brief Release peripheral module.
+ *
+ * Release peripheral module.
+ *
+ * @param peripheral Peripheral to release. The enum argument contains encoding of reset register
+ *                   and reset bit position in the reset register.
+ */
+static inline void RESET_ReleasePeripheralReset(reset_ip_name_t peripheral)
+{
+    RESET_ClearPeripheralReset(peripheral);
+}
 
 #if defined(__cplusplus)
 }

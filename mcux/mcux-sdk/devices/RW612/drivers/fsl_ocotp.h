@@ -79,6 +79,19 @@ status_t OCOTP_OtpDeinit(void);
 status_t OCOTP_OtpFuseRead(uint32_t addr, uint32_t *data);
 
 /*!
+ * @brief Read Fuse line with specific tag value from SoC OTP
+ *
+ * This function read Fuse line with specific tag value from SoC OTP to specified data buffer.
+ *
+ * @param data Buffer to hold the data read from SoC OTP
+ * @param tag  Tag value to match
+ * @return kStatus_Success - Data read from SoC OTP successfully
+ *         kStatus_Fail    - Data read from SoC OTP failed, or cannot find the tag
+ *         kStatus_InvalidArgument - data pointer is invalid
+ */
+status_t OCOTP_ReadSocOtp(uint64_t *data, uint32_t tag);
+
+/*!
  * @brief Read unique ID from OTP Fuse Block
  *
  * This function read unique ID from OTP Fuse block to specified data buffer.

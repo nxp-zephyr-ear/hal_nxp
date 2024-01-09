@@ -6,8 +6,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef _FSL_SAI_H_
-#define _FSL_SAI_H_
+#ifndef FSL_SAI_H_
+#define FSL_SAI_H_
 
 #include "fsl_common.h"
 
@@ -20,10 +20,34 @@
  * Definitions
  ******************************************************************************/
 
+/*! @brief Used to control whether SAI_RxSetFifoConfig()/SAI_TxSetFifoConfig()
+ * allows a NULL FIFO watermark.
+ *
+ * If this macro is set to 0 then SAI_RxSetFifoConfig()/SAI_TxSetFifoConfig()
+ * will set the watermark to half of the FIFO's depth if passed a NULL
+ * watermark.
+ */
+#ifndef MCUX_SDK_SAI_ALLOW_NULL_FIFO_WATERMARK
+#define MCUX_SDK_SAI_ALLOW_NULL_FIFO_WATERMARK 0
+#endif /* MCUX_SDK_SAI_ALLOW_NULL_FIFO_WATERMARK */
+
+/*! @brief Disable implicit channel data configuration within SAI_TxSetConfig()/SAI_RxSetConfig().
+ *
+ * Use this macro to control whether SAI_RxSetConfig()/SAI_TxSetConfig() will
+ * attempt to implicitly configure the channel data. By channel data we mean
+ * the startChannel, channelMask, endChannel, and channelNums fields from the
+ * sai_transciever_t structure. By default, SAI_TxSetConfig()/SAI_RxSetConfig()
+ * will attempt to compute these fields, which may not be desired in cases where
+ * the user wants to set them before the call to said functions.
+ */
+#ifndef MCUX_SDK_SAI_DISABLE_IMPLICIT_CHAN_CONFIG
+#define MCUX_SDK_SAI_DISABLE_IMPLICIT_CHAN_CONFIG 0
+#endif /* MCUX_SDK_SAI_DISABLE_IMPLICIT_CHAN_CONFIG */
+
 /*! @name Driver version */
-/*@{*/
-#define FSL_SAI_DRIVER_VERSION (MAKE_VERSION(2, 3, 8)) /*!< Version 2.3.8 */
-/*@}*/
+/*! @{ */
+#define FSL_SAI_DRIVER_VERSION (MAKE_VERSION(2, 4, 2)) /*!< Version 2.4.2 */
+/*! @} */
 
 /*! @brief _sai_status_t, SAI return status.*/
 enum
@@ -467,78 +491,6 @@ extern "C" {
  */
 
 /*!
- * @brief Initializes the SAI Tx peripheral.
- * @deprecated Do not use this function.  It has been superceded by @ref SAI_Init
- *
- * Ungates the SAI clock, resets the module, and configures SAI Tx with a configuration structure.
- * The configuration structure can be custom filled or set with default values by
- * SAI_TxGetDefaultConfig().
- *
- * @note  This API should be called at the beginning of the application to use
- * the SAI driver. Otherwise, accessing the SAIM module can cause a hard fault
- * because the clock is not enabled.
- *
- * @param base SAI base pointer
- * @param config SAI configuration structure.
- */
-void SAI_TxInit(I2S_Type *base, const sai_config_t *config);
-
-/*!
- * @brief Initializes the SAI Rx peripheral.
- * @deprecated Do not use this function.  It has been superceded by @ref SAI_Init
- *
- * Ungates the SAI clock, resets the module, and configures the SAI Rx with a configuration structure.
- * The configuration structure can be custom filled or set with default values by
- * SAI_RxGetDefaultConfig().
- *
- * @note  This API should be called at the beginning of the application to use
- * the SAI driver. Otherwise, accessing the SAI module can cause a hard fault
- * because the clock is not enabled.
- *
- * @param base SAI base pointer
- * @param config SAI configuration structure.
- */
-void SAI_RxInit(I2S_Type *base, const sai_config_t *config);
-
-/*!
- * @brief  Sets the SAI Tx configuration structure to default values.
- * @deprecated Do not use this function.  It has been superceded by
- * @ref SAI_GetClassicI2SConfig, @ref SAI_GetLeftJustifiedConfig , @ref SAI_GetRightJustifiedConfig, @ref
- SAI_GetDSPConfig, @ref SAI_GetTDMConfig
- *
- * This API initializes the configuration structure for use in SAI_TxConfig().
- * The initialized structure can remain unchanged in SAI_TxConfig(), or it can be modified
- *  before calling SAI_TxConfig().
- * This is an example.
-   @code
-   sai_config_t config;
-   SAI_TxGetDefaultConfig(&config);
-   @endcode
- *
- * @param config pointer to master configuration structure
- */
-void SAI_TxGetDefaultConfig(sai_config_t *config);
-
-/*!
- * @brief  Sets the SAI Rx configuration structure to default values.
- * @deprecated Do not use this function.  It has been superceded by
- * @ref SAI_GetClassicI2SConfig, @ref SAI_GetLeftJustifiedConfig , @ref SAI_GetRightJustifiedConfig, @ref
- SAI_GetDSPConfig, @ref SAI_GetTDMConfig
- *
- * This API initializes the configuration structure for use in SAI_RxConfig().
- * The initialized structure can remain unchanged in SAI_RxConfig() or it can be modified
- *  before calling SAI_RxConfig().
- * This is an example.
-   @code
-   sai_config_t config;
-   SAI_RxGetDefaultConfig(&config);
-   @endcode
- *
- * @param config pointer to master configuration structure
- */
-void SAI_RxGetDefaultConfig(sai_config_t *config);
-
-/*!
  * @brief Initializes the SAI peripheral.
  *
  * This API gates the SAI clock. The SAI module can't operate unless SAI_Init is called to enable the clock.
@@ -940,7 +892,7 @@ static inline void SAI_RxClearStatusFlags(I2S_Type *base, uint32_t mask)
  * This function will also clear all the error flags such as FIFO error, sync error etc.
  *
  * @param base SAI base pointer
- * @param tresetType Reset type, FIFO reset or software reset
+ * @param resetType Reset type, FIFO reset or software reset
  */
 void SAI_TxSoftwareReset(I2S_Type *base, sai_reset_type_t resetType);
 
@@ -1245,42 +1197,6 @@ static inline uintptr_t SAI_RxGetDataRegisterAddress(I2S_Type *base, uint32_t ch
  */
 
 /*!
- * @brief Configures the SAI Tx audio format.
- * @deprecated Do not use this function.  It has been superceded by @ref SAI_TxSetConfig
- *
- * The audio format can be changed at run-time. This function configures the sample rate and audio data
- * format to be transferred.
- *
- * @param base SAI base pointer.
- * @param format Pointer to the SAI audio data format structure.
- * @param mclkSourceClockHz SAI master clock source frequency in Hz.
- * @param bclkSourceClockHz SAI bit clock source frequency in Hz. If the bit clock source is a master
- * clock, this value should equal the masterClockHz.
- */
-void SAI_TxSetFormat(I2S_Type *base,
-                     sai_transfer_format_t *format,
-                     uint32_t mclkSourceClockHz,
-                     uint32_t bclkSourceClockHz);
-
-/*!
- * @brief Configures the SAI Rx audio format.
- * @deprecated Do not use this function.  It has been superceded by @ref SAI_RxSetConfig
- *
- * The audio format can be changed at run-time. This function configures the sample rate and audio data
- * format to be transferred.
- *
- * @param base SAI base pointer.
- * @param format Pointer to the SAI audio data format structure.
- * @param mclkSourceClockHz SAI master clock source frequency in Hz.
- * @param bclkSourceClockHz SAI bit clock source frequency in Hz. If the bit clock source is a master
- * clock, this value should equal the masterClockHz.
- */
-void SAI_RxSetFormat(I2S_Type *base,
-                     sai_transfer_format_t *format,
-                     uint32_t mclkSourceClockHz,
-                     uint32_t bclkSourceClockHz);
-
-/*!
  * @brief Sends data using a blocking method.
  *
  * @note This function blocks by polling until data is ready to be sent.
@@ -1417,47 +1333,6 @@ void SAI_TransferTxSetConfig(I2S_Type *base, sai_handle_t *handle, sai_transceiv
  */
 void SAI_TransferRxSetConfig(I2S_Type *base, sai_handle_t *handle, sai_transceiver_t *config);
 
-/*!
- * @brief Configures the SAI Tx audio format.
- * @deprecated Do not use this function.  It has been superceded by @ref SAI_TransferTxSetConfig
- *
- * The audio format can be changed at run-time. This function configures the sample rate and audio data
- * format to be transferred.
- *
- * @param base SAI base pointer.
- * @param handle SAI handle pointer.
- * @param format Pointer to the SAI audio data format structure.
- * @param mclkSourceClockHz SAI master clock source frequency in Hz.
- * @param bclkSourceClockHz SAI bit clock source frequency in Hz. If a bit clock source is a master
- * clock, this value should equal the masterClockHz in format.
- * @return Status of this function. Return value is the status_t.
- */
-status_t SAI_TransferTxSetFormat(I2S_Type *base,
-                                 sai_handle_t *handle,
-                                 sai_transfer_format_t *format,
-                                 uint32_t mclkSourceClockHz,
-                                 uint32_t bclkSourceClockHz);
-
-/*!
- * @brief Configures the SAI Rx audio format.
- * @deprecated Do not use this function.  It has been superceded by @ref SAI_TransferRxSetConfig
- *
- * The audio format can be changed at run-time. This function configures the sample rate and audio data
- * format to be transferred.
- *
- * @param base SAI base pointer.
- * @param handle SAI handle pointer.
- * @param format Pointer to the SAI audio data format structure.
- * @param mclkSourceClockHz SAI master clock source frequency in Hz.
- * @param bclkSourceClockHz SAI bit clock source frequency in Hz. If a bit clock source is a master
- * clock, this value should equal the masterClockHz in format.
- * @return Status of this function. Return value is one of status_t.
- */
-status_t SAI_TransferRxSetFormat(I2S_Type *base,
-                                 sai_handle_t *handle,
-                                 sai_transfer_format_t *format,
-                                 uint32_t mclkSourceClockHz,
-                                 uint32_t bclkSourceClockHz);
 
 /*!
  * @brief Performs an interrupt non-blocking send transfer on SAI.
@@ -1583,4 +1458,4 @@ void SAI_TransferRxHandleIRQ(I2S_Type *base, sai_handle_t *handle);
 
 /*! @} */
 
-#endif /* _FSL_SAI_H_ */
+#endif /* FSL_SAI_H_ */

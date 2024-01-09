@@ -11,5 +11,5 @@ target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
 )
 
 
-include(component_silicon_id_RW612)
 include(driver_ocotp)
+include(component_silicon_id_RW612)

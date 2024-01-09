@@ -26,8 +26,8 @@ list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_LIST_DIR}/../../drivers/uart
     ${CMAKE_CURRENT_LIST_DIR}/../../drivers/wdog8
     ${CMAKE_CURRENT_LIST_DIR}/../../utilities/assert
-    ${CMAKE_CURRENT_LIST_DIR}/../../utilities/debug_console
-    ${CMAKE_CURRENT_LIST_DIR}/../../utilities/debug_console_lite
+    ${CMAKE_CURRENT_LIST_DIR}/../../utilities
+    ${CMAKE_CURRENT_LIST_DIR}/../../utilities
     ${CMAKE_CURRENT_LIST_DIR}/../../utilities/misc_utilities
     ${CMAKE_CURRENT_LIST_DIR}/drivers
 )
@@ -45,13 +45,13 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_cmsis_spi)
 #    include(driver_cmsis_i2c)
 #    include(device_startup)
-#    include(CMSIS_Driver_Include_USART)
-#    include(CMSIS_Driver_Include_SPI)
+#    include(CMSIS_Driver_Include_USART OPTIONAL)
+#    include(CMSIS_Driver_Include_SPI OPTIONAL)
 #    include(utility_debug_console_lite)
 #    include(driver_acmp_1)
-#    include(CMSIS_Include_core_cm)
+#    include(CMSIS_Include_core_cm OPTIONAL)
 #    include(driver_ftm)
-#    include(CMSIS_Driver_Include_I2C)
+#    include(CMSIS_Driver_Include_I2C OPTIONAL)
 #    include(driver_gpio_1)
 #    include(utility_assert_lite)
 #    include(driver_port_ke06)
@@ -59,10 +59,10 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(component_uart_adapter)
 #    include(driver_clock)
 #    include(utility_debug_console)
-#    include(device_CMSIS)
+#    
 #    include(driver_wdog8)
 #    include(driver_uart)
-#    include(CMSIS_Driver_Include_Common)
+#    include(CMSIS_Driver_Include_Common OPTIONAL)
 #    include(driver_common)
 #    include(driver_cmsis_uart)
 #    include(utility_assert)

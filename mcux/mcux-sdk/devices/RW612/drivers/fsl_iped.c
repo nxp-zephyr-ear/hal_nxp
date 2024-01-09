@@ -15,12 +15,12 @@ status_t IPED_SetRegionAddressRange(FLEXSPI_Type *base,
     /* Check if region is not locked */
     if (IPED_IsRegionLocked(base, region))
     {
-        return kStatus_IPED_RegionIsLocked;
+        return (status_t)kStatus_IPED_RegionIsLocked;
     }
 
     /* Disable soft lock for given region first */
-    base->IPEDCTXCTRL[0] = (base->IPEDCTXCTRL[0] & (uint32_t)~(FLEXSPI_IPEDCTXCTRL_CTX0_FREEZE0_MASK << (region * 2u))) |
-                           (uint32_t)(IPED_RW_ENABLE_VAL << (region * 2u));
+    base->IPEDCTXCTRL[0] = (base->IPEDCTXCTRL[0] & ~(FLEXSPI_IPEDCTXCTRL_CTX0_FREEZE0_MASK << (region * 2UL))) |
+                          (IPED_RW_ENABLE_VAL << (region * 2UL));
 
     __IO uint32_t *reg_start = (__IO uint32_t *)(((uint32_t) & (base->IPEDCTX0START)) + (IPED_CTX_REG_OFFSET * region));
     __IO uint32_t *reg_end   = (__IO uint32_t *)(((uint32_t) & (base->IPEDCTX0END)) + (IPED_CTX_REG_OFFSET * region));
@@ -31,8 +31,8 @@ status_t IPED_SetRegionAddressRange(FLEXSPI_Type *base,
         (*reg_end & (~FLEXSPI_IPEDCTX0END_END_ADDRESS_MASK)) | (end_address & FLEXSPI_IPEDCTX0END_END_ADDRESS_MASK);
 
     /* Re-enable soft lock for given region */
-    base->IPEDCTXCTRL[0] = (base->IPEDCTXCTRL[0] & (uint32_t)~(FLEXSPI_IPEDCTXCTRL_CTX0_FREEZE0_MASK << (region * 2u))) |
-                           (uint32_t)(IPED_RW_DISABLE_VAL << (region * 2u));
+    base->IPEDCTXCTRL[0] = (base->IPEDCTXCTRL[0] & ~(FLEXSPI_IPEDCTXCTRL_CTX0_FREEZE0_MASK << (region * 2UL))) |
+                           (IPED_RW_DISABLE_VAL << (region * 2UL));
 
     return kStatus_Success;
 }
@@ -42,12 +42,12 @@ status_t IPED_SetRegionEnable(FLEXSPI_Type *base, iped_region_t region, bool ena
     /* Check if region is not locked */
     if (IPED_IsRegionLocked(base, region))
     {
-        return kStatus_IPED_RegionIsLocked;
+        return (status_t)kStatus_IPED_RegionIsLocked;
     }
 
     /* Disable soft lock for given region first */
-    base->IPEDCTXCTRL[0] = (base->IPEDCTXCTRL[0] & (uint32_t)~(FLEXSPI_IPEDCTXCTRL_CTX0_FREEZE0_MASK << (region * 2u))) |
-                           (uint32_t)(IPED_RW_ENABLE_VAL << (region * 2u));
+    base->IPEDCTXCTRL[0] = (base->IPEDCTXCTRL[0] & ~(FLEXSPI_IPEDCTXCTRL_CTX0_FREEZE0_MASK << (region * 2UL))) |
+                           (IPED_RW_ENABLE_VAL << (region * 2UL));
 
     __IO uint32_t *reg_start = (__IO uint32_t *)(((uint32_t) & (base->IPEDCTX0START)) + (IPED_CTX_REG_OFFSET * region));
     if (enable)
@@ -60,8 +60,8 @@ status_t IPED_SetRegionEnable(FLEXSPI_Type *base, iped_region_t region, bool ena
     }
 
     /* Re-enable soft lock for given region */
-    base->IPEDCTXCTRL[0] = (base->IPEDCTXCTRL[0] & (uint32_t)~(FLEXSPI_IPEDCTXCTRL_CTX0_FREEZE0_MASK << (region * 2u))) |
-                           (uint32_t)(IPED_RW_DISABLE_VAL << (region * 2u));
+    base->IPEDCTXCTRL[0] = (base->IPEDCTXCTRL[0] & ~(FLEXSPI_IPEDCTXCTRL_CTX0_FREEZE0_MASK << (region * 2UL))) |
+                           (IPED_RW_DISABLE_VAL << (region * 2UL));
 
     return kStatus_Success;
 }

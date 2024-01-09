@@ -407,6 +407,20 @@ extern "C" {
 hal_rpmsg_status_t HAL_ImuAddWlanTxPacket(uint8_t imuLink, uint8_t *txBuf, uint32_t length);
 
 /*!
+ * @brief Add wlan Tx packet for sending multiple Tx packets within one message.
+ *
+ * This function is used to add a wlan Tx packet with callback function for IMU_MSG_MULTI_TX_DATA.
+ *
+ * @param imuLink           IMU link ID.
+ * @param txBuf             Tx buffer to be sent.
+ * @param length            Length of Tx data.
+ * @param cb                Callback function to add packet.
+ * @retval kStatus_HAL_RpmsgSuccess or kStatus_HAL_RpmsgError.
+ */
+hal_rpmsg_status_t HAL_ImuAddWlanTxPacketExt(uint8_t imuLink, uint8_t *txBuf, uint32_t length,
+    void (*cb)(void *destAddr, void *srcAddr, uint32_t len));
+
+/*!
  * @brief Install wlan callback.
  *
  * This function is used to imstall wlan callback

@@ -44,7 +44,7 @@
 //!	                1	                2	                X	                X       X	                0xEB12XXXX	    ISP BOOT: SPI
 //!
 
-typedef struct _user_app_boot_invoke_option
+typedef struct _fsl_user_app_boot_invoke_option
 {
     union
     {
@@ -59,7 +59,7 @@ typedef struct _user_app_boot_invoke_option
         } B;
         uint32_t U;
     } option;
-} user_app_boot_invoke_option_t;
+} fsl_user_app_boot_invoke_option_t;
 
 //! @brief Boot interface can be selected by user application
 //! @note  For USB-HID QSPI USB-DFU SD MMC, these interfaces are invalid for ISP boot
@@ -122,13 +122,13 @@ typedef struct
 typedef struct BootloaderTree_v0
 {
     void (*runBootloader)(void *arg);                               //!< Function to start the bootloader executing.
-    standard_version_t                      version;                //!< Bootloader version number.
+    fsl_standard_version_t                      version;                //!< Bootloader version number.
     const char                              *copyright;             //!< Copyright string.
     const uint32_t                          reservedBootloader2;
     const nboot_interface_v0_t              *nbootDriver;           //!< Image authentication API.
     const uint32_t                          reservedBootloader3;
     const ocotp_driver_v0_t                 *otpDriver;             //!< OTP driver API.
-    const iap_api_interface_t               *iapApiDriver;
+    const fsl_iap_api_interface_t               *iapApiDriver;
 } bootloader_tree_v0_t;
 
 //! @brief Root of the bootloader API tree for A1/A2.
@@ -142,13 +142,13 @@ typedef struct BootloaderTree_v0
 typedef struct BootloaderTree_v1
 {
     void (*runBootloader)(void *arg);                               //!< Function to start the bootloader executing.
-    standard_version_t                      version;                //!< Bootloader version number.
+    fsl_standard_version_t                      version;                //!< Bootloader version number.
     const char                              *copyright;             //!< Copyright string.
     const uint32_t                          reservedBootloader2;
     const nboot_interface_v1_t              *nbootDriver;           //!< Image authentication API.
     const uint32_t                          reservedBootloader3;
     const ocotp_driver_v1_t                 *otpDriver;             //!< OTP driver API.
-    const iap_api_interface_t               *iapApiDriver;
+    const fsl_iap_api_interface_t               *iapApiDriver;
 } bootloader_tree_v1_t;
 
 #if defined(__cplusplus)

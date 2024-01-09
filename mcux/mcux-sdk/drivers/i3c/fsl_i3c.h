@@ -1,11 +1,10 @@
 /*
- * Copyright 2018-2022 NXP
- * All rights reserved.
+ * Copyright 2018-2023 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#ifndef _FSL_I3C_H_
-#define _FSL_I3C_H_
+#ifndef FSL_I3C_H_
+#define FSL_I3C_H_
 
 #include "fsl_common.h"
 
@@ -19,10 +18,10 @@
  */
 
 /*! @name Driver version */
-/*@{*/
+/*! @{ */
 /*! @brief I3C driver version */
-#define FSL_I3C_DRIVER_VERSION (MAKE_VERSION(2, 9, 0))
-/*@}*/
+#define FSL_I3C_DRIVER_VERSION (MAKE_VERSION(2, 10, 5))
+/*! @} */
 
 /*! @brief Timeout times for waiting flag. */
 #ifndef I3C_RETRY_TIMES
@@ -255,6 +254,14 @@ typedef enum _i3c_rx_trigger_level
     kI3C_RxTriggerUntilThreeQuarterOrMore = 3U, /*!< Trigger on 3/4 full or more. */
 } i3c_rx_trigger_level_t;
 
+/*! @brief I3C master read termination operations. */
+typedef enum _i3c_rx_term_ops
+{
+    kI3C_RxTermDisable = 0U, /*!< Master doesn't terminate read, used for CCC transfer. */
+    kI3C_RxAutoTerm = 1U,  /*!< Master auto terminate read after receiving specified bytes(<=255). */
+    kI3C_RxTermLastByte = 2U,  /*!< Master terminates read at any time after START, no length limitation. */
+} i3c_rx_term_ops_t;
+
 /*! @brief Structure with setting master IBI rules and slave registry. */
 typedef struct _i3c_register_ibi_addr
 {
@@ -327,8 +334,9 @@ enum _i3c_master_transfer_flags
     kI3C_TransferRepeatedStartFlag = 0x02U, /*!< Send a repeated start condition */
     kI3C_TransferNoStopFlag        = 0x04U, /*!< Don't send a stop condition. */
     kI3C_TransferWordsFlag         = 0x08U, /*!< Transfer in words, else transfer in bytes. */
+    kI3C_TransferDisableRxTermFlag = 0x10U, /*!< Disable Rx termination. Note: It's for I3C CCC transfer. */
     kI3C_TransferRxAutoTermFlag =
-        0x10U, /*!< Set Rx auto-termination. Note: It's adaptive based on Rx size except in I3C_MasterReceive. */
+        0x20U, /*!< Set Rx auto-termination. Note: It's adaptive based on Rx size(<=255 bytes) except in I3C_MasterReceive. */
 };
 
 /*!
@@ -358,7 +366,7 @@ struct _i3c_master_handle
 {
     uint8_t state;                           /*!< Transfer state machine current state. */
     uint32_t remainingBytes;                 /*!< Remaining byte count in current state. */
-    bool isRxAutoTerm;                       /*!< Is read auto-termination configured. */
+    i3c_rx_term_ops_t rxTermOps;             /*!< Read termination operation. */
     i3c_master_transfer_t transfer;          /*!< Copy of the current transfer info. */
     uint8_t ibiAddress;                      /*!< Slave address which request IBI. */
     uint8_t *ibiBuff;                        /*!< Pointer to IBI buffer to keep ibi bytes. */
@@ -489,7 +497,9 @@ typedef enum _i3c_slave_activity_state
 typedef struct _i3c_slave_config
 {
     bool enableSlave;   /*!< Whether to enable slave. */
+#if !(defined(FSL_FEATURE_I3C_HAS_NO_SLAVE_IBI_MR_HJ) && FSL_FEATURE_I3C_HAS_NO_SLAVE_IBI_MR_HJ)
     bool isHotJoin;     /*!< Whether to enable slave hotjoin before enable slave. */
+#endif
     uint8_t staticAddr; /*!< Static address. */
     uint16_t vendorID;  /*!< Device vendor ID(manufacture ID). */
 #if !(defined(FSL_FEATURE_I3C_HAS_NO_SCONFIG_IDRAND) && FSL_FEATURE_I3C_HAS_NO_SCONFIG_IDRAND)
@@ -580,8 +590,6 @@ struct _i3c_slave_handle
     uint32_t transferredCount;              /*!< Count of bytes transferred. */
     i3c_slave_transfer_callback_t callback; /*!< Callback function called at transfer event. */
     void *userData;                         /*!< Callback parameter passed to callback. */
-    uint8_t *ibiData;                       /*!< IBI data buffer */
-    size_t ibiDataSize;                     /*!< IBI data size */
     uint8_t txFifoSize;                     /*!< Tx Fifo size */
 };
 
@@ -727,7 +735,7 @@ void I3C_Init(I3C_Type *base, const i3c_config_t *config, uint32_t sourceClock_H
  */
 
 /*! @name Initialization and deinitialization */
-/*@{*/
+/*! @{ */
 
 /*!
  * @brief Provides a default configuration for the I3C master peripheral.
@@ -791,10 +799,10 @@ static inline void I3C_MasterEnable(I3C_Type *base, i3c_master_enable_t enable)
     base->MCONFIG = (base->MCONFIG & ~I3C_MCONFIG_MSTENA_MASK) | I3C_MCONFIG_MSTENA(enable);
 }
 
-/*@}*/
+/*! @} */
 
 /*! @name Status */
-/*@{*/
+/*! @{ */
 
 /*!
  * @brief Gets the I3C master status flags.
@@ -878,10 +886,10 @@ static inline void I3C_MasterClearErrorStatusFlags(I3C_Type *base, uint32_t stat
  */
 i3c_master_state_t I3C_MasterGetState(I3C_Type *base);
 
-/*@}*/
+/*! @} */
 
 /*! @name Interrupts */
-/*@{*/
+/*! @{ */
 
 /*!
  * @brief Enables the I3C master interrupt requests.
@@ -937,10 +945,10 @@ static inline uint32_t I3C_MasterGetPendingInterrupts(I3C_Type *base)
     return base->MINTMASKED;
 }
 
-/*@}*/
+/*! @} */
 
 /*! @name DMA control */
-/*@{*/
+/*! @{ */
 
 /*!
  * @brief Enables or disables I3C master DMA requests.
@@ -983,10 +991,10 @@ static inline uint32_t I3C_MasterGetRxFifoAddress(I3C_Type *base, uint32_t width
     return (uint32_t)((width == 2U) ? &base->MRDATAH : &base->MRDATAB);
 }
 
-/*@}*/
+/*! @} */
 
 /*! @name FIFO control */
-/*@{*/
+/*! @{ */
 
 /*!
  * @brief Sets the watermarks for I3C master FIFOs.
@@ -1027,10 +1035,10 @@ static inline void I3C_MasterGetFifoCounts(I3C_Type *base, size_t *rxCount, size
     }
 }
 
-/*@}*/
+/*! @} */
 
 /*! @name Bus operations */
-/*@{*/
+/*! @{ */
 
 /*!
  * @brief Sets the I3C bus frequency for master transactions.
@@ -1323,10 +1331,10 @@ i3c_device_info_t *I3C_MasterGetDeviceListAfterDAA(I3C_Type *base, uint8_t *coun
  */
 status_t I3C_MasterTransferBlocking(I3C_Type *base, i3c_master_transfer_t *transfer);
 
-/*@}*/
+/*! @} */
 
 /*! @name Non-blocking */
-/*@{*/
+/*! @{ */
 
 /*!
  * @brief Creates a new handle for the I3C master non-blocking APIs.
@@ -1385,21 +1393,21 @@ status_t I3C_MasterTransferGetCount(I3C_Type *base, i3c_master_handle_t *handle,
  */
 void I3C_MasterTransferAbort(I3C_Type *base, i3c_master_handle_t *handle);
 
-/*@}*/
+/*! @} */
 
 /*! @name IRQ handler */
-/*@{*/
+/*! @{ */
 
 /*!
  * @brief Reusable routine to handle master interrupts.
  * @note This function does not need to be called unless you are reimplementing the
  *  nonblocking API's interrupt handler routines to add special functionality.
  * @param base The I3C peripheral base address.
- * @param handle Pointer to the I3C master driver handle.
+ * @param intHandle Pointer to the I3C master driver handle.
  */
 void I3C_MasterTransferHandleIRQ(I3C_Type *base, void *intHandle);
 
-/*@}*/
+/*! @} */
 
 /*! @} */
 
@@ -1409,7 +1417,7 @@ void I3C_MasterTransferHandleIRQ(I3C_Type *base, void *intHandle);
  */
 
 /*! @name Initialization and deinitialization */
-/*@{*/
+/*! @{ */
 
 /*!
  * @brief Provides a default configuration for the I3C slave peripheral.
@@ -1459,10 +1467,10 @@ static inline void I3C_SlaveEnable(I3C_Type *base, bool isEnable)
     base->SCONFIG = (base->SCONFIG & ~I3C_SCONFIG_SLVENA_MASK) | I3C_SCONFIG_SLVENA(isEnable);
 }
 
-/*@}*/
+/*! @} */
 
 /*! @name Status */
-/*@{*/
+/*! @{ */
 
 /*!
  * @brief Gets the I3C slave status flags.
@@ -1543,10 +1551,10 @@ i3c_slave_activity_state_t I3C_SlaveGetActivityState(I3C_Type *base);
 
 /* Not static so it can be used from fsl_i3c_dma.c. */
 status_t I3C_SlaveCheckAndClearError(I3C_Type *base, uint32_t status);
-/*@}*/
+/*! @} */
 
 /*! @name Interrupts */
-/*@{*/
+/*! @{ */
 
 /*!
  * @brief Enables the I3C slave interrupt requests.
@@ -1622,10 +1630,10 @@ static inline uint32_t I3C_SlaveGetPendingInterrupts(I3C_Type *base)
     return base->SINTMASKED;
 }
 
-/*@}*/
+/*! @} */
 
 /*! @name DMA control */
-/*@{*/
+/*! @{ */
 
 /*!
  * @brief Enables or disables I3C slave DMA requests.
@@ -1668,10 +1676,10 @@ static inline uint32_t I3C_SlaveGetRxFifoAddress(I3C_Type *base, uint32_t width)
     return (uint32_t)((width == 2U) ? &base->SRDATAH : &base->SRDATAB);
 }
 
-/*@}*/
+/*! @} */
 
 /*! @name FIFO control */
-/*@{*/
+/*! @{ */
 
 /*!
  * @brief Sets the watermarks for I3C slave FIFOs.
@@ -1712,11 +1720,12 @@ static inline void I3C_SlaveGetFifoCounts(I3C_Type *base, size_t *rxCount, size_
     }
 }
 
-/*@}*/
+/*! @} */
 
 /*! @name Bus operations */
-/*@{*/
+/*! @{ */
 
+#if !(defined(FSL_FEATURE_I3C_HAS_NO_SLAVE_IBI_MR_HJ) && FSL_FEATURE_I3C_HAS_NO_SLAVE_IBI_MR_HJ)
 /*!
  * @brief I3C slave request event.
  *
@@ -1724,6 +1733,7 @@ static inline void I3C_SlaveGetFifoCounts(I3C_Type *base, size_t *rxCount, size_
  * @param event I3C slave event of type #i3c_slave_event_t
  */
 void I3C_SlaveRequestEvent(I3C_Type *base, i3c_slave_event_t event);
+#endif
 
 /*!
  * @brief Performs a polling send transfer on the I3C bus.
@@ -1745,10 +1755,10 @@ status_t I3C_SlaveSend(I3C_Type *base, const void *txBuff, size_t txSize);
  */
 status_t I3C_SlaveReceive(I3C_Type *base, void *rxBuff, size_t rxSize);
 
-/*@}*/
+/*! @} */
 
 /*! @name Slave non-blocking */
-/*@{*/
+/*! @{ */
 
 /*!
  * @brief Creates a new handle for the I3C slave non-blocking APIs.
@@ -1818,42 +1828,45 @@ status_t I3C_SlaveTransferGetCount(I3C_Type *base, i3c_slave_handle_t *handle, s
  */
 void I3C_SlaveTransferAbort(I3C_Type *base, i3c_slave_handle_t *handle);
 
-/*@}*/
+/*! @} */
 
 /*! @name Slave IRQ handler */
-/*@{*/
+/*! @{ */
 
 /*!
  * @brief Reusable routine to handle slave interrupts.
  * @note This function does not need to be called unless you are reimplementing the
  *  non blocking API's interrupt handler routines to add special functionality.
  * @param base The I3C peripheral base address.
- * @param handle Pointer to struct: _i3c_slave_handle structure which stores the transfer state.
+ * @param intHandle Pointer to struct: _i3c_slave_handle structure which stores the transfer state.
  */
 void I3C_SlaveTransferHandleIRQ(I3C_Type *base, void *intHandle);
 
+#if !(defined(FSL_FEATURE_I3C_HAS_NO_SLAVE_IBI_MR_HJ) && FSL_FEATURE_I3C_HAS_NO_SLAVE_IBI_MR_HJ)
 /*!
- * @brief I3C slave request IBI event with multiple data payload.
+ * @brief I3C slave request IBI event with data payload(mandatory and extended).
  *
  * @param base The I3C peripheral base address.
- * @param handle Pointer to struct: _i3c_slave_handle structure which stores the transfer state.
  * @param data Pointer to IBI data to be sent in the request.
  * @param dataSize IBI data size.
  */
-void I3C_SlaveRequestIBIWithData(I3C_Type *base, i3c_slave_handle_t *handle, uint8_t *data, size_t dataSize);
+void I3C_SlaveRequestIBIWithData(I3C_Type *base, uint8_t *data, size_t dataSize);
 
 /*!
  * @brief I3C slave request IBI event with single data.
+ * @deprecated Do not use this function. It has been superseded by @ref I3C_SlaveRequestIBIWithData.
  *
  * @param base The I3C peripheral base address.
  * @param data IBI data to be sent in the request.
  * @param dataSize IBI data size.
  */
 void I3C_SlaveRequestIBIWithSingleData(I3C_Type *base, uint8_t data, size_t dataSize);
-/*@}*/
+#endif /* !(defined(FSL_FEATURE_I3C_HAS_NO_SLAVE_IBI_MR_HJ) && FSL_FEATURE_I3C_HAS_NO_SLAVE_IBI_MR_HJ) */
+
+/*! @} */
 /*! @} */
 #if defined(__cplusplus)
 }
 #endif
 
-#endif /* _FSL_I3C_H_ */
+#endif /* FSL_I3C_H_ */

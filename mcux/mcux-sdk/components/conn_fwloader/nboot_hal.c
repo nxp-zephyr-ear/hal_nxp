@@ -31,7 +31,7 @@
  * @retval kStatus_NBOOT_InvalidArgument Invalid values of the parms
  * @retval kStatus_NBOOT_Fail Failed to operate.
  */
-static nboot_status_t nboot_hal_get_root_auth_parms(nboot_context_t *context, nboot_rot_auth_parms_t *parms);
+static fsl_nboot_status_t nboot_hal_get_root_auth_parms(fsl_nboot_context_t *context, fsl_nboot_rot_auth_parms_t *parms);
 
 /*!
  * @brief Get the ROTK revoke settings.
@@ -43,7 +43,7 @@ static nboot_status_t nboot_hal_get_root_auth_parms(nboot_context_t *context, nb
  * @retval kStatus_NBOOT_Fail Operate successfully.
  * @retval kStatus_NBOOT_Fail Failed to operate.
  */
-static inline nboot_status_t nboot_hal_get_rotk_revoke(nboot_root_key_revocation_t *rotkRevoke, uint32_t rotkCnt);
+static inline fsl_nboot_status_t nboot_hal_get_rotk_revoke(fsl_nboot_root_key_revocation_t *rotkRevoke, uint32_t rotkCnt);
 
 /*!
  * @brief Get the ROTKH.
@@ -55,7 +55,7 @@ static inline nboot_status_t nboot_hal_get_rotk_revoke(nboot_root_key_revocation
  * @retval kStatus_NBOOT_Fail Operate successfully.
  * @retval kStatus_NBOOT_Fail Failed to operate.
  */
-static nboot_status_t nboot_hal_get_rotkh(uint32_t *rotkh, uint32_t rotkhSize);
+static fsl_nboot_status_t nboot_hal_get_rotkh(uint32_t *rotkh, uint32_t rotkhSize);
 
 /*!
  * @brief Get the type of the root keys.
@@ -66,7 +66,7 @@ static nboot_status_t nboot_hal_get_rotkh(uint32_t *rotkh, uint32_t rotkhSize);
  * @retval kStatus_NBOOT_Fail Operate successfully.
  * @retval kStatus_NBOOT_Fail Failed to operate.
  */
-static inline nboot_status_t nboot_hal_get_root_key_type(nboot_root_key_type_and_length_t *rootKeyType);
+static inline fsl_nboot_status_t nboot_hal_get_root_key_type(fsl_nboot_root_key_type_and_length_t *rootKeyType);
 
 /*!
  * @brief Get the Part Common Key(PCK).
@@ -78,7 +78,7 @@ static inline nboot_status_t nboot_hal_get_root_key_type(nboot_root_key_type_and
  * @retval kStatus_NBOOT_Fail Operate successfully.
  * @retval kStatus_NBOOT_Fail Failed to operate.
  */
-static inline nboot_status_t nboot_hal_get_pck_blob(uint8_t *pckBlob, uint32_t pckBlobSize);
+static inline fsl_nboot_status_t nboot_hal_get_pck_blob(uint8_t *pckBlob, uint32_t pckBlobSize);
 
 /*******************************************************************************
  * Codes
@@ -88,14 +88,14 @@ static inline uint32_t set_antipole(uint32_t value)
     return (value & 0xFFFFu) | (~(value & 0xFFFFu) << 16);
 }
 
-static nboot_status_t nboot_hal_get_root_auth_parms(nboot_context_t *context, nboot_rot_auth_parms_t *parms)
+static fsl_nboot_status_t nboot_hal_get_root_auth_parms(fsl_nboot_context_t *context, fsl_nboot_rot_auth_parms_t *parms)
 {
     if ((NULL == context) || (NULL == parms))
     {
         return kStatus_NBOOT_InvalidArgument;
     }
 
-    nboot_status_t status = kStatus_NBOOT_Fail;
+    fsl_nboot_status_t status = kStatus_NBOOT_Fail;
     do
     {
         status =
@@ -130,7 +130,7 @@ static nboot_status_t nboot_hal_get_root_auth_parms(nboot_context_t *context, nb
             break;
         }
 
-        parms->soc_lifecycle = (nboot_soc_lifecycle_t)set_antipole(get_lifecycle_state());
+        parms->soc_lifecycle = (fsl_nboot_soc_lifecycle_t)set_antipole(get_lifecycle_state());
         status               = kStatus_NBOOT_Success;
     } while (false);
 
@@ -142,7 +142,7 @@ static nboot_status_t nboot_hal_get_root_auth_parms(nboot_context_t *context, nb
     return status;
 }
 
-static inline nboot_status_t nboot_hal_get_rotk_revoke(nboot_root_key_revocation_t *rotkRevoke, uint32_t rotkCnt)
+static inline fsl_nboot_status_t nboot_hal_get_rotk_revoke(fsl_nboot_root_key_revocation_t *rotkRevoke, uint32_t rotkCnt)
 {
     /* No need to check the input arguments for this inline functions. */
     assert(rotkRevoke);
@@ -157,13 +157,13 @@ static inline nboot_status_t nboot_hal_get_rotk_revoke(nboot_root_key_revocation
     return kStatus_NBOOT_Success;
 }
 
-static nboot_status_t nboot_hal_get_rotkh(uint32_t *rotkh, uint32_t rotkhSize)
+static fsl_nboot_status_t nboot_hal_get_rotkh(uint32_t *rotkh, uint32_t rotkhSize)
 {
     /* No need to check the input arguments for this inline functions. */
     assert(rotkh);
     assert(rotkhSize == NBOOT_ROOT_ROTKH_SIZE_IN_BYTE);
 
-    nboot_status_t status = kStatus_NBOOT_Success;
+    fsl_nboot_status_t status = kStatus_NBOOT_Success;
 
     /* root key hash fixed in Flash memory */
 #ifdef USE_ENG_CERTIFICATE
@@ -229,7 +229,7 @@ static nboot_status_t nboot_hal_get_rotkh(uint32_t *rotkh, uint32_t rotkhSize)
     return status;
 }
 
-static inline nboot_status_t nboot_hal_get_root_key_type(nboot_root_key_type_and_length_t *rootKeyType)
+static inline fsl_nboot_status_t nboot_hal_get_root_key_type(fsl_nboot_root_key_type_and_length_t *rootKeyType)
 {
     /* No need to check the input arguments for this inline functions. */
     assert(rootKeyType);
@@ -239,13 +239,13 @@ static inline nboot_status_t nboot_hal_get_root_key_type(nboot_root_key_type_and
     return kStatus_NBOOT_Success;
 }
 
-static inline nboot_status_t nboot_hal_get_pck_blob(uint8_t *pckBlob, uint32_t pckBlobSize)
+static inline fsl_nboot_status_t nboot_hal_get_pck_blob(uint8_t *pckBlob, uint32_t pckBlobSize)
 {
     /* No need to check the input arguments for this inline functions. */
     assert(pckBlob);
     assert(pckBlobSize == NBOOT_PCK_BLOB_SIZE_IN_BYTE);
 
-    nboot_status_t status = kStatus_NBOOT_Fail;
+    fsl_nboot_status_t status = kStatus_NBOOT_Fail;
     status_t otpStatus    = kStatus_Fail;
 
     do
@@ -266,14 +266,14 @@ static inline nboot_status_t nboot_hal_get_pck_blob(uint8_t *pckBlob, uint32_t p
     return status;
 }
 
-nboot_status_t nboot_hal_get_sb3_manifest_params(nboot_context_t *context, nboot_sb3_load_manifest_parms_t *parms)
+fsl_nboot_status_t nboot_hal_get_sb3_manifest_params(fsl_nboot_context_t *context, fsl_nboot_sb3_load_manifest_parms_t *parms)
 {
     if ((NULL == context) || (NULL == parms))
     {
         return kStatus_NBOOT_InvalidArgument;
     }
 
-    nboot_status_t status = kStatus_NBOOT_Fail;
+    fsl_nboot_status_t status = kStatus_NBOOT_Fail;
     do
     {
         status = nboot_hal_get_root_auth_parms(context, &parms->soc_RoTNVM);

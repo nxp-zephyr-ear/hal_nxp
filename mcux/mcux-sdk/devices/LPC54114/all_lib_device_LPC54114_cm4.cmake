@@ -1,6 +1,7 @@
 list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_LIST_DIR}/.
-    ${CMAKE_CURRENT_LIST_DIR}/../../CMSIS/Include
+    ${CMAKE_CURRENT_LIST_DIR}/../../CMSIS/Core/Include
+    ${CMAKE_CURRENT_LIST_DIR}/../../CMSIS/DSP
     ${CMAKE_CURRENT_LIST_DIR}/../../components/codec
     ${CMAKE_CURRENT_LIST_DIR}/../../components/codec/i2c
     ${CMAKE_CURRENT_LIST_DIR}/../../components/codec/port/wm8904
@@ -38,8 +39,8 @@ list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_LIST_DIR}/../../../middleware/usb
     ${CMAKE_CURRENT_LIST_DIR}/../../../rtos/freertos/freertos-kernel
     ${CMAKE_CURRENT_LIST_DIR}/../../utilities/assert
-    ${CMAKE_CURRENT_LIST_DIR}/../../utilities/debug_console
-    ${CMAKE_CURRENT_LIST_DIR}/../../utilities/debug_console_lite
+    ${CMAKE_CURRENT_LIST_DIR}/../../utilities
+    ${CMAKE_CURRENT_LIST_DIR}/../../utilities
     ${CMAKE_CURRENT_LIST_DIR}/../../utilities/misc_utilities
     ${CMAKE_CURRENT_LIST_DIR}/drivers
     ${CMAKE_CURRENT_LIST_DIR}/utilities
@@ -53,7 +54,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_pint)
 #    include(driver_ctimer)
 #    include(utility_debug_console)
-#    include(CMSIS_Include_dsp)
+#    include(CMSIS_Include_dsp OPTIONAL)
 #    include(component_usart_adapter)
 #    include(utility_assert_lite)
 #    include(middleware_multicore_erpc_eRPC_arbitrator)
@@ -99,15 +100,14 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(middleware_multicore_erpc_eRPC_rpmsg_lite_rtos_master_c_wrapper)
 #    include(driver_sctimer)
 #    include(driver_flexcomm_usart)
-#    include(device_CMSIS)
+#    
 #    include(component_ctimer_adapter)
 #    include(driver_lpc_iocon)
 #    include(driver_flexcomm_i2c_freertos)
 #    include(driver_dmic_hwvad)
 #    include(driver_codec)
-#    include(CMSIS_Include_core_cm4)
+#    include(CMSIS_Include_core_cm OPTIONAL)
 #    include(middleware_multicore_erpc_eRPC_rpmsg_lite_master_c_wrapper)
-#    include(CMSIS_Include_common)
 #    include(driver_common)
 #    include(driver_gint)
 #    include(middleware_multicore_erpc_eRPC_port_freertos)

@@ -11,5 +11,5 @@ target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
 )
 
 
-include(driver_mdio-common)
 include(driver_enet)
+include(driver_mdio-common)

@@ -35,10 +35,10 @@ list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_LIST_DIR}/../../drivers/sysmpu
     ${CMAKE_CURRENT_LIST_DIR}/../../drivers/trgmux
     ${CMAKE_CURRENT_LIST_DIR}/../../drivers/wdog32
-    ${CMAKE_CURRENT_LIST_DIR}/../../../rtos/freertos/freertos_kernel
+    ${CMAKE_CURRENT_LIST_DIR}/../../../rtos/freertos/freertos-kernel
     ${CMAKE_CURRENT_LIST_DIR}/../../utilities/assert
-    ${CMAKE_CURRENT_LIST_DIR}/../../utilities/debug_console
-    ${CMAKE_CURRENT_LIST_DIR}/../../utilities/debug_console_lite
+    ${CMAKE_CURRENT_LIST_DIR}/../../utilities
+    ${CMAKE_CURRENT_LIST_DIR}/../../utilities
     ${CMAKE_CURRENT_LIST_DIR}/../../utilities/misc_utilities
     ${CMAKE_CURRENT_LIST_DIR}/drivers
     ${CMAKE_CURRENT_LIST_DIR}/utilities
@@ -70,7 +70,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_ewm)
 #    include(utility_assert)
 #    include(driver_lpuart)
-#    include(CMSIS_Include_core_cm)
+#    include(CMSIS_Include_core_cm OPTIONAL)
 #    include(driver_flexio_spi)
 #    include(driver_lpspi_edma)
 #    include(middleware_freertos-kernel_extension)
@@ -88,7 +88,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_flexcan_edma)
 #    include(driver_flexcan)
 #    include(driver_lpuart_edma)
-#    include(device_CMSIS)
+#    
 #    include(driver_flexio_uart_edma)
 #    include(utilities_misc_utilities)
 #    include(driver_lpi2c)

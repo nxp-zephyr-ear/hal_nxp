@@ -52,7 +52,7 @@ status_t otp_fuse_read(uint32_t addr, uint32_t *data)
 {
     uint32_t argChk;
     assert(OCOTP_API_TREE);
-    argChk = addr ^ ((uint32_t)data);
+    argChk = addr ^ ((uint32_t) data);
     return OCOTP_API_TREE->fuse_read(addr, data, argChk);
 }
 

@@ -55,20 +55,20 @@
 /*******************************************************************************
  * Prototype
  ******************************************************************************/
-static status_t ldr_DoHeader_v3(api_core_context_t *ctx);
-static status_t ldr_DoDataRead(api_core_context_t *ctx);
-static status_t ldr_DoBlock(api_core_context_t *ctx);
-static status_t ldr_DoLoadCmd(api_core_context_t *ctx);
-static status_t ldr_DoExecuteCmd(api_core_context_t *ctx);
+static status_t ldr_DoHeader_v3(fsl_api_core_context_t *ctx);
+static status_t ldr_DoDataRead(fsl_api_core_context_t *ctx);
+static status_t ldr_DoBlock(fsl_api_core_context_t *ctx);
+static status_t ldr_DoLoadCmd(fsl_api_core_context_t *ctx);
+static status_t ldr_DoExecuteCmd(fsl_api_core_context_t *ctx);
 
 /*******************************************************************************
  * Variables
  ******************************************************************************/
 /*! @brief nboot library context. */
-static api_core_context_t s_api_core_context = {0};
-static ldr_Context_v3_t s_sbloader_context;
+static fsl_api_core_context_t s_fsl_api_core_context = {0};
+static fsl_ldr_Context_v3_t s_sbloader_context;
 static uint8_t packetBuf[512] = {0};
-nboot_context_t g_nbootCtx    = {0};
+fsl_nboot_context_t g_nbootCtx    = {0};
 
 static bootloader_tree_v0_t *g_bootloaderTree_v0;
 static bootloader_tree_v1_t *g_bootloaderTree_v1;
@@ -155,7 +155,7 @@ void reset_device(LOAD_Target_Type loadTarget)
     }
 }
 
-static ldr_Context_v3_t *get_sbloader_v3_context(api_core_context_t *ctx)
+static fsl_ldr_Context_v3_t *get_sbloader_v3_context(fsl_api_core_context_t *ctx)
 {
     return ctx->sbloaderCtx;
 }
@@ -163,7 +163,7 @@ static ldr_Context_v3_t *get_sbloader_v3_context(api_core_context_t *ctx)
 ////////////////////////////////////////////////////////////////////////////
 //! @brief get firmware version from otp
 ////////////////////////////////////////////////////////////////////////////
-nboot_status_t nboot_hal_get_secure_firmware_version(uint32_t *fwVer, LOAD_Target_Type loadTarget)
+fsl_nboot_status_t nboot_hal_get_secure_firmware_version(uint32_t *fwVer, LOAD_Target_Type loadTarget)
 {
     if (fwVer == NULL)
     {
@@ -295,11 +295,11 @@ status_t sb3_fw_reset(LOAD_Target_Type loadTarget, uint32_t flag, uint32_t sourc
 ////////////////////////////////////////////////////////////////////////////
 //! @brief load command processing
 ////////////////////////////////////////////////////////////////////////////
-static status_t ldr_DoLoadCmd(api_core_context_t *ctx)
+static status_t ldr_DoLoadCmd(fsl_api_core_context_t *ctx)
 {
     status_t status = kStatus_Fail;
 
-    ldr_Context_v3_t *context = get_sbloader_v3_context(ctx);
+    fsl_ldr_Context_v3_t *context = get_sbloader_v3_context(ctx);
 
     // check current data_block_position
     if (context->data_block_position == context->block_data_size)
@@ -340,28 +340,28 @@ static status_t ldr_DoLoadCmd(api_core_context_t *ctx)
 ////////////////////////////////////////////////////////////////////////////
 //! @brief Execute command processing
 ////////////////////////////////////////////////////////////////////////////
-static status_t ldr_DoExecuteCmd(api_core_context_t *ctx)
+static status_t ldr_DoExecuteCmd(fsl_api_core_context_t *ctx)
 {
-    ldr_Context_v3_t *context = get_sbloader_v3_context(ctx);
+    fsl_ldr_Context_v3_t *context = get_sbloader_v3_context(ctx);
     // this data range section process finished.
     context->in_data_range      = false;
     context->data_range_handled = 0;
 
-    // Actual jump is implemented in sbloader_finalize().
+    // Actual jump is implemented in fsl_sbloader_finalize().
     return (status_t)kStatusRomLdrPendingJumpCommand;
 }
 
 ////////////////////////////////////////////////////////////////////////////
 //! @brief data block processing
 ////////////////////////////////////////////////////////////////////////////
-static status_t ldr_DoBlock(api_core_context_t *ctx)
+static status_t ldr_DoBlock(fsl_api_core_context_t *ctx)
 {
-    ldr_Context_v3_t *context = get_sbloader_v3_context(ctx);
+    fsl_ldr_Context_v3_t *context = get_sbloader_v3_context(ctx);
 
     status_t status = kStatus_Fail;
     // new data range with new data block
-    sb3_data_range_header_t *data_range_header;
-    sb3_section_header_t *data_section_header;
+    fsl_sb3_data_range_header_t *data_range_header;
+    fsl_sb3_section_header_t *data_section_header;
 
     while (context->in_data_block)
     {
@@ -374,10 +374,10 @@ static status_t ldr_DoBlock(api_core_context_t *ctx)
         else
         {
             // new data section started
-            data_section_header = (sb3_section_header_t *)&context->data_block[context->data_block_position];
+            data_section_header = (fsl_sb3_section_header_t *)&context->data_block[context->data_block_position];
 
             // save data range section header
-            (void)memcpy(&context->data_section_header, data_section_header, sizeof(sb3_section_header_t));
+            (void)memcpy(&context->data_section_header, data_section_header, sizeof(fsl_sb3_section_header_t));
 
             // branch to section types (only data range is currently supported)
             switch (data_section_header->sectionType)
@@ -390,7 +390,7 @@ static status_t ldr_DoBlock(api_core_context_t *ctx)
                     context->data_section_handled = 0;
                     context->in_data_range        = false;
                     context->data_range_handled   = 0;
-                    context->data_block_position += sizeof(sb3_section_header_t);
+                    context->data_block_position += sizeof(fsl_sb3_section_header_t);
                     break;
                 case ((uint32_t)kSectionDiffUpdate):
                 case ((uint32_t)kSectionDDRConfig):
@@ -421,7 +421,7 @@ static status_t ldr_DoBlock(api_core_context_t *ctx)
                 else
                 {
                     // started a new data range
-                    data_range_header = (sb3_data_range_header_t *)&context->data_block[context->data_block_position];
+                    data_range_header = (fsl_sb3_data_range_header_t *)&context->data_block[context->data_block_position];
 
                     // check command tag
                     if (data_range_header->tag != SB3_DATA_RANGE_HEADER_TAG)
@@ -434,17 +434,17 @@ static status_t ldr_DoBlock(api_core_context_t *ctx)
                     }
 
                     // save data range section header
-                    (void)memcpy(&context->data_range_header, data_range_header, sizeof(sb3_data_range_header_t));
+                    (void)memcpy(&context->data_range_header, data_range_header, sizeof(fsl_sb3_data_range_header_t));
                     context->in_data_range            = true;
                     context->has_data_range_expansion = false;
-                    context->data_range_handled       = sizeof(sb3_data_range_header_t); // used anywhere?
-                    context->data_block_position += sizeof(sb3_data_range_header_t);
-                    context->data_section_handled += sizeof(sb3_data_range_header_t);
+                    context->data_range_handled       = sizeof(fsl_sb3_data_range_header_t); // used anywhere?
+                    context->data_block_position += sizeof(fsl_sb3_data_range_header_t);
+                    context->data_section_handled += sizeof(fsl_sb3_data_range_header_t);
 
                     // 16 bytes alignmnent check and handling
                     context->data_range_gap = 0;
 
-                    switch ((sb3_cmd_t)data_range_header->cmd)
+                    switch ((fsl_sb3_cmd_t)data_range_header->cmd)
                     {
                         case kSB3_CmdLoad:
                             context->data_range_gap =
@@ -468,17 +468,17 @@ static status_t ldr_DoBlock(api_core_context_t *ctx)
                                 // we reached end of data section, need to get the next block
                                 return kStatus_Success;
                             }
-                            else if ((context->data_block_position + sizeof(sb3_data_range_expansion_t)) <=
+                            else if ((context->data_block_position + sizeof(fsl_sb3_data_range_expansion_t)) <=
                                      context->block_data_size)
                             {
                                 // save data range section header expansion.
                                 (void)memcpy(
                                     &context->data_range_expansion,
-                                    (sb3_data_range_expansion_t *)&context->data_block[context->data_block_position],
-                                    sizeof(sb3_data_range_expansion_t));
+                                    (fsl_sb3_data_range_expansion_t *)&context->data_block[context->data_block_position],
+                                    sizeof(fsl_sb3_data_range_expansion_t));
                                 context->has_data_range_expansion = true;
-                                context->data_block_position += sizeof(sb3_data_range_expansion_t);
-                                context->data_section_handled += sizeof(sb3_data_range_expansion_t);
+                                context->data_block_position += sizeof(fsl_sb3_data_range_expansion_t);
+                                context->data_section_handled += sizeof(fsl_sb3_data_range_expansion_t);
                             }
                             else
                             {
@@ -545,7 +545,7 @@ static status_t ldr_DoBlock(api_core_context_t *ctx)
                     context->block_buffer_position = 0;
                     context->in_data_block         = false;
                     context->data_block_position   = 0;
-                    context->Action                = (pLdrFnc_v3_t)ldr_DoDataRead;
+                    context->Action                = (fsl_pLdrFnc_v3_t)ldr_DoDataRead;
                     SBLOADER_PRINTF("Bootloader: %s, data blobck process done.", __func__);
                     status = kStatus_Success;
                 }
@@ -589,12 +589,12 @@ static status_t ldr_DoBlock(api_core_context_t *ctx)
 ////////////////////////////////////////////////////////////////////////////
 //! @brief data block decryption and handling
 ////////////////////////////////////////////////////////////////////////////
-static status_t ldr_DoDataRead(api_core_context_t *ctx)
+static status_t ldr_DoDataRead(fsl_api_core_context_t *ctx)
 {
     status_t status = kStatus_Fail;
-    nboot_status_t nbootResult = kStatus_NBOOT_Fail;
+    fsl_nboot_status_t nbootResult = kStatus_NBOOT_Fail;
 
-    ldr_Context_v3_t *context = get_sbloader_v3_context(ctx);
+    fsl_ldr_Context_v3_t *context = get_sbloader_v3_context(ctx);
 
     // check block integrity
     if (context->processedBlocks < ctx->nbootCtx->totalBlocks)
@@ -602,12 +602,12 @@ static status_t ldr_DoDataRead(api_core_context_t *ctx)
         // call nboot lib to decrypt the data block
         if ((get_chip_revision() == 1) || (get_chip_revision() == 2))
         {
-            nbootResult = (nboot_status_t)g_bootloaderTree_v1->nbootDriver->nboot_sb3_load_block(
+            nbootResult = (fsl_nboot_status_t)g_bootloaderTree_v1->nbootDriver->nboot_sb3_load_block(
                 ctx->nbootCtx, (uint32_t *)&context->block_buffer[0]);
         }
         else
         {
-            nbootResult = (nboot_status_t)g_bootloaderTree_v0->nbootDriver->nboot_sb3_load_block(
+            nbootResult = (fsl_nboot_status_t)g_bootloaderTree_v0->nbootDriver->nboot_sb3_load_block(
                 ctx->nbootCtx, (uint32_t *)&context->block_buffer[0]);
         }
         if (nbootResult == kStatus_NBOOT_Success)
@@ -643,17 +643,17 @@ static status_t ldr_DoDataRead(api_core_context_t *ctx)
 ////////////////////////////////////////////////////////////////////////////
 //! @brief header block handling
 ////////////////////////////////////////////////////////////////////////////
-static status_t ldr_DoHeader_v3(api_core_context_t *ctx)
+static status_t ldr_DoHeader_v3(fsl_api_core_context_t *ctx)
 {
     status_t status = kStatus_Success;
-    nboot_sb3_load_manifest_parms_t manifestParms;
+    fsl_nboot_sb3_load_manifest_parms_t manifestParms;
 
-    ldr_Context_v3_t *context = get_sbloader_v3_context(ctx);
+    fsl_ldr_Context_v3_t *context = get_sbloader_v3_context(ctx);
 
     do
     {
-        nboot_sb3_header_t *header = (nboot_sb3_header_t *)&context->block_buffer[0];
-        if (context->block_buffer_size == sizeof(nboot_sb3_header_t))
+        fsl_nboot_sb3_header_t *header = (fsl_nboot_sb3_header_t *)&context->block_buffer[0];
+        if (context->block_buffer_size == sizeof(fsl_nboot_sb3_header_t))
         {
             // Update the buffer size to the size of Block 0.
             context->block_buffer_size = header->imageTotalLength;
@@ -665,7 +665,7 @@ static status_t ldr_DoHeader_v3(api_core_context_t *ctx)
                 break;
             }
             // Resume the cleared buffer position.
-            context->block_buffer_position = sizeof(nboot_sb3_header_t);
+            context->block_buffer_position = sizeof(fsl_nboot_sb3_header_t);
 
             status = kStatus_Success;
             break;
@@ -677,9 +677,9 @@ static status_t ldr_DoHeader_v3(api_core_context_t *ctx)
             break;
         }
 
-        (void)memset(&manifestParms, 0, sizeof(nboot_sb3_load_manifest_parms_t));
+        (void)memset(&manifestParms, 0, sizeof(fsl_nboot_sb3_load_manifest_parms_t));
 
-        nboot_status_t nbootResult = nboot_hal_get_sb3_manifest_params(ctx->nbootCtx, &manifestParms);
+        fsl_nboot_status_t nbootResult = nboot_hal_get_sb3_manifest_params(ctx->nbootCtx, &manifestParms);
         if (nbootResult != kStatus_NBOOT_Success)
         {
             SBLOADER_PRINTF("ROM API: %s, nboot_hal_get_sb3_manifest_params is failed, status = %x", __func__,
@@ -691,18 +691,18 @@ static status_t ldr_DoHeader_v3(api_core_context_t *ctx)
         // call nboot lib to verify the block header
         if ((get_chip_revision() == 1) || (get_chip_revision() == 2))
         {
-            nbootResult = (nboot_status_t)g_bootloaderTree_v1->nbootDriver->nboot_sb3_load_manifest(
+            nbootResult = (fsl_nboot_status_t)g_bootloaderTree_v1->nbootDriver->nboot_sb3_load_manifest(
                  ctx->nbootCtx, (uint32_t *)header, &manifestParms);
         }
         else
         {
-            nbootResult = (nboot_status_t)g_bootloaderTree_v0->nbootDriver->nboot_sb3_load_manifest(
+            nbootResult = (fsl_nboot_status_t)g_bootloaderTree_v0->nbootDriver->nboot_sb3_load_manifest(
                  ctx->nbootCtx, (uint32_t *)header, &manifestParms);
         }
         if (nbootResult == kStatus_NBOOT_Success)
         {
             context->data_block_offset = (uint8_t)(sizeof(uint32_t) /* blockNumber*/ + header->certificateBlockOffset -
-                                                   sizeof(nboot_sb3_header_t));
+                                                   sizeof(fsl_nboot_sb3_header_t));
             context->block_buffer_size = (uint32_t)context->data_block_offset + NBOOT_SB3_CHUNK_SIZE_IN_BYTES;
             context->block_buffer_position = 0;
             context->block_size            = header->blockSize;
@@ -711,7 +711,7 @@ static status_t ldr_DoHeader_v3(api_core_context_t *ctx)
             context->in_data_section       = false;
             context->data_section_handled  = 0;
             context->processedBlocks       = 0;
-            context->Action                = (pLdrFnc_v3_t)ldr_DoDataRead;
+            context->Action                = (fsl_pLdrFnc_v3_t)ldr_DoDataRead;
             status                         = kStatus_Success;
         }
         else
@@ -727,7 +727,7 @@ static status_t ldr_DoHeader_v3(api_core_context_t *ctx)
 ////////////////////////////////////////////////////////////////////////////
 //! @brief Initialize the loader state machine.
 ////////////////////////////////////////////////////////////////////////////
-status_t sbloader_init(api_core_context_t *ctx)
+status_t fsl_sbloader_init(fsl_api_core_context_t *ctx)
 {
     status_t status = kStatus_InvalidArgument;
 
@@ -738,14 +738,14 @@ status_t sbloader_init(api_core_context_t *ctx)
             break;
         }
 
-        ldr_Context_v3_t *context = ctx->sbloaderCtx;
+        fsl_ldr_Context_v3_t *context = ctx->sbloaderCtx;
 
         // Initialize the context
-        (void)memset(context, 0, sizeof(ldr_Context_v3_t));
-        context->block_buffer_size = sizeof(nboot_sb3_header_t);
+        (void)memset(context, 0, sizeof(fsl_ldr_Context_v3_t));
+        context->block_buffer_size = sizeof(fsl_nboot_sb3_header_t);
 
         // Process the first chunk of the image header
-        context->Action = (pLdrFnc_v3_t)ldr_DoHeader_v3;
+        context->Action = (fsl_pLdrFnc_v3_t)ldr_DoHeader_v3;
 
         // Initialize the allowed command set
         context->commandSet = SBLOADER_V3_CMD_SET_ALL;
@@ -760,11 +760,11 @@ status_t sbloader_init(api_core_context_t *ctx)
 ////////////////////////////////////////////////////////////////////////////
 //! @brief Finalize the loader operations
 ////////////////////////////////////////////////////////////////////////////
-status_t sbloader_finalize(api_core_context_t *ctx)
+status_t fsl_sbloader_finalize(fsl_api_core_context_t *ctx)
 {
     status_t status = kStatus_Fail;
 
-    ldr_Context_v3_t *context = get_sbloader_v3_context(ctx);
+    fsl_ldr_Context_v3_t *context = get_sbloader_v3_context(ctx);
 
     if (context->data_range_header.cmd == (uint32_t)kSB3_CmdExecute)
     {
@@ -776,12 +776,12 @@ status_t sbloader_finalize(api_core_context_t *ctx)
 
 ////////////////////////////////////////////////////////////////////////////
 //! @brief Pump the loader state machine.///////////////////////////////////
-status_t sbloader_pump(api_core_context_t *ctx, uint8_t *data, uint32_t length)
+status_t fsl_sbloader_pump(fsl_api_core_context_t *ctx, uint8_t *data, uint32_t length)
 {
     status_t status = kStatus_InvalidArgument;
     do
     {
-        ldr_Context_v3_t *context = ctx->sbloaderCtx;
+        fsl_ldr_Context_v3_t *context = ctx->sbloaderCtx;
         uint32_t required         = 0U;
         uint32_t available        = 0U;
         uint32_t readPosition     = 0U;
@@ -859,13 +859,14 @@ status_t loader_process_sb_file(uint32_t readOffset)
 {
     status_t status                = kStatus_Fail;
     uint32_t packetLength          = sizeof(packetBuf);
-    s_api_core_context.sbloaderCtx = &s_sbloader_context;
-    s_api_core_context.nbootCtx    = &g_nbootCtx;
+    s_fsl_api_core_context.sbloaderCtx = &s_sbloader_context;
+    s_fsl_api_core_context.nbootCtx    = &g_nbootCtx;
     bool elsFlag                   = false;
     uint32_t CSS_CTRL_context = 0;
 
     do
     {
+        (void)POWER_EnableGDetVSensors();
         if ( ((CLKCTL0->PSCCTL0 & CLKCTL0_PSCCTL0_ELS_MASK) == 0U) || \
              ((CLKCTL0->PSCCTL1 & CLKCTL0_PSCCTL1_ELS_APB_MASK) == 0U) || \
              ((RSTCTL0->PRSTCTL0 & RSTCTL0_PRSTCTL0_ELS_MASK) != 0U) )
@@ -878,18 +879,18 @@ status_t loader_process_sb_file(uint32_t readOffset)
 
         if ((get_chip_revision() == 1) || (get_chip_revision() == 2))
         {
-            status = (int32_t)g_bootloaderTree_v1->nbootDriver->nboot_context_init(s_api_core_context.nbootCtx);
+            status = (int32_t)g_bootloaderTree_v1->nbootDriver->nboot_context_init(s_fsl_api_core_context.nbootCtx);
         }
         else
         {
-            status = (int32_t)g_bootloaderTree_v0->nbootDriver->nboot_context_init(s_api_core_context.nbootCtx);
+            status = (int32_t)g_bootloaderTree_v0->nbootDriver->nboot_context_init(s_fsl_api_core_context.nbootCtx);
         }
         if (status != (status_t)kStatus_NBOOT_Success)
         {
             break;
         }
 
-        status = sbloader_init(&s_api_core_context);
+        status = fsl_sbloader_init(&s_fsl_api_core_context);
         if (status != kStatus_Success)
         {
             break;
@@ -901,11 +902,11 @@ status_t loader_process_sb_file(uint32_t readOffset)
             (void)memcpy(packetBuf, (uint8_t *)readOffset, packetLength);
             if ((get_chip_revision() == 1) || (get_chip_revision() == 2))
             {
-                status = sbloader_pump(&s_api_core_context, packetBuf, packetLength);
+                status = fsl_sbloader_pump(&s_fsl_api_core_context, packetBuf, packetLength);
             }
             else
             {
-                status = g_bootloaderTree_v0->iapApiDriver->sbloader_pump(&s_api_core_context, packetBuf, packetLength);
+                status = g_bootloaderTree_v0->iapApiDriver->fsl_sbloader_pump(&s_fsl_api_core_context, packetBuf, packetLength);
             }
 
             // kStatusRomLdrDataUnderrun means need more data
@@ -917,7 +918,7 @@ status_t loader_process_sb_file(uint32_t readOffset)
             }
             else if (status == (status_t)kStatusRomLdrPendingJumpCommand)
             {
-                status = sbloader_finalize(&s_api_core_context);
+                status = fsl_sbloader_finalize(&s_fsl_api_core_context);
                 break;
             }
             else
@@ -942,11 +943,11 @@ status_t loader_process_sb_file(uint32_t readOffset)
 
     if ((get_chip_revision() == 1) || (get_chip_revision() == 2))
     {
-        (void)g_bootloaderTree_v1->nbootDriver->nboot_context_deinit(s_api_core_context.nbootCtx);
+        (void)g_bootloaderTree_v1->nbootDriver->nboot_context_deinit(s_fsl_api_core_context.nbootCtx);
     }
     else
     {
-        (void)g_bootloaderTree_v0->nbootDriver->nboot_context_deinit(s_api_core_context.nbootCtx);
+        (void)g_bootloaderTree_v0->nbootDriver->nboot_context_deinit(s_fsl_api_core_context.nbootCtx);
     }
 
     if (get_chip_revision() == 0)
@@ -961,6 +962,7 @@ status_t loader_process_sb_file(uint32_t readOffset)
         CLOCK_DisableClock(kCLOCK_ElsApb);
         CLOCK_DisableClock(kCLOCK_Els);
     }
+    POWER_DisableGDetVSensors();
 
     return status;
 }
@@ -1002,9 +1004,9 @@ status_t loader_process_raw_file(uint32_t readOffset)
 status_t load_service(LOAD_Target_Type loadTarget, uint32_t sourceAddr)
 {
     status_t status = kStatus_Fail;
-    nboot_sb3_header_t *pt_a_ptr;
-    nboot_sb3_header_t *pt_b_ptr;
-    nboot_sb3_header_t *active_pt_ptr;
+    fsl_nboot_sb3_header_t *pt_a_ptr;
+    fsl_nboot_sb3_header_t *pt_b_ptr;
+    fsl_nboot_sb3_header_t *active_pt_ptr;
     uint32_t firmwareVersion = 0xFFFFFFFFU;
     bool flexspiFlag = false;
     bool otpFlag = false;
@@ -1023,39 +1025,39 @@ status_t load_service(LOAD_Target_Type loadTarget, uint32_t sourceAddr)
     {
         if (sourceAddr == 0)
         {
-            pt_a_ptr = (nboot_sb3_header_t *)WIFI_IMAGE_A_OFFSET;
-            pt_b_ptr = (nboot_sb3_header_t *)WIFI_IMAGE_B_OFFSET;
+            pt_a_ptr = (fsl_nboot_sb3_header_t *)WIFI_IMAGE_A_OFFSET;
+            pt_b_ptr = (fsl_nboot_sb3_header_t *)WIFI_IMAGE_B_OFFSET;
         }
         else
         {
-            pt_a_ptr = (nboot_sb3_header_t *)sourceAddr;
-            pt_b_ptr = (nboot_sb3_header_t *)(sourceAddr + WIFI_IMAGE_SIZE_MAX);
+            pt_a_ptr = (fsl_nboot_sb3_header_t *)sourceAddr;
+            pt_b_ptr = (fsl_nboot_sb3_header_t *)(sourceAddr + WIFI_IMAGE_SIZE_MAX);
         }
     }
     else if (LOAD_BLE_FIRMWARE == loadTarget)
     {
         if (sourceAddr == 0)
         {
-            pt_a_ptr = (nboot_sb3_header_t *)BLE_IMAGE_A_OFFSET;
-            pt_b_ptr = (nboot_sb3_header_t *)BLE_IMAGE_B_OFFSET;
+            pt_a_ptr = (fsl_nboot_sb3_header_t *)BLE_IMAGE_A_OFFSET;
+            pt_b_ptr = (fsl_nboot_sb3_header_t *)BLE_IMAGE_B_OFFSET;
         }
         else
         {
-            pt_a_ptr = (nboot_sb3_header_t *)sourceAddr;
-            pt_b_ptr = (nboot_sb3_header_t *)(sourceAddr + BLE_IMAGE_SIZE_MAX);
+            pt_a_ptr = (fsl_nboot_sb3_header_t *)sourceAddr;
+            pt_b_ptr = (fsl_nboot_sb3_header_t *)(sourceAddr + BLE_IMAGE_SIZE_MAX);
         }
     }
     else if (LOAD_15D4_FIRMWARE == loadTarget)
     {
         if (sourceAddr == 0)
         {
-            pt_a_ptr = (nboot_sb3_header_t *)Z154_IMAGE_A_OFFSET;
-            pt_b_ptr = (nboot_sb3_header_t *)Z154_IMAGE_B_OFFSET;
+            pt_a_ptr = (fsl_nboot_sb3_header_t *)Z154_IMAGE_A_OFFSET;
+            pt_b_ptr = (fsl_nboot_sb3_header_t *)Z154_IMAGE_B_OFFSET;
         }
         else
         {
-            pt_a_ptr = (nboot_sb3_header_t *)sourceAddr;
-            pt_b_ptr = (nboot_sb3_header_t *)(sourceAddr + Z154_IMAGE_SIZE_MAX);
+            pt_a_ptr = (fsl_nboot_sb3_header_t *)sourceAddr;
+            pt_b_ptr = (fsl_nboot_sb3_header_t *)(sourceAddr + Z154_IMAGE_SIZE_MAX);
         }
     }
     else

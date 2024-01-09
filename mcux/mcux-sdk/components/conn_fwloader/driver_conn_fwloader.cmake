@@ -12,6 +12,12 @@ target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/include
 )
 
+#OR Logic component
+if(CONFIG_USE_component_osa_free_rtos_RW612) 
+    include(component_osa_free_rtos_RW612)
+endif()
+if(CONFIG_USE_component_osa_bm) 
+    include(component_osa_bm)
+endif()
 
-include(component_osa_bm)
 include(driver_ocotp)

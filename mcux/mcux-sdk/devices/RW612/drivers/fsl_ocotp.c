@@ -254,20 +254,25 @@ status_t OCOTP_ReadSocOtp(uint64_t *data, uint32_t tag)
     status_t status = kStatus_Fail;
     uint32_t i;
 
-    assert(data != NULL);
-
-    /* Read SOC_OTP values */
-    for (i = 0U; i < OTP_SEC_NLINES; i++)
+    if (data == NULL)
     {
-        if (soc_otp_read(i, data) == 0U)
+        status = kStatus_InvalidArgument;
+    }
+    else
+    {
+        /* Read SOC_OTP values */
+        for (i = 0U; i < OTP_SEC_NLINES; i++)
         {
-            continue;
-        }
+            if (soc_otp_read(i, data) == 0U)
+            {
+                continue;
+            }
 
-        if ((*data & 0xFFFFU) == tag)
-        {
-            status = kStatus_Success;
-            break;
+            if ((*data & 0xFFFFU) == tag)
+            {
+                status = kStatus_Success;
+                break;
+            }
         }
     }
 

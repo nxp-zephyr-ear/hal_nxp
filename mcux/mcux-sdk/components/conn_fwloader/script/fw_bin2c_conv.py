@@ -6,7 +6,7 @@ def bin2c_convert(binfile_name, array_name, padding_len=0):
 
     with open(binfile_name, 'rb') as in_file:
         bindata = in_file.read()
-    
+
     out = 'const char %s[%d] = {\n' % (array_name, len(bindata)+padding_len)
     line = ''
     first_char=True
@@ -47,23 +47,21 @@ def bin2c_file(bin_file_name, out_src_file_name, dest_path):
 
 def generate_sb_src(conn_fwloader_dir, chip_revision):
 
-    a0_sb_list=[{'file':'rw610_sb_wifi.bin',              'array_name': 'fw_cpu1'},
-                {'file':'rw610_sb_ble.bin',               'array_name': 'fw_cpu2_ble'},
-                {'file':'rw610_sb_ble_15d4_combo.bin',    'array_name': 'fw_cpu2_combo'}]
-    a1_sb_list=[{'file':'rw610_sb_wifi_v1.bin',           'array_name': 'fw_cpu1'},
-                {'file':'rw610_sb_ble_v1.bin',            'array_name': 'fw_cpu2_ble'},
-                {'file':'rw610_sb_ble_15d4_combo_v1.bin', 'array_name': 'fw_cpu2_combo'}]
-    a2_sb_list=[{'file':'rw610_sb_wifi_v2.bin',           'array_name': 'fw_cpu1'},
-                {'file':'rw610_sb_ble_v2.bin',            'array_name': 'fw_cpu2_ble'},
-                {'file':'rw610_sb_ble_15d4_combo_v2.bin', 'array_name': 'fw_cpu2_combo'}]
-            
+    a1_sb_list = [
+        {'file': 'rw61x_sb_wifi_a1.bin',           'array_name': 'fw_cpu1'},
+        {'file': 'rw61x_sb_ble_a1.bin',            'array_name': 'fw_cpu2_ble'},
+        {'file': 'rw61x_sb_ble_15d4_combo_a1.bin', 'array_name': 'fw_cpu2_combo'}
+    ]
+    a2_sb_list = [
+        {'file': 'rw61x_sb_wifi_a2.bin',           'array_name': 'fw_cpu1'},
+        {'file': 'rw61x_sb_ble_a2.bin',            'array_name': 'fw_cpu2_ble'},
+        {'file': 'rw61x_sb_ble_15d4_combo_a2.bin', 'array_name': 'fw_cpu2_combo'}
+    ]
 
     if (chip_revision == 'A2'):
         binlist = a2_sb_list
     elif (chip_revision == 'A1'):
         binlist = a1_sb_list
-    elif (chip_revision == 'A0'):
-        binlist = a0_sb_list
     else:
         return
     dest_dir=conn_fwloader_dir+'/'+chip_revision
@@ -78,22 +76,21 @@ def generate_sb_src(conn_fwloader_dir, chip_revision):
 
 def generate_raw_src(conn_fwloader_dir, chip_revision):
 
-    a0_raw_list=[{'file':'rw610w_raw_cpu1.bin',                        'array_name': 'fw_cpu1'},
-                {'file':'rw610n_raw_cpu2_ble.bin',                     'array_name': 'fw_cpu2_ble'},
-                {'file':'rw610n_combo_raw_cpu2_ble_15_4_combo.bin',    'array_name': 'fw_cpu2_combo'}]
-    a1_raw_list=[{'file':'rw610w_raw_cpu1_v1.bin',                     'array_name': 'fw_cpu1'},
-                {'file':'rw610n_raw_cpu2_ble_v1.bin',                  'array_name': 'fw_cpu2_ble'},
-                {'file':'rw610n_combo_raw_cpu2_ble_15_4_combo_v1.bin', 'array_name': 'fw_cpu2_combo'}]
-    a2_raw_list=[{'file':'rw610w_raw_cpu1_v2.bin',                     'array_name': 'fw_cpu1'},
-                {'file':'rw610n_raw_cpu2_ble_v2.bin',                  'array_name': 'fw_cpu2_ble'},
-                {'file':'rw610n_combo_raw_cpu2_ble_15_4_combo_v2.bin', 'array_name': 'fw_cpu2_combo'}]
+    a1_raw_list = [
+        {'file': 'rw61xw_raw_cpu1_a1.bin',                      'array_name': 'fw_cpu1'},
+        {'file': 'rw61xn_raw_cpu2_ble_a1.bin',                  'array_name': 'fw_cpu2_ble'},
+        {'file': 'rw61xn_combo_raw_cpu2_ble_15_4_combo_a1.bin', 'array_name': 'fw_cpu2_combo'}
+    ]
+    a2_raw_list = [
+        {'file': 'rw61xw_raw_cpu1_a2.bin',                      'array_name': 'fw_cpu1'},
+        {'file': 'rw61xn_raw_cpu2_ble_a2.bin',                  'array_name': 'fw_cpu2_ble'},
+        {'file': 'rw61xn_combo_raw_cpu2_ble_15_4_combo_a2.bin', 'array_name': 'fw_cpu2_combo'}
+    ]
 
     if (chip_revision == 'A2'):
         binlist = a2_raw_list
     elif (chip_revision == 'A1'):
         binlist = a1_raw_list
-    elif (chip_revision == 'A0'):
-        binlist = a0_raw_list
     else:
         return
     dest_dir=conn_fwloader_dir+'/'+chip_revision
@@ -117,20 +114,18 @@ def main():
 
     if args.type == 'sb':
         if args.rev == 'all':
-            #generate_sb_src(args.in_path, 'A0') deprecated revision A0
             generate_sb_src(args.in_path, 'A1')
             generate_sb_src(args.in_path, 'A2')
         else:
-            if args.rev == 'A0' or args.rev == 'A1' or args.rev == 'A2':
-                generate_sb_src(args.in_path, args.rev)
+            if args.rev == 'A1' or args.rev == 'A2':
+                generate_sb_src(args.in_path, args.rev, args.verbose)
     elif args.type == 'raw':
         if args.rev == 'all':
-            #generate_raw_src(args.in_path, 'A0') deprecated revision A0
             generate_raw_src(args.in_path, 'A1')
             generate_raw_src(args.in_path, 'A2')
         else:
-            if args.rev == 'A0' or args.rev == 'A1' or args.rev == 'A2':
-                generate_raw_src(args.in_path, args.rev)
+            if args.rev == 'A1' or args.rev == 'A2':
+                generate_raw_src(args.in_path, args.rev, args.verbose)
             else:
                 print("error wrong chip revision argument must be in A0, A1, A2, or all")
     else:

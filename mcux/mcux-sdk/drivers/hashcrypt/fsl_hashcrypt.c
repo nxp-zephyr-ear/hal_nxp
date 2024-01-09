@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 NXP
+ * Copyright 2017-2023 NXP
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -20,6 +20,8 @@
 #define SHA_BLOCK_SIZE 64U
 /*!< max number of blocks that can be proccessed in one run (master mode) */
 #define SHA_MASTER_MAX_BLOCKS 2048U
+/*!< max number of blocks the SHA engine can copy, starting at MEMADDR */
+#define SHA_MAX_BLOCK_COUNT 2047U
 
 /*!< Use standard C library memcpy  */
 #define hashcrypt_memcpy memcpy
@@ -320,13 +322,21 @@ static status_t hashcrypt_check_need_key(HASHCRYPT_Type *base, hashcrypt_handle_
  * @param base Hachcrypt peripheral base address.
  * @param[out] output Output buffer.
  * @param Number of bytes to copy.
+ * @return kStatus_Success if no hashing error, kStatus_Fail otherwise.
  */
-static void hashcrypt_get_data(HASHCRYPT_Type *base, uint32_t *output, size_t outputSize)
+static status_t hashcrypt_get_data(HASHCRYPT_Type *base, uint8_t *output, size_t outputSize)
 {
+    status_t status = kStatus_Fail;
     uint32_t digest[8];
 
-    while (0U == (base->STATUS & HASHCRYPT_STATUS_DIGEST_MASK))
+    while ((0U == (base->STATUS & HASHCRYPT_STATUS_DIGEST_MASK)) &&
+           (0U == (base->STATUS & HASHCRYPT_STATUS_ERROR_MASK)))
     {
+    }
+
+    if (0U == (base->STATUS & HASHCRYPT_STATUS_ERROR_MASK))
+    {
+        status = kStatus_Success;
     }
 
     /* Data Synchronization Barrier */
@@ -341,7 +351,9 @@ static void hashcrypt_get_data(HASHCRYPT_Type *base, uint32_t *output, size_t ou
     {
         outputSize = sizeof(digest);
     }
-    (void)hashcrypt_memcpy(output, digest, outputSize);
+    (void)hashcrypt_memcpy(output, (const uint8_t *)(uintptr_t)digest, outputSize);
+
+    return status;
 }
 
 /*!
@@ -429,7 +441,8 @@ static status_t hashcrypt_aes_one_block_aligned(HASHCRYPT_Type *base,
     while (size >= HASHCRYPT_AES_BLOCK_SIZE)
     {
         /* Get result */
-        while (0U == (base->STATUS & HASHCRYPT_STATUS_DIGEST_MASK))
+        while ((0U == (base->STATUS & HASHCRYPT_STATUS_DIGEST_MASK)) &&
+               (0U == (base->STATUS & HASHCRYPT_STATUS_ERROR_MASK)))
         {
         }
 
@@ -477,14 +490,16 @@ static status_t hashcrypt_aes_one_block_unaligned(HASHCRYPT_Type *base,
     {
         size_t actSz     = size >= 256u ? 256u : size;
         size_t actSzOrig = actSz;
-        (void)memcpy(temp, (const uint32_t *)(uintptr_t)(input + 256 * cnt), actSz);
+        /* Memcpy input not typecast; see memcpy *important* note in hashcrypt_sha_one_block() */
+        (void)hashcrypt_memcpy(temp, (input + 256 * cnt), actSz);
         size -= actSz;
         base->MEMADDR   = HASHCRYPT_MEMADDR_BASE(temp);
         base->MEMCTRL   = HASHCRYPT_MEMCTRL_MASTER(1) | HASHCRYPT_MEMCTRL_COUNT(actSz / 16U);
         uint32_t outidx = 0;
         while (actSz != 0U)
         {
-            while (0U == (base->STATUS & HASHCRYPT_STATUS_DIGEST_MASK))
+            while ((0U == (base->STATUS & HASHCRYPT_STATUS_DIGEST_MASK)) &&
+                   (0U == (base->STATUS & HASHCRYPT_STATUS_ERROR_MASK)))
             {
             }
             for (int i = 0; i < 4; i++)
@@ -494,7 +509,7 @@ static status_t hashcrypt_aes_one_block_unaligned(HASHCRYPT_Type *base,
             outidx += HASHCRYPT_AES_BLOCK_SIZE / 4U;
             actSz -= HASHCRYPT_AES_BLOCK_SIZE;
         }
-        (void)memcpy(output + 256 * cnt, (const uint8_t *)(uintptr_t)temp, actSzOrig);
+        (void)hashcrypt_memcpy(output + 256 * cnt, (const uint8_t *)(uintptr_t)temp, actSzOrig);
         cnt++;
     }
 
@@ -649,7 +664,10 @@ static void hashcrypt_sha_one_block(HASHCRYPT_Type *base, const uint8_t *blk)
     /* make sure the 512-bit block is word aligned */
     if (0U != ((uintptr_t)blk & 0x3u))
     {
-        (void)hashcrypt_memcpy(temp, (const uint32_t *)(uintptr_t)blk, SHA_BLOCK_SIZE);
+        (void)hashcrypt_memcpy(temp, blk, SHA_BLOCK_SIZE);
+        /* Important: do not cast blk to any other type then uint8_t. Depending on the compiler and optimization level,
+         * compiler might decide to use a mempy implementation that does not work on non aligned addresses, resulting in
+         * a hard fault */
         actBlk = (const uint32_t *)(uintptr_t)temp;
     }
     else
@@ -676,13 +694,15 @@ static void hashcrypt_sha_one_block(HASHCRYPT_Type *base, const uint8_t *blk)
  * @param ctxInternal Internal context.
  * @param message Input message.
  * @param messageSize Size of input message in bytes.
- * @return kStatus_Success.
+ * @return kStatus_Success if message hashed, kStatus_Fail otherwise.
  */
 static status_t hashcrypt_sha_process_message_data(HASHCRYPT_Type *base,
                                                    hashcrypt_sha_ctx_internal_t *ctxInternal,
                                                    const uint8_t *message,
                                                    size_t messageSize)
 {
+    status_t status = kStatus_Fail;
+
     /* first fill the internal buffer to full block */
     if (ctxInternal->blksz != 0U)
     {
@@ -709,28 +729,66 @@ static status_t hashcrypt_sha_process_message_data(HASHCRYPT_Type *base,
         }
         else
         {
-            /* poll waiting. */
-            while (0U == (base->STATUS & HASHCRYPT_STATUS_WAITING_MASK))
+            /* number of blocks and number of rounds needed to compute hash */
+            uint32_t blkNum        = (messageSize >> 6); /* div by 64 bytes */
+            uint32_t blkFullRounds = blkNum / SHA_MAX_BLOCK_COUNT;
+
+            /* feed the SHA engine with the maximum possible number of blocks */
+            while (blkFullRounds >= 1U)
             {
+                /* poll waiting. */
+                while (0U == (base->STATUS & HASHCRYPT_STATUS_WAITING_MASK))
+                {
+                }
+                uint32_t blkBytes = SHA_MAX_BLOCK_COUNT * 64u; /* number of bytes in maximum block count */
+
+                __DSB();
+                base->MEMADDR = HASHCRYPT_MEMADDR_BASE(message);
+                base->MEMCTRL = HASHCRYPT_MEMCTRL_MASTER(1) | HASHCRYPT_MEMCTRL_COUNT(SHA_MAX_BLOCK_COUNT);
+                __DSB();
+
+                while ((0U == (base->STATUS & HASHCRYPT_STATUS_DIGEST_MASK)) &&
+                       (0U == (base->STATUS & HASHCRYPT_STATUS_ERROR_MASK)))
+                {
+                }
+                message += blkBytes;
+                messageSize -= blkBytes;
+                blkFullRounds -= 1U;
+                blkNum -= SHA_MAX_BLOCK_COUNT;
             }
-            uint32_t blkNum   = (messageSize >> 6); /* div by 64 bytes */
-            uint32_t blkBytes = blkNum * 64u;       /* number of bytes in 64 bytes blocks */
-            __DSB();
-            __ISB();
-            base->MEMADDR = HASHCRYPT_MEMADDR_BASE(message);
-            base->MEMCTRL = HASHCRYPT_MEMCTRL_MASTER(1) | HASHCRYPT_MEMCTRL_COUNT(blkNum);
-            message += blkBytes;
-            messageSize -= blkBytes;
-            while (0U == (base->STATUS & HASHCRYPT_STATUS_DIGEST_MASK))
+
+            if (blkNum != 0U)
             {
+                /* same as above, but only for the remaining number of blocks < SHA_MAX_BLOCK_COUNT */
+                while (0U == (base->STATUS & HASHCRYPT_STATUS_WAITING_MASK))
+                {
+                }
+                uint32_t blkBytes = blkNum * 64u; /* number of bytes in 64 bytes blocks */
+
+                __DSB();
+                base->MEMADDR = HASHCRYPT_MEMADDR_BASE(message);
+                base->MEMCTRL = HASHCRYPT_MEMCTRL_MASTER(1) | HASHCRYPT_MEMCTRL_COUNT(blkNum);
+                __DSB();
+
+                while ((0U == (base->STATUS & HASHCRYPT_STATUS_DIGEST_MASK)) &&
+                       (0U == (base->STATUS & HASHCRYPT_STATUS_ERROR_MASK)))
+                {
+                }
+                message += blkBytes;
+                messageSize -= blkBytes;
             }
         }
+    }
+
+    if (0U == (base->STATUS & HASHCRYPT_STATUS_ERROR_MASK))
+    {
+        status = kStatus_Success;
     }
 
     /* copy last incomplete message bytes into internal block */
     (void)hashcrypt_memcpy(&ctxInternal->blk.b[0], message, messageSize);
     ctxInternal->blksz = messageSize;
-    return kStatus_Success;
+    return status;
 }
 
 /*!
@@ -740,10 +798,11 @@ static status_t hashcrypt_sha_process_message_data(HASHCRYPT_Type *base,
  *
  * @param base SHA peripheral base address.
  * @param ctxInternal Internal context.
- * @return kStatus_Success.
+ * @return kStatus_Success if finalized, kStatus_Fail otherwise.
  */
 static status_t hashcrypt_sha_finalize(HASHCRYPT_Type *base, hashcrypt_sha_ctx_internal_t *ctxInternal)
 {
+    status_t status = kStatus_Fail;
     hashcrypt_sha_block_t lastBlock;
 
     (void)memset(&lastBlock, 0, sizeof(hashcrypt_sha_block_t));
@@ -777,19 +836,28 @@ static status_t hashcrypt_sha_finalize(HASHCRYPT_Type *base, hashcrypt_sha_ctx_i
         hashcrypt_sha_one_block(base, &lastBlock.b[0]);
     }
     /* poll wait for final digest */
-    while (0U == (base->STATUS & HASHCRYPT_STATUS_DIGEST_MASK))
+    while ((0U == (base->STATUS & HASHCRYPT_STATUS_DIGEST_MASK)) &&
+           (0U == (base->STATUS & HASHCRYPT_STATUS_ERROR_MASK)))
     {
     }
-    return kStatus_Success;
+
+    if (0U == (base->STATUS & HASHCRYPT_STATUS_ERROR_MASK))
+    {
+        status = kStatus_Success;
+    }
+
+    return status;
 }
 
-static void hashcrypt_save_running_hash(HASHCRYPT_Type *base, hashcrypt_sha_ctx_internal_t *ctxInternal)
+static status_t hashcrypt_save_running_hash(HASHCRYPT_Type *base, hashcrypt_sha_ctx_internal_t *ctxInternal)
 {
 #if defined(FSL_FEATURE_HASHCRYPT_HAS_RELOAD_FEATURE) && (FSL_FEATURE_HASHCRYPT_HAS_RELOAD_FEATURE > 0)
-    size_t len = (ctxInternal->algo == kHASHCRYPT_Sha1) ? SHA1_LEN : SHA256_LEN;
+    status_t status = kStatus_Fail;
+    size_t len      = (ctxInternal->algo == kHASHCRYPT_Sha1) ? SHA1_LEN : SHA256_LEN;
 
     /* Wait until digest is ready */
-    while (0U == (base->STATUS & HASHCRYPT_STATUS_DIGEST_MASK))
+    while ((0U == (base->STATUS & HASHCRYPT_STATUS_DIGEST_MASK)) &&
+           (0U == (base->STATUS & HASHCRYPT_STATUS_ERROR_MASK)))
     {
     }
 
@@ -798,6 +866,15 @@ static void hashcrypt_save_running_hash(HASHCRYPT_Type *base, hashcrypt_sha_ctx_
     {
         ctxInternal->runningHash[i] = base->DIGEST0[i];
     }
+
+    if (0U == (base->STATUS & HASHCRYPT_STATUS_ERROR_MASK))
+    {
+        status = kStatus_Success;
+    }
+
+    return status;
+#else
+    return kStatus_Success;
 #endif
 }
 
@@ -823,6 +900,23 @@ static void hashcrypt_restore_running_hash(HASHCRYPT_Type *base, hashcrypt_sha_c
     /* Clear RELOAD register before continuing */
     base->CTRL &= ~HASHCRYPT_CTRL_RELOAD_MASK;
 #endif
+}
+
+/* Load random number into PRNG_SEED register */
+/* Used in AES operations for SCA protection */
+static void hashcrypt_seed_prng(HASHCRYPT_Type *base)
+{
+#if defined(FSL_FEATURE_HASHCRYPT_HAS_RELOAD_FEATURE) && (FSL_FEATURE_HASHCRYPT_HAS_RELOAD_FEATURE > 0)
+
+#if defined(FSL_FEATURE_SOC_LPC_RNG1_COUNT) && (FSL_FEATURE_SOC_LPC_RNG1_COUNT > 0)
+    base->PRNG_SEED = RNG->RANDOM_NUMBER;
+#endif /* defined(FSL_FEATURE_SOC_LPC_RNG1_COUNT) && (FSL_FEATURE_SOC_LPC_RNG1_COUNT > 0) */
+
+#if defined(FSL_FEATURE_SOC_TRNG_COUNT) && (FSL_FEATURE_SOC_TRNG_COUNT > 0)
+    base->PRNG_SEED = TRNG->ENT[15];
+#endif /* defined(FSL_FEATURE_SOC_TRNG_COUNT) && (FSL_FEATURE_SOC_TRNG_COUNT > 0) */
+
+#endif /* defined(FSL_FEATURE_HASHCRYPT_HAS_RELOAD_FEATURE) && (FSL_FEATURE_HASHCRYPT_HAS_RELOAD_FEATURE > 0) */
 }
 
 status_t HASHCRYPT_SHA(HASHCRYPT_Type *base,
@@ -930,8 +1024,13 @@ status_t HASHCRYPT_SHA_Update(HASHCRYPT_Type *base, hashcrypt_hash_ctx_t *ctx, c
     /* Data Synchronization Barrier */
     __DSB();
     status = hashcrypt_sha_process_message_data(base, ctxInternal, input, inputSize);
+    if (kStatus_Success != status)
+    {
+        return status;
+    }
+
     __DSB();
-    hashcrypt_save_running_hash(base, ctxInternal);
+    status = hashcrypt_save_running_hash(base, ctxInternal);
     return status;
 }
 
@@ -987,6 +1086,10 @@ status_t HASHCRYPT_SHA_Finish(HASHCRYPT_Type *base, hashcrypt_hash_ctx_t *ctx, u
 
     /* flush message last incomplete block, if there is any, and add padding bits */
     status = hashcrypt_sha_finalize(base, ctxInternal);
+    if (kStatus_Success != status)
+    {
+        return status;
+    }
 
     if (outputSize != NULL)
     {
@@ -1000,7 +1103,11 @@ status_t HASHCRYPT_SHA_Finish(HASHCRYPT_Type *base, hashcrypt_hash_ctx_t *ctx, u
         }
     }
 
-    hashcrypt_get_data(base, (uint32_t *)(uintptr_t)output, algOutSize);
+    status = hashcrypt_get_data(base, output, algOutSize);
+    if (kStatus_Success != status)
+    {
+        return status;
+    }
 
 #ifdef HASHCRYPT_SHA_DO_WIPE_CONTEXT
     ctxW = (uint32_t *)ctx;
@@ -1147,6 +1254,8 @@ status_t HASHCRYPT_AES_EncryptEcb(
         return kStatus_InvalidArgument;
     }
 
+    hashcrypt_seed_prng(base);
+
     uint32_t keyType = (handle->keyType == kHASHCRYPT_UserKey) ? 0U : 1u;
     base->CRYPTCFG   = HASHCRYPT_CRYPTCFG_AESMODE(kHASHCRYPT_AesEcb) | HASHCRYPT_CRYPTCFG_AESDECRYPT(AES_ENCRYPT) |
                      HASHCRYPT_CRYPTCFG_AESSECRET(keyType) | HASHCRYPT_CRYPTCFG_AESKEYSZ(handle->keySize) |
@@ -1185,6 +1294,8 @@ status_t HASHCRYPT_AES_DecryptEcb(
     {
         return kStatus_InvalidArgument;
     }
+
+    hashcrypt_seed_prng(base);
 
     uint32_t keyType = (handle->keyType == kHASHCRYPT_UserKey) ? 0U : 1u;
     base->CRYPTCFG   = HASHCRYPT_CRYPTCFG_AESMODE(kHASHCRYPT_AesEcb) | HASHCRYPT_CRYPTCFG_AESDECRYPT(AES_DECRYPT) |
@@ -1228,6 +1339,8 @@ status_t HASHCRYPT_AES_EncryptCbc(HASHCRYPT_Type *base,
     {
         return kStatus_InvalidArgument;
     }
+
+    hashcrypt_seed_prng(base);
 
     uint32_t keyType = (handle->keyType == kHASHCRYPT_UserKey) ? 0U : 1u;
     base->CRYPTCFG   = HASHCRYPT_CRYPTCFG_AESMODE(kHASHCRYPT_AesCbc) | HASHCRYPT_CRYPTCFG_AESDECRYPT(AES_ENCRYPT) |
@@ -1274,6 +1387,8 @@ status_t HASHCRYPT_AES_DecryptCbc(HASHCRYPT_Type *base,
     {
         return kStatus_InvalidArgument;
     }
+
+    hashcrypt_seed_prng(base);
 
     uint32_t keyType = (handle->keyType == kHASHCRYPT_UserKey) ? 0U : 1u;
     base->CRYPTCFG   = HASHCRYPT_CRYPTCFG_AESMODE(kHASHCRYPT_AesCbc) | HASHCRYPT_CRYPTCFG_AESDECRYPT(AES_DECRYPT) |
@@ -1325,6 +1440,8 @@ status_t HASHCRYPT_AES_CryptCtr(HASHCRYPT_Type *base,
     {
         return kStatus_InvalidArgument;
     }
+
+    hashcrypt_seed_prng(base);
 
     uint32_t keyType = (handle->keyType == kHASHCRYPT_UserKey) ? 0U : 1u;
     base->CRYPTCFG   = HASHCRYPT_CRYPTCFG_AESMODE(kHASHCRYPT_AesCtr) | HASHCRYPT_CRYPTCFG_AESDECRYPT(AES_ENCRYPT) |
@@ -1433,6 +1550,8 @@ status_t HASHCRYPT_AES_CryptOfb(HASHCRYPT_Type *base,
 
     uint32_t keyType = (handle->keyType == kHASHCRYPT_UserKey) ? 0U : 1u;
 
+    hashcrypt_seed_prng(base);
+
     base->CRYPTCFG = HASHCRYPT_CRYPTCFG_AESMODE(kHASHCRYPT_AesCbc) | HASHCRYPT_CRYPTCFG_AESDECRYPT(AES_ENCRYPT) |
                      HASHCRYPT_CRYPTCFG_AESSECRET(keyType) | HASHCRYPT_CRYPTCFG_AESKEYSZ(handle->keySize) |
                      HASHCRYPT_CRYPTCFG_MSW1ST_OUT(1) | HASHCRYPT_CRYPTCFG_SWAPKEY(1) | HASHCRYPT_CRYPTCFG_SWAPDAT(1) |
@@ -1518,6 +1637,8 @@ status_t HASHCRYPT_AES_EncryptCfb(HASHCRYPT_Type *base,
 
     uint32_t keyType = (handle->keyType == kHASHCRYPT_UserKey) ? 0U : 1u;
 
+    hashcrypt_seed_prng(base);
+
     base->CRYPTCFG = HASHCRYPT_CRYPTCFG_AESMODE(kHASHCRYPT_AesCbc) | HASHCRYPT_CRYPTCFG_AESDECRYPT(AES_ENCRYPT) |
                      HASHCRYPT_CRYPTCFG_AESSECRET(keyType) | HASHCRYPT_CRYPTCFG_AESKEYSZ(handle->keySize) |
                      HASHCRYPT_CRYPTCFG_MSW1ST_OUT(1) | HASHCRYPT_CRYPTCFG_SWAPKEY(1) | HASHCRYPT_CRYPTCFG_SWAPDAT(1) |
@@ -1600,6 +1721,8 @@ status_t HASHCRYPT_AES_DecryptCfb(HASHCRYPT_Type *base,
     }
 
     uint32_t keyType = (handle->keyType == kHASHCRYPT_UserKey) ? 0U : 1u;
+
+    hashcrypt_seed_prng(base);
 
     base->CRYPTCFG = HASHCRYPT_CRYPTCFG_AESMODE(kHASHCRYPT_AesCbc) | HASHCRYPT_CRYPTCFG_AESDECRYPT(AES_ENCRYPT) |
                      HASHCRYPT_CRYPTCFG_AESSECRET(keyType) | HASHCRYPT_CRYPTCFG_AESKEYSZ(handle->keySize) |
@@ -1695,8 +1818,7 @@ void HASHCRYPT_DriverIRQHandler(void)
         /* no full blocks left, disable interrupts and AHB master mode */
         base->INTENCLR = HASHCRYPT_INTENCLR_DIGEST_MASK | HASHCRYPT_INTENCLR_ERROR_MASK;
         base->MEMCTRL  = HASHCRYPT_MEMCTRL_MASTER(0);
-        hashcrypt_save_running_hash(base, ctxInternal);
-        status = kStatus_Success;
+        status         = hashcrypt_save_running_hash(base, ctxInternal);
     }
     else
     {

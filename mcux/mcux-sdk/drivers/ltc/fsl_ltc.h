@@ -5,8 +5,8 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#ifndef _FSL_LTC_H_
-#define _FSL_LTC_H_
+#ifndef FSL_LTC_H_
+#define FSL_LTC_H_
 
 #include "fsl_common.h"
 
@@ -19,10 +19,10 @@
  * @{
  */
 /*! @name Driver version */
-/*@{*/
-/*! @brief LTC driver version. Version 2.0.15.
+/*! @{ */
+/*! @brief LTC driver version. Version 2.0.16.
  *
- * Current version: 2.0.14
+ * Current version: 2.0.16
  *
  * Change log:
  * - Version 2.0.1
@@ -69,9 +69,12 @@
  *
  * - Version 2.0.15
  *   - Fix MISRA-2012 issues
+ *
+ * - Version 2.0.16
+ *   - Fix unitialized GCC warning in LTC_AES_GenerateDecryptKey()
  */
-#define FSL_LTC_DRIVER_VERSION (MAKE_VERSION(2, 0, 15))
-/*@}*/
+#define FSL_LTC_DRIVER_VERSION (MAKE_VERSION(2, 0, 16))
+/*! @} */
 /*! @} */
 
 /*******************************************************************************
@@ -1692,4 +1695,4 @@ extern status_t ltc_symmetric_process_data(LTC_Type *base, const uint8_t *inData
  *@}
  */
 
-#endif /* _FSL_LTC_H_ */
+#endif /* FSL_LTC_H_ */

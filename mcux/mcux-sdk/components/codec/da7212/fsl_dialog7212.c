@@ -342,7 +342,7 @@ status_t DA7212_Init(da7212_handle_t *handle, da7212_config_t *codecConfig)
 
     /* i2c bus initialization */
     if (CODEC_I2C_Init(handle->i2cHandle, config->i2cConfig.codecI2CInstance, DA7212_I2C_BAUDRATE,
-                       config->i2cConfig.codecI2CSourceClock) != kStatus_HAL_I2cSuccess)
+                       config->i2cConfig.codecI2CSourceClock) != (status_t)kStatus_HAL_I2cSuccess)
     {
         return kStatus_Fail;
     }
@@ -404,6 +404,8 @@ status_t DA7212_Init(da7212_handle_t *handle, da7212_config_t *codecConfig)
 
         sysClock = (uint32_t)(codecConfig->pll->outputClock_HZ);
     }
+    
+    DA7212_ChangeInput(handle, codecConfig->inputSource);
 
     error = DA7212_ConfigAudioFormat(handle, sysClock, config->format.sampleRate, config->format.bitWidth);
 

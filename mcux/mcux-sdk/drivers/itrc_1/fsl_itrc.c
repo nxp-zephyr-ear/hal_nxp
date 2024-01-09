@@ -16,9 +16,9 @@
 #define FSL_COMPONENT_ID "platform.drivers.itrc_1"
 #endif
 
-#define b11 0x3u
-#define b10 0x2u
-#define b01 0x1u
+#define b11 0x3UL
+#define b10 0x2UL
+#define b01 0x1UL
 
 /* Value used to trigger SW Events */
 #define SW_EVENT_VAL 0x5AA55AA5u
@@ -193,15 +193,15 @@ status_t ITRC_SetActionToEvent(
     }
 
     /* Compute index for INx_SEL0/1 bit-field within OUTy_SEL0/1 registers */
-    index = 2u * (uint32_t)in;
+    index = 2UL * (uint32_t)in;
 
     /* Eeach signal is encoded by two bits */
-    if (index > 2u * ITRC_INPUT_SIGNALS_NUM)
+    if (index > 2UL * ITRC_INPUT_SIGNALS_NUM)
     {
         return kStatus_InvalidArgument;
     }
 
-    if (index < 32u)
+    if (index < 32UL)
     {
         /* Prepare AND mask to set INx_SEL0 accordingly */
         select_AND_mask = ~(b11 << index);
@@ -225,7 +225,7 @@ status_t ITRC_SetActionToEvent(
     }
     else
     {
-        index -= 32u;
+        index -= 32UL;
         /* Prepare AND mask to set INx_SEL0 accordingly */
         select_AND_mask = ~(b11 << index);
 
@@ -263,13 +263,13 @@ status_t ITRC_SetActionToEvent(
  */
 bool ITRC_GetInEventStatus(ITRC_Type *base, itrc_in_signals_t event)
 {
-    if (event < 16)
+    if (event < 16UL)
     {
-        return (base->STATUS0 & (1u << event)) != 0u;
+        return (base->STATUS0 & (1UL << event)) != 0UL;
     }
     else
     {
-        return (base->STATUS1 & (1u << (event - 16))) != 0u;
+        return (base->STATUS1 & (1UL << (event - 16UL))) != 0UL;
     }
 }
 
@@ -286,7 +286,7 @@ bool ITRC_GetInEventStatus(ITRC_Type *base, itrc_in_signals_t event)
  */
 bool ITRC_GetOutActionStatus(ITRC_Type *base, itrc_out_signals_t action)
 {
-    return ((base->STATUS0 & (1u << action)) != 0u);
+    return ((base->STATUS0 & (1UL << action)) != 0UL);
 }
 
 /*!
@@ -299,9 +299,13 @@ bool ITRC_GetOutActionStatus(ITRC_Type *base, itrc_out_signals_t action)
  */
 status_t ITRC_Init(ITRC_Type *base)
 {
-    (void)EnableIRQ(ITRC_IRQn);
+    status_t status  = IRQ_ClearPendingIRQ(ITRC_IRQn);
 
-    return kStatus_Success;
+    if ( status != kStatus_Success)
+    {
+        return status;
+    }
+    return EnableIRQ(ITRC_IRQn);
 }
 
 /*!

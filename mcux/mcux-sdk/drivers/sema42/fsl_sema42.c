@@ -22,6 +22,10 @@
 /* The second number write to RSTGDP when reset SEMA42 gate. */
 #define SEMA42_GATE_RESET_PATTERN_2 (0x1DU)
 
+#if defined(SEMA42_RSTS)
+#define SEMA42_RESETS_ARRAY SEMA42_RSTS
+#endif
+
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
@@ -45,6 +49,11 @@ static SEMA42_Type *const s_sema42Bases[] = SEMA42_BASE_PTRS;
 static const clock_ip_name_t s_sema42Clocks[] = SEMA42_CLOCKS;
 #endif /* FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL */
 
+#if defined(SEMA42_RESETS_ARRAY)
+/* Reset array */
+static const reset_ip_name_t s_sema42Resets[] = SEMA42_RESETS_ARRAY;
+#endif
+
 /******************************************************************************
  * CODE
  *****************************************************************************/
@@ -54,8 +63,18 @@ uint32_t SEMA42_GetInstance(SEMA42_Type *base)
     uint32_t instance;
 
     /* Find the instance index from base address mappings. */
+    /*
+     * $Branch Coverage Justification$
+     * (instance >= ARRAY_SIZE(s_sema42Bases)) not covered. The peripheral base
+     * address is always valid and checked by assert.
+     */
     for (instance = 0; instance < ARRAY_SIZE(s_sema42Bases); instance++)
     {
+        /*
+         * $Branch Coverage Justification$
+         * (s_sema42Bases[instance] != base) not covered. The peripheral base
+         * address is always valid and checked by assert.
+         */
         if (s_sema42Bases[instance] == base)
         {
             break;
@@ -82,6 +101,10 @@ void SEMA42_Init(SEMA42_Type *base)
 #if !(defined(FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL) && FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL)
     (void)CLOCK_EnableClock(s_sema42Clocks[SEMA42_GetInstance(base)]);
 #endif /* FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL */
+
+#if defined(SEMA42_RESETS_ARRAY)
+    RESET_ReleasePeripheralReset(s_sema42Resets[SEMA42_GetInstance(base)]);
+#endif
 }
 
 /*!
@@ -175,8 +198,17 @@ status_t SEMA42_ResetGate(SEMA42_Type *base, uint8_t gateNum)
     assert(!((gateNum < SEMA42_GATE_NUM_RESET_ALL) && (gateNum >= (uint8_t)FSL_FEATURE_SEMA42_GATE_COUNT)));
 
     /* Check whether some reset is ongoing. */
+    /*
+     * $Branch Coverage Justification$
+     * (0U == (base->RSTGT_R & SEMA42_RSTGT_R_RSTGSM_MASK))) not covered. Test unfeasible,
+     * the reset state is too short to catch.
+     */
     if (0U != (base->RSTGT_R & SEMA42_RSTGT_R_RSTGSM_MASK))
     {
+        /*
+         * $Line Coverage Justification$
+         * Block not covered. Test unfeasible, the reset state is too short to catch.
+         */
         status = kStatus_SEMA42_Reseting;
     }
     else

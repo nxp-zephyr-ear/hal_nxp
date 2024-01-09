@@ -23,8 +23,8 @@
 
 /*! @name Driver version */
 /*@{*/
-/*! @brief POWER driver version 2.4.0. */
-#define FSL_POWER_DRIVER_VERSION (MAKE_VERSION(2, 4, 0))
+/*! @brief POWER driver version 2.5.0. */
+#define FSL_POWER_DRIVER_VERSION (MAKE_VERSION(2, 5, 0))
 /*@}*/
 
 /*!
@@ -212,6 +212,20 @@ typedef struct _power_sleep_config
     uint32_t pm3BuckCfg;  /*!< PMIP BUCK control in PM3 mode. Logical OR of the enums in @ref _clk_pm3_buck_bits. */
 } power_sleep_config_t;
 
+/*!
+ * @brief Glitch detector configuration.
+ */
+typedef struct _power_gdet_data
+{
+    uint32_t CFG[6];
+    uint32_t TRIM0;
+} power_gdet_data_t;
+
+/*!
+ * @brief Glitch detector configuration load function.
+ */
+typedef bool (*power_load_gdet_cfg)(power_gdet_data_t *data);
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -244,7 +258,9 @@ __STATIC_INLINE void POWER_DisableResetSource(uint32_t source)
  */
 __STATIC_INLINE uint32_t POWER_GetResetCause(void)
 {
-    return PMU->SYS_RST_STATUS & (uint32_t)kPOWER_ResetCauseAll;
+    /* On reset, PMU->SYS_RST_STATUS is backed up in RF_SYSCON->WO_SCRATCH_REG[3]
+       and cleared by ROM */
+    return RF_SYSCON->WO_SCRATCH_REG[3] & (uint32_t)kPOWER_ResetCauseAll;
 }
 
 /**
@@ -447,14 +463,23 @@ void POWER_DisableCaptPulseTimer(void);
 void POWER_InitVoltage(uint32_t dro, uint32_t pack);
 
 /**
+ * @brief   Initialize glitch detector configuration.
+ * @param   loadFunc : function pointer to the GDET load configuration.
+ * @param   data     : GDET config data loaded from fuse.
+ * @param   pack     : Device package type: 0 - QFN, 1 - CSP, 2 - BGA
+ */
+void Power_InitLoadGdetCfg(power_load_gdet_cfg loadFunc, const power_gdet_data_t *data, uint32_t pack);
+
+/**
  * @brief   Disable GDET and VSensors
  */
 AT_QUICKACCESS_SECTION_CODE(void POWER_DisableGDetVSensors(void));
 
 /**
  * @brief   Enable GDET and VSensors
+ * @return  True for success, else failure.
  */
-AT_QUICKACCESS_SECTION_CODE(void POWER_EnableGDetVSensors(void));
+AT_QUICKACCESS_SECTION_CODE(bool POWER_EnableGDetVSensors(void));
 
 /**
  * @brief   Apply SVC GDC equation and get the SVC trim configuration

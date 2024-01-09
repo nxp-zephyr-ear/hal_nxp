@@ -17,10 +17,11 @@
 
 /* TEXT BELOW IS USED AS SETTING FOR TOOLS *************************************
 !!GlobalInfo
-product: Clocks v5.0
+product: Clocks v12.0
 processor: LPC824
+package_id: LPC824M201JHI33
 mcu_data: ksdk2_0
-processor_version: 0.0.10
+processor_version: 14.0.0
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
 
 #include "fsl_power.h"
@@ -34,8 +35,6 @@ processor_version: 0.0.10
 /*******************************************************************************
  * Variables
  ******************************************************************************/
-/* System clock frequency. */
-extern uint32_t SystemCoreClock;
 
 /*******************************************************************************
  ************************ BOARD_InitBootClocks function ************************
@@ -90,4 +89,3 @@ void BOARD_BootClockRUN(void)
     /*!< Set SystemCoreClock variable. */
     SystemCoreClock = BOARD_BOOTCLOCKRUN_CORE_CLOCK;
 }
-

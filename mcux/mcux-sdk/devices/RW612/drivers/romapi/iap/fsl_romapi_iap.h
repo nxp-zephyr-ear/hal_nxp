@@ -77,16 +77,16 @@ enum
 
 typedef struct _arena_context
 {
-    uint32_t start;
-    uint32_t end;
+    uint32_t start_1;
+    uint32_t end_1;
     uint32_t nextAddr;
 } arena_context_t;
 
 //!@brief Memory region information table
 typedef struct mem_region
 {
-    uint32_t start;
-    uint32_t end;
+    uint32_t start_2;
+    uint32_t end_2;
 } mem_region_t;
 
 //! @brief Memory Attribute Structure
@@ -102,7 +102,7 @@ typedef struct _mem_attribute
 typedef struct api_memory_region_interface
 {
     status_t (*init)(mem_attribute_t *attr);
-#if ROM_API_HAS_FEATURE_MEM_READ
+#if defined(ROM_API_HAS_FEATURE_MEM_READ) && (ROM_API_HAS_FEATURE_MEM_READ == 1u)
     status_t (*read)(mem_attribute_t *attr, uint32_t addr, uint32_t leth, uint8_t *buf);
 #endif
     status_t (*write)(mem_attribute_t *attr, uint32_t addr, uint32_t len, const uint8_t *buf);
@@ -138,13 +138,13 @@ typedef struct soc_memory_map_struct
 {
     struct
     {
-        uint32_t start;
-        uint32_t end;
+        uint32_t starts;
+        uint32_t ends;
     } ramRegions[RAM_REGION_COUNT];
     struct
     {
-        uint32_t starts;
-        uint32_t ends;
+        uint32_t starts_1;
+        uint32_t ends_1;
     } flexspiNorRegions[FLEXSPINOR_REGION_COUNT];
 } soc_mem_regions_t;
 
@@ -183,7 +183,7 @@ typedef struct iap_api_interface_struct
     standard_version_t version; //!< IAP API version number.
     status_t (*api_init)(api_core_context_t *coreCtx, const kp_api_init_param_t *param);
     status_t (*api_deinit)(api_core_context_t *coreCtx);
-    status_t (*mem_init)(api_core_context_t *ctx);
+    status_t (*mem_init_api)(api_core_context_t *ctx);
     status_t (*mem_read)(api_core_context_t *ctx, uint32_t addr, uint32_t len, uint8_t *buf, uint32_t memoryId);
     status_t (*mem_write)(api_core_context_t *ctx, uint32_t addr, uint32_t len, const uint8_t *buf, uint32_t memoryId);
     status_t (*mem_fill)(api_core_context_t *ctx, uint32_t addr, uint32_t len, uint32_t pattern, uint32_t memoryId);

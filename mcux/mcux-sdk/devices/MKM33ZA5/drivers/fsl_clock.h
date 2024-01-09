@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015, Freescale Semiconductor, Inc.
- * Copyright 2016 - 2020, NXP
+ * Copyright 2016 - 2020, 2023 NXP
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -58,8 +58,8 @@
 
 /*! @name Driver version */
 /*@{*/
-/*! @brief CLOCK driver version 2.0.0. */
-#define FSL_CLOCK_DRIVER_VERSION (MAKE_VERSION(2, 0, 0))
+/*! @brief CLOCK driver version 2.0.1. */
+#define FSL_CLOCK_DRIVER_VERSION (MAKE_VERSION(2, 0, 1))
 /*@}*/
 
 /*! @brief External XTAL0 (OSC0) clock frequency.
@@ -124,9 +124,9 @@ extern volatile uint32_t g_xtal32Freq;
 #endif
 
 /*! @brief Clock ip name array for DMAMUX. */
-#define DMAMUX_CLOCKS  \
-    {                  \
-        kCLOCK_Dmamux0 \
+#define DMAMUX_CLOCKS                                                  \
+    {                                                                  \
+        kCLOCK_Dmamux0, kCLOCK_Dmamux1, kCLOCK_Dmamux2, kCLOCK_Dmamux3 \
     }
 
 /*! @brief Clock ip name array for RTC. */

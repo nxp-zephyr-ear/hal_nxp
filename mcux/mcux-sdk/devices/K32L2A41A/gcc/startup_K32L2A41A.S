@@ -4,13 +4,11 @@
 /*            K32L2A41A                                                      */
 /*  @version: 1.0                                                            */
 /*  @date:    2019-10-30                                                     */
-/*  @build:   b191218                                                        */
+/*  @build:   b231018                                                        */
 /* ------------------------------------------------------------------------- */
 /*                                                                           */
 /* Copyright 1997-2016 Freescale Semiconductor, Inc.                         */
-/* Copyright 2016-2019 NXP                                                   */
-/* All rights reserved.                                                      */
-/*                                                                           */
+/* Copyright 2016-2023 NXP                                                   */
 /* SPDX-License-Identifier: BSD-3-Clause                                     */
 /*****************************************************************************/
 /* Version: GCC for ARM Embedded Processors                                  */
@@ -105,7 +103,7 @@ __isr_vector:
     .long   Reserved78_IRQHandler                           /* Reserved interrupt*/
     .long   Reserved79_IRQHandler                           /* Reserved interrupt*/
 
-    .size    __isr_vector, . - __isr_vector
+    .size   __isr_vector, . - __isr_vector
 
 /* Flash Configuration */
     .section .FlashConfig, "a"
@@ -117,6 +115,11 @@ __isr_vector:
     .text
     .thumb
 
+#if defined (__cplusplus)
+#ifdef __REDLIB__
+#error Redlib does not support C++
+#endif
+#endif
 /* Reset Handler */
 
     .thumb_func
@@ -176,12 +179,16 @@ Reset_Handler:
 .LC2:
     subs    r2, 4
     str r0, [r1, r2]
-    bge .LC2
+    bgt .LC2
 .LC3:
 #endif
     cpsie   i               /* Unmask interrupts */
 #ifndef __START
+#ifdef __REDLIB__
+#define __START __main
+#else
 #define __START _start
+#endif
 #endif
 #ifndef __ATOLLIC__
     ldr   r0,=__START
@@ -428,7 +435,6 @@ LPI2C2_IRQHandler:
     .weak \handler_name
     .set  \handler_name, DefaultISR
     .endm
-
 /* Exception Handlers */
     def_irq_handler    DMA0_04_DriverIRQHandler
     def_irq_handler    DMA0_15_DriverIRQHandler

@@ -1,5 +1,0 @@
-/*!
-@defgroup io_mux IO_MUX Driver
-@details IO_MUX driver supports peripheral IO multiplex configration.
-
-*/

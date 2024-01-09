@@ -33,7 +33,6 @@ list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_LIST_DIR}/../../components/osa
     ${CMAKE_CURRENT_LIST_DIR}/../../components/panic
     ${CMAKE_CURRENT_LIST_DIR}/../../components/pca9420
-    ${CMAKE_CURRENT_LIST_DIR}/../../components/power_manager/boards/EVK-MIMXRT595
     ${CMAKE_CURRENT_LIST_DIR}/../../components/power_manager/core
     ${CMAKE_CURRENT_LIST_DIR}/../../components/serial_manager
     ${CMAKE_CURRENT_LIST_DIR}/../../components/ssd1963
@@ -97,7 +96,6 @@ list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_LIST_DIR}/../../../middleware/eiq/tensorflow-lite
     ${CMAKE_CURRENT_LIST_DIR}/../../../middleware/eiq/tensorflow-lite/third_party/cmsis
     ${CMAKE_CURRENT_LIST_DIR}/../../../middleware/fatfs
-    ${CMAKE_CURRENT_LIST_DIR}/../../middleware/issdk
     ${CMAKE_CURRENT_LIST_DIR}/../../../middleware/littlefs
     ${CMAKE_CURRENT_LIST_DIR}/../../../middleware/lwip
     ${CMAKE_CURRENT_LIST_DIR}/../../../middleware/mbedtls
@@ -158,7 +156,6 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_iap)
 #    include(component_serial_manager)
 #    include(middleware_multicore_rpmsg_lite)
-#    include(middleware_issdk_sensor_fxas21002)
 #    include(middleware_edgefast_wifi_nxp)
 #    include(middleware_usb_device_cdc_external)
 #    include(component_i3c_bus_adapter)
@@ -198,7 +195,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_wm8904)
 #    include(middleware_freertos-kernel_extension)
 #    include(component_serial_manager_swo)
-#    include(CMSIS_Driver_Include_I2C)
+#    include(CMSIS_Driver_Include_I2C OPTIONAL)
 #    include(middleware_eiq_audio)
 #    include(driver_lpc_smartdma)
 #    include(component_mflash_file_MIMXRT595S_cm33)
@@ -212,10 +209,10 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_clock)
 #    include(driver_soc_mipi_dsi)
 #    include(driver_display-mipi-dsi-cmd)
-#    include(device_CMSIS)
+#    
 #    include(driver_dc-fb-ssd1963)
 #    include(middleware_multicore_rpmsg_lite_freertos)
-#    include(CMSIS_Driver_Include_Common)
+#    include(CMSIS_Driver_Include_Common OPTIONAL)
 #    include(driver_ft5406)
 #    include(component_osa_bm)
 #    include(middleware_usb_host_common_header)
@@ -227,7 +224,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(component_osa_free_rtos)
 #    include(middleware_sdmmc_sd)
 #    include(middleware_freertos-kernel_heap_3)
-#    include(CMSIS_Include_core_cm)
+#    include(CMSIS_Include_core_cm OPTIONAL)
 #    include(driver_video-common)
 #    include(driver_common)
 #    include(component_tfa9896_adapter)
@@ -236,7 +233,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_mipi_dsi)
 #    include(driver_hashcrypt)
 #    include(middleware_sdmmc_sdio)
-#    include(CMSIS_DSP_Source)
+#    include(CMSIS_DSP_Source OPTIONAL)
 #    include(middleware_eiq_tensorflow_lite_micro_third_party_gemmlowp)
 #    include(component_usart_adapter)
 #    include(driver_mpi_loader)
@@ -247,9 +244,8 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(utility_debug_console_lite)
 #    include(driver_powerquad)
 #    include(component_log)
-#    include(middleware_issdk_sensor_interface_common)
-#    include(CMSIS_Driver_Include_USART)
-#    include(CMSIS_Driver_Include_SPI)
+#    include(CMSIS_Driver_Include_USART OPTIONAL)
+#    include(CMSIS_Driver_Include_SPI OPTIONAL)
 #    include(driver_cmsis_flexcomm_usart)
 #    include(driver_flexcomm_i2s_dma)
 #    include(driver_dbi)
@@ -262,7 +258,6 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(utility_assert_lite)
 #    include(middleware_fatfs)
 #    include(driver_flexio)
-#    include(component_power_manager_evkmimxrt595)
 #    include(driver_lcdif)
 #    include(component_wifi_bt_module_tx_pwr_limits)
 #    include(driver_otfad)
@@ -273,15 +268,14 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(component_mflash_common)
 #    include(middleware_sdmmc_osa_bm)
 #    include(driver_cmsis_flexcomm_spi)
-#    include(CMSIS_RTOS2_Common)
+#    include(CMSIS_RTOS2_Common OPTIONAL)
 #    include(driver_puf)
-#    include(middleware_issdk_sensor_fxos8700)
 #    include(driver_dbi_flexio_smartdma)
 #    include(driver_casper)
 #    include(middleware_usb_phy)
 #    include(middleware_multicore_rpmsg_lite_evkmimxrt595_bm)
-#    include(CMSIS_DSP_Include)
-#    include(CMSIS_Device_API_RTOS2)
+#    include(CMSIS_DSP_Include OPTIONAL)
+#    include(CMSIS_Device_API_RTOS2 OPTIONAL)
 #    include(middleware_fatfs_usb)
 #    include(driver_dc-fb-dsi-cmd)
 #    include(driver_dmic_dma)
@@ -299,7 +293,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(component_i3c_bus)
 #    include(driver_mrt)
 #    include(driver_acmp)
-#    include(CMSIS_RTOS2_NonSecure)
+#    include(CMSIS_RTOS2_NonSecure OPTIONAL)
 #    include(driver_flexcomm)
 #    include(component_osa)
 #    include(driver_fmeas)
@@ -330,7 +324,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(middleware_usb_host_audio)
 #    include(middleware_eiq_tensorflow_lite_micro_third_party_flatbuffers)
 #    include(driver_lpc_iopctl)
-#    include(CMSIS_Device_API_OSTick)
+#    include(CMSIS_Device_API_OSTick OPTIONAL)
 #    include(driver_trng)
 #    include(driver_ssd1963)
 #    include(middleware_eiq_deepviewrt)

@@ -90,7 +90,8 @@ static status_t WM8960_SetInternalPllConfig(
     /* enable PLL power */
     WM8960_CHECK_RET(WM8960_ModifyReg(handle, WM8960_POWER2, 1U, 1U), ret);
 
-    WM8960_CHECK_RET(WM8960_ModifyReg(handle, WM8960_CLOCK1, 7U, ((sysclkDiv == 1U ? 0U : sysclkDiv) << 1U) | 1U), ret);
+    WM8960_CHECK_RET(
+        WM8960_ModifyReg(handle, WM8960_CLOCK1, 7U, (uint16_t)(((sysclkDiv == 1U ? 0U : sysclkDiv) << 1U) | 1U)), ret);
 
     return ret;
 }
@@ -263,13 +264,17 @@ status_t WM8960_Deinit(wm8960_handle_t *handle)
 {
     status_t ret = kStatus_Success;
 
+    /* Reinit I2C in case it has been stopped by concurrent codec driver */
+    if (CODEC_I2C_Init(handle->i2cHandle, handle->config->i2cConfig.codecI2CInstance, WM8960_I2C_BAUDRATE,
+                handle->config->i2cConfig.codecI2CSourceClock) != (status_t)kStatus_HAL_I2cSuccess)
+        return kStatus_Fail;
+
     WM8960_CHECK_RET(WM8960_SetModule(handle, kWM8960_ModuleADC, false), ret);
     WM8960_CHECK_RET(WM8960_SetModule(handle, kWM8960_ModuleDAC, false), ret);
     WM8960_CHECK_RET(WM8960_SetModule(handle, kWM8960_ModuleVREF, false), ret);
     WM8960_CHECK_RET(WM8960_SetModule(handle, kWM8960_ModuleLineIn, false), ret);
     WM8960_CHECK_RET(WM8960_SetModule(handle, kWM8960_ModuleLineOut, false), ret);
     WM8960_CHECK_RET(WM8960_SetModule(handle, kWM8960_ModuleSpeaker, false), ret);
-    WM8960_CHECK_RET(CODEC_I2C_Deinit(handle->i2cHandle), ret);
 
     return ret;
 }

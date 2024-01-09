@@ -5,8 +5,8 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#ifndef _FSL_TRNG_DRIVER_H_
-#define _FSL_TRNG_DRIVER_H_
+#ifndef FSL_TRNG_DRIVER_H_
+#define FSL_TRNG_DRIVER_H_
 
 #include "fsl_common.h"
 
@@ -22,7 +22,7 @@
  *******************************************************************************/
 
 /*! @name Driver version */
-/*@{*/
+/*! @{ */
 /*! @brief TRNG driver version 2.0.16.
  *
  * Current version: 2.0.16
@@ -66,7 +66,7 @@
  *   - update default OSCDIV for K81 to divide by 2
  */
 #define FSL_TRNG_DRIVER_VERSION (MAKE_VERSION(2, 0, 16))
-/*@}*/
+/*! @} */
 
 /*! @brief TRNG sample mode. Used by trng_config_t. */
 typedef enum _trng_sample_mode
@@ -223,4 +223,4 @@ status_t TRNG_GetRandomData(TRNG_Type *base, void *data, size_t dataSize);
 /*! @}*/
 
 #endif /* FSL_FEATURE_SOC_TRNG_COUNT */
-#endif /*_FSL_TRNG_H_*/
+#endif /*FSL_TRNG_H_*/

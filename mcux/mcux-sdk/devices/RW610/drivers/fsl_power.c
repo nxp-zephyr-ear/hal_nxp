@@ -6,6 +6,7 @@
  */
 
 #include "fsl_power.h"
+#include <string.h>
 
 /*******************************************************************************
  * Definitions
@@ -82,7 +83,7 @@ typedef struct _power_clock_context
 
 typedef struct _power_gdet_sensor_context
 {
-    uint32_t disableCount;
+    int32_t disableCount;
     uint32_t VSEN_CTRL_1_REG_1;
     uint32_t VSEN_CTRL_2_REG_1;
     uint32_t VSEN_CTRL_3_REG_1;
@@ -116,7 +117,8 @@ static power_switch_callback_t s_postSwitch;
 static void *s_postSwitchParam;
 static const uint8_t s_droTable[19] = {0x40U, 0x43U, 0x46U, 0x48U, 0x4CU, 0x4FU, 0x52U, 0x54U, 0x57U, 0x5AU,
                                        0x5DU, 0x5FU, 0x62U, 0x65U, 0x67U, 0x69U, 0x69U, 0x69U, 0x69U};
-static uint32_t s_pmipBuckLvl;
+static power_load_gdet_cfg s_gdetCfgloadFunc;
+static power_gdet_data_t s_gdetCfgData;
 
 /*******************************************************************************
  * Prototypes
@@ -187,6 +189,7 @@ static void POWER_GetThresholdParams(uint32_t pack,
             break;
         default:
             assert(false);
+            break;
     }
 }
 
@@ -724,7 +727,8 @@ AT_QUICKACCESS_SECTION_CODE(static void POWER_PrePowerMode(uint32_t mode, const 
 
     if ((mode == 2U) || (mode == 3U) || (mode == 4U))
     {
-        POWER_DisableGDetVSensors();
+        /* To enter PM2/PM3/PM4, GDET sensor must be disabled */
+        assert(s_gdetSensorContext.disableCount > 0);
     }
 
     s_clockContext.SOURCE_CLK_GATE = SYSCTL2->SOURCE_CLK_GATE;
@@ -744,7 +748,6 @@ AT_QUICKACCESS_SECTION_CODE(static void POWER_PrePowerMode(uint32_t mode, const 
         /* Turn off the short switch between C18/C11 and V18/V11.
            In sleep mode, V11 drops to 0.8V */
         BUCK18->BUCK_CTRL_TWENTY_REG = 0x75U;
-
         if (mode == 3U)
         {
             POWER_SaveNvicState();
@@ -752,14 +755,6 @@ AT_QUICKACCESS_SECTION_CODE(static void POWER_PrePowerMode(uint32_t mode, const 
             PMU->MEM_CFG = (PMU->MEM_CFG & ~PMU_MEM_CFG_MEM_RET_MASK) | (config->memPdCfg & PMU_MEM_CFG_MEM_RET_MASK);
             PMU->PMIP_BUCK_CTRL = (PMU->PMIP_BUCK_CTRL & ~((uint32_t)kPOWER_Pm3BuckAll)) |
                                   (config->pm3BuckCfg & (uint32_t)kPOWER_Pm3BuckAll);
-            if ((SOCCTRL->CHIP_INFO & SOCCIU_CHIP_INFO_REV_NUM_MASK) < 2U)
-            {
-                s_pmipBuckLvl      = PMU->PMIP_BUCK_LVL;
-                PMU->PMIP_BUCK_LVL = PMU_PMIP_BUCK_LVL_SLEEP_BUCK18_SEL(0x60U) |  /* 1.8V */
-                                     PMU_PMIP_BUCK_LVL_SLEEP_BUCK11_SEL(0x22U) |  /* 0.8V */
-                                     PMU_PMIP_BUCK_LVL_NORMAL_BUCK18_SEL(0x60U) | /* 1.8V */
-                                     PMU_PMIP_BUCK_LVL_NORMAL_BUCK11_SEL(0x60U);  /* 1.11V */
-            }
             /* Clear reset status */
             PMU->SYS_RST_CLR = 0x7FU;
         }
@@ -774,14 +769,6 @@ AT_QUICKACCESS_SECTION_CODE(static void POWER_PrePowerMode(uint32_t mode, const 
             {
                 /* pm422, LDO 0.8V, 1.8V */
                 PMU->PMIP_LDO_LVL = PMU_PMIP_LDO_LVL_LDO18_SEL(4) | PMU_PMIP_LDO_LVL_LDO11_SEL(1);
-            }
-            if ((SOCCTRL->CHIP_INFO & SOCCIU_CHIP_INFO_REV_NUM_MASK) < 2U)
-            {
-                s_pmipBuckLvl      = PMU->PMIP_BUCK_LVL;
-                PMU->PMIP_BUCK_LVL = PMU_PMIP_BUCK_LVL_SLEEP_BUCK18_SEL(0x60U) |  /* 1.8V */
-                                     PMU_PMIP_BUCK_LVL_SLEEP_BUCK11_SEL(0x22U) |  /* 0.8V */
-                                     PMU_PMIP_BUCK_LVL_NORMAL_BUCK18_SEL(0x60U) | /* 1.8V */
-                                     PMU_PMIP_BUCK_LVL_NORMAL_BUCK11_SEL(0x60U);  /* 1.11V */
             }
             /* Clear reset status */
             PMU->SYS_RST_CLR = 0x7FU;
@@ -804,7 +791,7 @@ AT_QUICKACCESS_SECTION_CODE(static void POWER_PrePowerMode(uint32_t mode, const 
 
 AT_QUICKACCESS_SECTION_CODE(static bool POWER_PostPowerMode(uint32_t mode))
 {
-    assert((mode >= 1U) && (mode <= 3U));
+    assert((mode >= 1U) && (mode <= 4U));
 
     if (s_postSwitch != NULL)
     {
@@ -824,20 +811,17 @@ AT_QUICKACCESS_SECTION_CODE(static bool POWER_PostPowerMode(uint32_t mode))
         SystemInit();
         POWER_RestoreNvicState();
         initXip();
-        if ((PMU->PWR_MODE_STATUS != 2U) && ((SOCCTRL->CHIP_INFO & SOCCIU_CHIP_INFO_REV_NUM_MASK) < 2U))
-        {
-            /* Failed to enter PM3 on A1, restore buck level. */
-            PMU->PMIP_BUCK_LVL = s_pmipBuckLvl;
-        }
     }
     else
     {
         /* PM1: Do nothing */
     }
 
-    if ((mode == 2U) || (mode == 3U))
+    if ((mode == 3U) && (PMU->PWR_MODE_STATUS == 2U))
     {
-        POWER_EnableGDetVSensors();
+        /* Successfully resumed from PM3, GDET is enabled by ROM. */
+        assert(s_gdetSensorContext.disableCount > 0);
+        s_gdetSensorContext.disableCount--;
     }
 
     SysTick->CTRL = s_systickContext.CTRL;
@@ -986,10 +970,6 @@ static void POWER_InitVSensorThreshold(uint8_t volt11, uint32_t pack)
     val |= SENSOR_CTRL_VSEN_CTRL_2_REG_1_VSEN_MIN_VOLTAGE_THR((v18.param1 * (1710U * 10U - v18.margin) + v18.param2) /
                                                               1000000U);
     SENSOR_CTRL->VSEN_CTRL_2_REG_1 = val & ~SENSOR_CTRL_VSEN_CTRL_2_REG_1_VSEN_SW_ENABLE_MASK;
-    /* On demand mode */
-    val = (val & ~SENSOR_CTRL_VSEN_CTRL_2_REG_1_VSEN_TRIGGER_MODE_MASK) |
-          SENSOR_CTRL_VSEN_CTRL_2_REG_1_VSEN_TRIGGER_MODE(1);
-    SENSOR_CTRL->VSEN_CTRL_2_REG_1 = val & ~SENSOR_CTRL_VSEN_CTRL_2_REG_1_VSEN_SW_ENABLE_MASK;
     /* Restore V18 sensor */
     SENSOR_CTRL->VSEN_CTRL_2_REG_1 = val;
 
@@ -1003,10 +983,6 @@ static void POWER_InitVSensorThreshold(uint8_t volt11, uint32_t pack)
         (v33.param1 * (3630U * 10U + v33.margin) + v33.param2 + 999999U) / 1000000U);
     val |= SENSOR_CTRL_VSEN_CTRL_3_REG_1_VSEN_MIN_VOLTAGE_THR((v33.param1 * (1850U * 10U - v33.margin) + v33.param2) /
                                                               1000000U);
-    SENSOR_CTRL->VSEN_CTRL_3_REG_1 = val & ~SENSOR_CTRL_VSEN_CTRL_3_REG_1_VSEN_SW_ENABLE_MASK;
-    /* On demand mode */
-    val = (val & ~SENSOR_CTRL_VSEN_CTRL_3_REG_1_VSEN_TRIGGER_MODE_MASK) |
-          SENSOR_CTRL_VSEN_CTRL_3_REG_1_VSEN_TRIGGER_MODE(1);
     SENSOR_CTRL->VSEN_CTRL_3_REG_1 = val & ~SENSOR_CTRL_VSEN_CTRL_3_REG_1_VSEN_SW_ENABLE_MASK;
     /* Restore V33 sensor */
     SENSOR_CTRL->VSEN_CTRL_3_REG_1 = val;
@@ -1089,6 +1065,9 @@ bool POWER_EnterPowerMode(uint32_t mode, const power_sleep_config_t *config)
     bool ret = true;
 
     assert(mode <= 4U);
+
+    /* Needed to make POWER_DelayUs() accurate. */
+    SystemCoreClockUpdate();
 
     if (mode >= 1U)
     {
@@ -1242,39 +1221,48 @@ void POWER_DisableCaptPulseTimer(void)
     PMU->CAPT_PULSE = PMU_CAPT_PULSE_IRQ_CLR_MASK | PMU_CAPT_PULSE_IRQ_MSK_MASK;
 }
 
+void Power_InitLoadGdetCfg(power_load_gdet_cfg loadFunc, const power_gdet_data_t *data, uint32_t pack)
+{
+    assert(loadFunc != NULL);
+    assert(data != NULL);
+    assert(pack <= 2U);
+
+    s_gdetCfgloadFunc = loadFunc;
+    (void)memcpy(&s_gdetCfgData, data, sizeof(power_gdet_data_t));
+    s_gdetCfgData.CFG[3] = POWER_TrimSvc(data->CFG[3], pack);
+}
+
 /* Configure voltage threshold */
 void POWER_InitVoltage(uint32_t dro, uint32_t pack)
 {
     int32_t i;
-    uint32_t val;
+    uint8_t val;
 
     SystemCoreClockUpdate();
-
-    POWER_DisableGDetVSensors();
 
     /* LPBG trim */
     BUCK11->BUCK_CTRL_EIGHTEEN_REG = 0x6U;
 
-    /* Change buck level */
-    dro /= 1000U;
-    i = 36 - (int32_t)dro;
-    assert((i >= 0) && ((uint32_t)i < ARRAY_SIZE(s_droTable)));
+    if (dro == 0U)
+    { /* Boot voltage 1.11V */
+        val = 0x60U;
+    }
+    else
+    {
+        /* Change buck level */
+        dro /= 1000U;
+        i = 36 - (int32_t)dro;
+        assert((i >= 0) && ((uint32_t)i < ARRAY_SIZE(s_droTable)));
+        val = s_droTable[i];
+    }
     PMU->PMIP_BUCK_LVL = PMU_PMIP_BUCK_LVL_SLEEP_BUCK18_SEL(0x60U) |  /* 1.8V */
                          PMU_PMIP_BUCK_LVL_SLEEP_BUCK11_SEL(0x22U) |  /* 0.8V */
                          PMU_PMIP_BUCK_LVL_NORMAL_BUCK18_SEL(0x60U) | /* 1.8V */
-                         PMU_PMIP_BUCK_LVL_NORMAL_BUCK11_SEL(s_droTable[i]);
+                         PMU_PMIP_BUCK_LVL_NORMAL_BUCK11_SEL(val);
     /* Delay 600us */
     POWER_DelayUs(600U);
 
-    POWER_InitVSensorThreshold(s_droTable[i], pack);
-
-    /* TSEN on demand mode */
-    val = SENSOR_CTRL->TSEN_CTRL_1_REG_1 & ~SENSOR_CTRL_TSEN_CTRL_1_REG_1_TSEN_TRIGGER_MODE_MASK;
-    SENSOR_CTRL->TSEN_CTRL_1_REG_1 = val | SENSOR_CTRL_TSEN_CTRL_1_REG_1_TSEN_TRIGGER_MODE(1);
-    val = SENSOR_CTRL->TSEN_CTRL_2_REG_1 & ~SENSOR_CTRL_TSEN_CTRL_2_REG_1_TSEN_TRIGGER_MODE_MASK;
-    SENSOR_CTRL->TSEN_CTRL_2_REG_1 = val | SENSOR_CTRL_TSEN_CTRL_2_REG_1_TSEN_TRIGGER_MODE(1);
-
-    POWER_EnableGDetVSensors();
+    POWER_InitVSensorThreshold(val, pack);
 }
 
 void POWER_DisableGDetVSensors(void)
@@ -1283,7 +1271,7 @@ void POWER_DisableGDetVSensors(void)
     uint32_t pscctl0, pscctl1, pscctl2;
     uint32_t rstctl0, rstctl1;
 
-    if (s_gdetSensorContext.disableCount == 0U)
+    if (s_gdetSensorContext.disableCount == 0)
     {
         pscctl0 = CLKCTL0->PSCCTL0;
         pscctl1 = CLKCTL0->PSCCTL1;
@@ -1338,23 +1326,6 @@ void POWER_DisableGDetVSensors(void)
         val                        = ITRC->OUT1_SEL0_EVENT16_31 & ~ITRC_OUT_SEL_EVENT_MASK;
         ITRC->OUT1_SEL0_EVENT16_31 = val | ITRC_OUT_SEL_EVENT_DISABLE;
 
-        /* Check that GDET_ERROR and other sensor signals/status are handled correctly */
-        /* Clear ELS GDET interrupts */
-        if (s_gdetSensorContext.ELS_EN != 0U)
-        {
-            ELS->ELS_INT_STATUS_CLR  = ELS_ELS_INT_STATUS_CLR_INT_CLR_MASK | ELS_ELS_INT_STATUS_CLR_GDET_INT_CLR_MASK;
-            ELS->ELS_ERR_STATUS_CLR  = ELS_ELS_ERR_STATUS_CLR_ERR_CLR_MASK;
-            ELS->ELS_GDET_EVTCNT_CLR = ELS_ELS_GDET_EVTCNT_CLR_GDET_EVTCNT_CLR_MASK;
-            /* Disable ELS */
-            ELS->ELS_CTRL &= ~ELS_ELS_CTRL_ELS_EN_MASK;
-        }
-
-        /* Clear Sensor errors */
-        SENSOR_CTRL->SEN_CLR_REG = 0x3CU;
-        /* Clear ITRC status */
-        ITRC->STATUS0 = ITRC->STATUS0;
-        ITRC->STATUS1 = ITRC->STATUS1;
-
         /* Restore ELS/ITRC clock */
         CLKCTL0->PSCCTL0 = pscctl0;
         CLKCTL0->PSCCTL1 = pscctl1;
@@ -1367,16 +1338,15 @@ void POWER_DisableGDetVSensors(void)
     s_gdetSensorContext.disableCount++;
 }
 
-void POWER_EnableGDetVSensors(void)
+bool POWER_EnableGDetVSensors(void)
 {
     uint32_t pscctl0, pscctl1, pscctl2;
     uint32_t rstctl0, rstctl1;
-
-    assert(s_gdetSensorContext.disableCount > 0U);
+    bool retval = true;
 
     s_gdetSensorContext.disableCount--;
 
-    if (s_gdetSensorContext.disableCount == 0U)
+    if (s_gdetSensorContext.disableCount == 0)
     {
         pscctl0 = CLKCTL0->PSCCTL0;
         pscctl1 = CLKCTL0->PSCCTL1;
@@ -1392,26 +1362,42 @@ void POWER_EnableGDetVSensors(void)
         RSTCTL0->PRSTCTL0_CLR = RSTCTL0_PRSTCTL0_ELS_MASK;
         RSTCTL0->PRSTCTL1_CLR = RSTCTL0_PRSTCTL1_ELS_APB_MASK;
 
-        /* Clear Sensor errors */
-        SENSOR_CTRL->SEN_CLR_REG = 0x3CU;
-        /* Clear ITRC status */
-        ITRC->STATUS0 = ITRC->STATUS0;
-        ITRC->STATUS1 = ITRC->STATUS1;
-
-        POWER_RestoreGdetVSensorConfig();
-        if (s_gdetSensorContext.ELS_EN != 0U)
+        /* Only in the normal flow that GDET_INT_EN is disabled, we will restore GDET config here.
+         * An exception is that we call POWER_DisableGDetVSensors() before PM3 and then wake up
+         * from ROM. In that case, ELS_INT_ENABLE will be set by ROM again and we shouldn't config
+         * GDET here. */
+        if (((ELS->ELS_CTRL & ELS_ELS_CTRL_ELS_EN_MASK) != 0U) &&
+            (ELS->ELS_INT_ENABLE & ELS_ELS_INT_ENABLE_GDET_INT_EN_MASK) == 0U)
         {
-            ELS->ELS_CTRL |= ELS_ELS_CTRL_ELS_EN_MASK;
-            POWER_DelayUs(400U);
-            ELS->ELS_INT_STATUS_CLR  = ELS_ELS_INT_STATUS_CLR_INT_CLR_MASK | ELS_ELS_INT_STATUS_CLR_GDET_INT_CLR_MASK;
-            ELS->ELS_ERR_STATUS_CLR  = ELS_ELS_ERR_STATUS_CLR_ERR_CLR_MASK;
-            ELS->ELS_GDET_EVTCNT_CLR = ELS_ELS_GDET_EVTCNT_CLR_GDET_EVTCNT_CLR_MASK;
-            /* Clear Sensor errors */
-            SENSOR_CTRL->SEN_CLR_REG = 0x3CU;
-            /* Clear ITRC status */
-            ITRC->STATUS0       = ITRC->STATUS0;
-            ITRC->STATUS1       = ITRC->STATUS1;
-            ELS->ELS_INT_ENABLE = s_gdetSensorContext.ELS_INT_ENABLE;
+            POWER_RestoreGdetVSensorConfig();
+            if ((s_gdetSensorContext.ELS_EN != 0U) && (s_gdetSensorContext.ELS_INT_ENABLE != 0U))
+            {
+                /* To enable GDET, load function must be configured. */
+                if (s_gdetCfgloadFunc == NULL)
+                {
+                    retval = false;
+                }
+                else
+                {
+                    /* GDET config must be loaded correctly for GDET working. */
+                    retval = s_gdetCfgloadFunc(&s_gdetCfgData);
+                }
+
+                /* Clear GDET errors */
+                ELS->ELS_INT_STATUS_CLR =
+                    ELS_ELS_INT_STATUS_CLR_INT_CLR_MASK | ELS_ELS_INT_STATUS_CLR_GDET_INT_CLR_MASK;
+                ELS->ELS_ERR_STATUS_CLR  = ELS_ELS_ERR_STATUS_CLR_ERR_CLR_MASK;
+                ELS->ELS_GDET_EVTCNT_CLR = ELS_ELS_GDET_EVTCNT_CLR_GDET_EVTCNT_CLR_MASK;
+                /* Clear Sensor errors */
+                SENSOR_CTRL->SEN_CLR_REG = 0x3CU;
+                /* Clear ITRC status */
+                ITRC->STATUS0 = ITRC->STATUS0;
+                ITRC->STATUS1 = ITRC->STATUS1;
+                if (retval)
+                {
+                    ELS->ELS_INT_ENABLE = s_gdetSensorContext.ELS_INT_ENABLE;
+                }
+            }
         }
 
         /* Restore ELS/ITRC clock */
@@ -1422,78 +1408,56 @@ void POWER_EnableGDetVSensors(void)
         RSTCTL0->PRSTCTL0 = rstctl0;
         RSTCTL0->PRSTCTL1 = rstctl1;
     }
+
+    return retval;
 }
 
 uint32_t POWER_TrimSvc(uint32_t gdetTrim, uint32_t pack)
 {
     int32_t x;
     int32_t y1, y3;
-    uint32_t trimSvc;
+    uint32_t trimSvc = gdetTrim;
     uint32_t clk;
     uint32_t rst;
     uint32_t revision = SOCCTRL->CHIP_INFO & SOCCIU_CHIP_INFO_REV_NUM_MASK;
 
-    if (revision < 2U)
-    {
-        /* A1 */
-        /* GDET trim value at [31:24] */
-        x = gdetTrim >> 24;
-        if (pack == 0U)
-        {
-            /* QFN */
-            y1 = 12000 * x + 41000;
-            y3 = y1 / 10000;
-        }
-        else if (pack == 1U)
-        {
-            /* CSP */
-            y1 = 12000 * x + 41000;
-            y3 = y1 / 10000;
-        }
-        else
-        {
-            /* BGA */
-            assert(pack == 2U);
-            y1 = 12000 * x + 41000;
-            y3 = y1 / 10000;
-        }
-    }
-    else
+    if (revision == 2U)
     {
         /* A2 */
         /* Autotrim value at [7:0] */
-        x = gdetTrim & 0xFFU;
+        x = (int32_t)(uint32_t)(gdetTrim & 0xFFUL);
         if (pack == 0U)
         {
             /* QFN */
-            y1 = -107 * x * x + 13435 * x + 145100;
+            y1 = (18 * x * x) + (801 * x) + 437290;
             y3 = y1 / 10000;
         }
         else if (pack == 1U)
         {
             /* CSP */
-            y1 = -96 * x * x + 12320 * x + 151940;
+            y1 = (82 * x * x) - (5171 * x) + 559320;
             y3 = y1 / 10000;
         }
         else
         {
             /* BGA */
             assert(pack == 2U);
-            y1 = -58 * x * x + 8342 * x + 247330;
+            y1 = (25 * x * x) + (1337 * x) + 381140;
             y3 = y1 / 10000;
         }
-    }
-    trimSvc = ((uint32_t)y3) << 24;
 
-    clk = CLKCTL0->PSCCTL0;
-    rst = RSTCTL0->PRSTCTL0;
-    /* Enable AON MEM clock/reset. */
-    CLKCTL0->PSCCTL0_SET  = CLKCTL0_PSCCTL0_SET_AON_MEM_MASK;
-    RSTCTL0->PRSTCTL0_CLR = RSTCTL0_PRSTCTL0_CLR_AON_MEM_MASK;
-    POWER_WRITE_MEM32(0x4015C00CU, trimSvc);
-    /* Restore AON MEM clock/reset */
-    CLKCTL0->PSCCTL0  = clk;
-    RSTCTL0->PRSTCTL0 = rst;
+        trimSvc = ((uint32_t)y3) << 24;
+
+        clk = CLKCTL0->PSCCTL0;
+        rst = RSTCTL0->PRSTCTL0;
+        /* Enable AON MEM clock/reset. */
+        CLKCTL0->PSCCTL0_SET  = CLKCTL0_PSCCTL0_SET_AON_MEM_MASK;
+        RSTCTL0->PRSTCTL0_CLR = RSTCTL0_PRSTCTL0_CLR_AON_MEM_MASK;
+        POWER_WRITE_MEM32(0x4015C00CU, trimSvc);
+        /* Restore AON MEM clock/reset */
+        CLKCTL0->PSCCTL0  = clk;
+        RSTCTL0->PRSTCTL0 = rst;
+    }
 
     return trimSvc;
 }

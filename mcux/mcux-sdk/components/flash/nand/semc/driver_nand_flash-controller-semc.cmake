@@ -11,5 +11,5 @@ target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
 )
 
 
-include(driver_nand_flash-common)
 include(driver_semc)
+include(driver_nand_flash-common)
