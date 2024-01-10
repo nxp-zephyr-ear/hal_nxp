@@ -999,11 +999,12 @@ status_t loader_process_sb_file(uint32_t readOffset)
 ////////////////////////////////////////////////////////////////////////////
 status_t loader_process_raw_file(uint32_t readOffset)
 {
-    status_t status = kStatus_Success;
+    status_t status = kStatus_Fail;
     uint32_t *src_addr;
     uint32_t *dst_addr;
     uint32_t code_size;
-    uint32_t *data_ptr = (uint32_t *)readOffset;
+    uint32_t *data_ptr      = (uint32_t *)readOffset;
+    uint32_t total_raw_size = 0;
 
 #ifdef CONFIG_FW_VDLLV2
     if ( (*data_ptr == LOADER_RAW_BINARY_FORMAT) && (*(data_ptr+1) == LOADER_VDLL_RAW_BINARY_FORMAT) )
@@ -1012,6 +1013,7 @@ status_t loader_process_raw_file(uint32_t readOffset)
         dst_addr  = (uint32_t *)*(data_ptr + 2);
         code_size = *(data_ptr + 3);
         (void)memcpy(dst_addr, src_addr, code_size);
+        status = kStatus_Success;
     }
     else
 #endif
@@ -1022,18 +1024,26 @@ status_t loader_process_raw_file(uint32_t readOffset)
             {
                 break;
             }
-#ifdef CONFIG_FW_VDLLV2
-            else if (*(data_ptr+1) == LOADER_VDLL_RAW_BINARY_FORMAT)
-            {
-                vdll_image_base = (uint32_t) data_ptr;
-                break;
-            }
-#endif
+
             src_addr  = data_ptr + 4;
             dst_addr  = (uint32_t *)*(data_ptr + 2);
             code_size = *(data_ptr + 3);
+            // Check for raw ending segment
+            if (((uint32_t)src_addr == 0xffffffff) || ((uint32_t)dst_addr == 0xffffffff))
+            {
+                if (code_size == total_raw_size)
+                {
+                    status = kStatus_Success;
+#ifdef CONFIG_FW_VDLLV2
+                    vdll_image_base = (uint32_t)(data_ptr + 4);
+#endif
+                }
+                break;
+            }
+
             (void)memcpy(dst_addr, src_addr, code_size);
             data_ptr += 4 + (code_size >> 2U);
+            total_raw_size += code_size;
         } while (true);
     }
 
