@@ -4,7 +4,7 @@
  *
  *     SPDX-License-Identifier: BSD-3-Clause
  */
-
+#include "fsl_common.h"
 #include "mcux_els.h"
 #include <mcuxClEls.h>              /* Interface to the entire nxpClEls component */
 #include <mcuxCsslFlowProtection.h> /* Code flow protection */
@@ -12,6 +12,11 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
+enum
+{
+    kStatus_SlotUnavailable =
+        MAKE_STATUS(kStatusGroup_ELS_PKC, 0), /*!< Key slot is not available to be used as PRNG kick-off. */
+};
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
