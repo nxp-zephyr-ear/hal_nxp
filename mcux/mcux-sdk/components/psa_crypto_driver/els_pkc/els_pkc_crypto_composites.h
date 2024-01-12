@@ -35,10 +35,10 @@ typedef struct {
     uint8_t is_encrypt;
     uint8_t tag_length;
 
-    uint8_t body_started;
-    uint8_t ad_remaining;
-    uint8_t body_remaining;
-    uint8_t nonce_set;
+    uint32_t body_started;
+    uint32_t ad_remaining;
+    uint32_t body_remaining;
+    uint32_t nonce_set;
 
     uint8_t clns_data[MCUXCLPSADRIVER_CLNSDATA_AEAD_SIZE];
 } els_pkc_transparent_aead_operation_t,els_pkc_opaque_aead_operation_t,els_pkc_aead_operation_t;
