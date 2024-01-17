@@ -4718,7 +4718,6 @@ status_t CAAM_RNG_GetRandomDataNonBlocking(CAAM_Type *base,
     if (additionalEntropy != NULL)
     {
         descriptor[2] = ADD_OFFSET((uint32_t)additionalEntropy);
-        descriptor[5] |= (uint32_t)1U << 1;  /* set PR bit in ALG OPERATION (entropy seed) */
         descriptor[5] |= (uint32_t)1U << 11; /* set AI bit in ALG OPERATION */
         descriptor[5] |= (uint32_t)1U << 1;  /* set PR bit in ALG OPERATION (entropy seed) */
     }
