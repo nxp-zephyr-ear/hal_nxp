@@ -11,5 +11,24 @@ if(CONFIG_SOC_SERIES_RW6XX)
         ${CMAKE_CURRENT_LIST_DIR}/platform/include
         ${CMAKE_CURRENT_LIST_DIR}/platform/rw61x
         ${CMAKE_CURRENT_LIST_DIR}/platform/rw61x/configs
+        # Flash files are only included to build successfully the framework files.
+        # Content is not used
+        ${CMAKE_CURRENT_LIST_DIR}/../../mcux-sdk/components/flash/mflash/rdrw612bga
+        ${CMAKE_CURRENT_LIST_DIR}/../../mcux-sdk/components/flash/mflash
     )
+
+    zephyr_compile_definitions(gPlatformDisableVendorSpecificInit=1U)
+
+    if (CONFIG_NXP_FW_LOADER_MONOLITHIC)
+        zephyr_compile_definitions(gPlatformMonolithicApp_d=1U)
+
+        zephyr_compile_definitions_ifndef(CONFIG_BT
+                                          BLE_FW_ADDRESS=0U)
+
+        zephyr_compile_definitions_ifndef(CONFIG_WIFI
+                                          WIFI_FW_ADDRESS=0U)
+
+        # Combo FW not supported yet on Zephyr
+        zephyr_compile_definitions(COMBO_FW_ADDRESS=0U)
+    endif()
 endif()
