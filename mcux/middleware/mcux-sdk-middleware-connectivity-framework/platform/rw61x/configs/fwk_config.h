@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -7,7 +7,7 @@
 #ifndef _FWK_CONFIG_H_
 #define _FWK_CONFIG_H_
 
-//#include "mflash_drv.h" /* TODO remove this dependency */
+#include "fwk_platform_definitions.h"
 
 #ifndef gPlatformUseHwParameter_d
 #define gPlatformUseHwParameter_d 0
@@ -25,6 +25,10 @@
 #define gPlatformDisableSetBtCalDataAnnex100_d 1
 #endif
 
+#ifndef gPlatformDisableVendorSpecificInit
+#define gPlatformDisableVendorSpecificInit 0
+#endif
+
 #ifndef gPlatformEnableTxPowerChangeWithCountry_d
 #define gPlatformEnableTxPowerChangeWithCountry_d 0
 #endif
@@ -39,12 +43,13 @@
 #define gPlatformSetAntDiversity_d 0
 #endif
 
-#define PLATFORM_EXTFLASH_SECTOR_SIZE MFLASH_SECTOR_SIZE
-#define PLATFORM_EXTFLASH_PAGE_SIZE   MFLASH_PAGE_SIZE
-#define PLATFORM_EXTFLASH_TOTAL_SIZE  FLASH_SIZE /* SPI NOR Flash is an MX25U51245G (512Mb) */
-
-#ifdef CONFIG_NXP_FW_LOADER_MONOLITHIC
-#define gPlatformMonolithicApp_d CONFIG_NXP_FW_LOADER_MONOLITHIC
+/*
+ * gBoardUseFro32k_d diversity
+ * value is 0, enable external XTAL32K
+ * value is 1, enable internal FRO32K
+ */
+#ifndef gBoardUseFro32k_d
+#define gBoardUseFro32k_d 0
 #endif
 
 #endif /* _FWK_CONFIG_H_ */

@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------- */
-/*                           Copyright 2021-2022 NXP                          */
+/*                           Copyright 2021-2024 NXP                          */
 /*                            All rights reserved.                            */
 /*                    SPDX-License-Identifier: BSD-3-Clause                   */
 /* -------------------------------------------------------------------------- */
@@ -13,32 +13,24 @@
 
 #include "fwk_platform_coex.h"
 #include "fsl_loader.h"
-#include "fwk_config.h"
 
 /* -------------------------------------------------------------------------- */
 /*                               Private macros                               */
 /* -------------------------------------------------------------------------- */
-
 #ifndef gPlatformMonolithicApp_d
 #define gPlatformMonolithicApp_d 0
 #endif
 
 #if (defined gPlatformMonolithicApp_d && (gPlatformMonolithicApp_d != 0))
-#if CONFIG_WIFI
+#ifndef WIFI_FW_ADDRESS
 extern const uint32_t fw_cpu1[];
-#define WIFI_FW_ADDRESS  (uint32_t) & fw_cpu1[0]
-#else
-#define WIFI_FW_ADDRESS  0U
+#define WIFI_FW_ADDRESS (uint32_t) & fw_cpu1[0]
 #endif
-#if CONFIG_BT
+#ifndef BLE_FW_ADDRESS
 extern const uint32_t fw_cpu2_ble[];
-#define BLE_FW_ADDRESS   (uint32_t) & fw_cpu2_ble[0]
-#else
-#define BLE_FW_ADDRESS   0U
+#define BLE_FW_ADDRESS (uint32_t) & fw_cpu2_ble[0]
 #endif
-#if __ZEPHYR__
-#define COMBO_FW_ADDRESS 0U
-#else
+#ifndef COMBO_FW_ADDRESS
 extern const uint32_t fw_cpu2_combo[];
 #define COMBO_FW_ADDRESS (uint32_t) & fw_cpu2_combo[0]
 #endif

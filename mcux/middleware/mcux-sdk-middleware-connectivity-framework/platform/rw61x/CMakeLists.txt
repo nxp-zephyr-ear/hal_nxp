@@ -8,7 +8,7 @@ set(SOURCES
     fwk_platform_coex.c
     fwk_platform_extflash.c
     fwk_platform_ota.c
-    # configs/fwk_lfs_config.c
+    configs/fwk_lfs_config.c
 )
 
 if(CONNFWK_IGNORE_PLATFORM)

@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------- */
-/*                           Copyright 2021-2023 NXP                          */
+/*                           Copyright 2021-2024 NXP                          */
 /*                            All rights reserved.                            */
 /*                    SPDX-License-Identifier: BSD-3-Clause                   */
 /* -------------------------------------------------------------------------- */
@@ -22,6 +22,14 @@
  * \return int return status: >=0 for success, <0 for errors
  */
 int PLATFORM_InitBle(void);
+
+/*!
+ * \brief Performs vendor specific initialization that uses HCI vendor commands.
+ *        This function is already called during init.
+ *        Note: can cause troubles with some BLE Host. Can be disabled by setting
+ *        <gPlatformDisableVendorSpecificInit>
+ */
+void PLATFORM_VendorSpecificInit(void);
 
 /*!
  * \brief Shutdown BLE Controller

@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------- */
-/*                           Copyright 2021-2023 NXP                          */
+/*                           Copyright 2021-2024 NXP                          */
 /*                            All rights reserved.                            */
 /*                    SPDX-License-Identifier: BSD-3-Clause                   */
 /* -------------------------------------------------------------------------- */
@@ -17,6 +17,7 @@
 #include "fwk_platform_ot.h"
 #include "fsl_adapter_rfimu.h"
 #include "fsl_adapter_rpmsg.h"
+#include "fsl_os_abstraction.h"
 
 /* -------------------------------------------------------------------------- */
 /*                               Private macros                               */
@@ -32,6 +33,14 @@
 
 #ifndef PLATFORM_HDLC_RPMSG_ALLOC_FAILED_DELAY_MS
 #define PLATFORM_HDLC_RPMSG_ALLOC_FAILED_DELAY_MS 2U
+#endif
+
+#ifndef PLATFORM_HDLC_RPMSG_LINK_READY_CHECK_RETRY
+#define PLATFORM_HDLC_RPMSG_LINK_READY_CHECK_RETRY 100
+#endif
+
+#ifndef PLATFORM_HDLC_RPMSG_LINK_READY_DELAY_MS
+#define PLATFORM_HDLC_RPMSG_LINK_READY_DELAY_MS 100
 #endif
 
 /* -------------------------------------------------------------------------- */
@@ -65,6 +74,14 @@ static int PLATFORM_TerminateHdlcRpmsg(void);
  * \return hal_rpmsg_return_status_t tells RPMSG to free or hold the buffer
  */
 static hal_rpmsg_return_status_t PLATFORM_HdlcRpmsgRxCallback(void *param, uint8_t *data, uint32_t len);
+
+/*!
+ * \brief Checks if the IMU link is ready - used before sending a message
+ *
+ * \return true link is ready
+ * \return false link is not ready yet
+ */
+static bool PLATFORM_IsHdlcLinkReady(void);
 
 /* -------------------------------------------------------------------------- */
 /*                               Private memory                               */
@@ -125,24 +142,39 @@ int PLATFORM_TerminateHdlcInterface(void)
 
     do
     {
-        if (HAL_ImuDeinit(kIMU_LinkCpu2Cpu3, 0) != kStatus_HAL_RpmsgSuccess)
+        /* Make sure the controller is awake */
+        ret = PLATFORM_RequestBleWakeUp();
+        if (ret != 0)
         {
             ret = -1;
             break;
         }
 
-        if (PLATFORM_TerminateHdlcRpmsg() != 0)
+        if (HAL_ImuDeinit(kIMU_LinkCpu2Cpu3, 0) != kStatus_HAL_RpmsgSuccess)
         {
             ret = -2;
             break;
         }
 
-        if (PLATFORM_TerminateControllers((uint32_t)conn802_15_4_c) != 0)
+        if (PLATFORM_TerminateHdlcRpmsg() != 0)
         {
             ret = -3;
             break;
         }
 
+        if (PLATFORM_TerminateControllers((uint32_t)conn802_15_4_c) != 0)
+        {
+            ret = -4;
+            break;
+        }
+
+        /* Release the wake up request now */
+        ret = PLATFORM_ReleaseBleWakeUp();
+        if (ret != 0)
+        {
+            ret = -5;
+            break;
+        }
     } while (false);
 
     return ret;
@@ -164,13 +196,31 @@ int PLATFORM_ResetHdlcInterface(void)
 int PLATFORM_SendHdlcMessage(uint8_t *msg, uint32_t len)
 {
     hal_rpmsg_status_t rpmsgStatus;
-    int                ret            = 0;
-    uint32_t           remainingBytes = len;
-    uint8_t *          pMsg           = msg;
-    uint8_t *          pRpmsgBuffer   = NULL;
+    int                ret                = 0;
+    int                hdlcLinkReadyRetry = 0;
+    uint32_t           remainingBytes     = len;
+    uint8_t *          pMsg               = msg;
+    uint8_t *          pRpmsgBuffer       = NULL;
 
     do
     {
+        /* Make sure the link is ready before sending a message */
+        while (PLATFORM_IsHdlcLinkReady() == false)
+        {
+            if (hdlcLinkReadyRetry >= PLATFORM_HDLC_RPMSG_LINK_READY_CHECK_RETRY)
+            {
+                ret = -1;
+                break;
+            }
+            hdlcLinkReadyRetry++;
+            OSA_TimeDelay(PLATFORM_HDLC_RPMSG_LINK_READY_DELAY_MS);
+        }
+
+        if (ret != 0)
+        {
+            break;
+        }
+
         (void)PLATFORM_RequestBleWakeUp();
 
         /* Send HDLC Packet through RPMSG channel
@@ -264,4 +314,9 @@ static hal_rpmsg_return_status_t PLATFORM_HdlcRpmsgRxCallback(void *param, uint8
     }
 
     return kStatus_HAL_RL_RELEASE;
+}
+
+static bool PLATFORM_IsHdlcLinkReady(void)
+{
+    return (HAL_ImuLinkIsUp(hdlcRpmsgConfig.imuLink) == kStatus_HAL_RpmsgSuccess);
 }

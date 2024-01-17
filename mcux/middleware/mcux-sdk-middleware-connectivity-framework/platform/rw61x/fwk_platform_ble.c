@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------- */
-/*                           Copyright 2021-2023 NXP                          */
+/*                           Copyright 2021-2024 NXP                          */
 /*                            All rights reserved.                            */
 /*                    SPDX-License-Identifier: BSD-3-Clause                   */
 /* -------------------------------------------------------------------------- */
@@ -11,14 +11,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#ifdef __ZEPHYR__
-#include <zephyr/kernel.h>
-#else
-#include "FreeRTOS.h"
-#include "event_groups.h"
-#include "semphr.h"
+#ifndef CONFIG_PRINTK /* Zephyr already has print support */
 #include "fsl_debug_console.h"
-#endif /* __ZEPHYR__ */
+#endif /* CONFIG_PRINTK */
 
 #include "fsl_loader.h"
 #include "fsl_power.h"
@@ -39,13 +34,8 @@
 /*                               Private macros                               */
 /* -------------------------------------------------------------------------- */
 /* By default, wait maximum 1s for the controller to wake up */
-#ifndef PLATFORM_BLE_WAKE_UP_TIMEOUT_TICKS
-
-#ifdef __ZEPHYR__
-#define PLATFORM_BLE_WAKE_UP_TIMEOUT_TICKS Z_TIMEOUT_MS(1000)
-#else
-#define PLATFORM_BLE_WAKE_UP_TIMEOUT_TICKS (1000U / portTICK_PERIOD_MS)
-#endif/* __ZEPHYR__ */
+#ifndef PLATFORM_BLE_WAKE_UP_TIMEOUT_MS
+#define PLATFORM_BLE_WAKE_UP_TIMEOUT_MS 1000U
 
 #endif
 
@@ -91,13 +81,13 @@
  * like PowerSave Vendor Event */
 #define BLE_VENDOR_EVENT_HANDLE (true)
 
-#ifdef __ZEPHYR__
+#ifdef CONFIG_PRINTK
 
 #ifndef PRINTF
 #define PRINTF printk
 #endif
 
-#endif /* __ZEPHYR__ */
+#endif /* CONFIG_PRINTK */
 
 #define BLE_PS_DBG(...)      \
     do                       \
@@ -142,11 +132,7 @@
  *a delay of at least 20ms is required to continue sending annex100
  */
 #if defined(gPlatformDisableSetBtCalDataAnnex100_d) && (gPlatformDisableSetBtCalDataAnnex100_d == 0)
-#ifdef __ZEPHYR__
-#define BLE_RESET_DELAY_TICKS Z_TIMEOUT_MS(20)
-#else
-#define BLE_RESET_DELAY_TICKS (20U / portTICK_PERIOD_MS)
-#endif /* __ZEPHYR__ */
+#define BLE_RESET_DELAY_MS 20U
 #endif
 
 /* -------------------------------------------------------------------------- */
@@ -217,7 +203,6 @@ static bool PLATFORM_IsBleAwake(void);
  */
 static hal_rpmsg_return_status_t PLATFORM_HciRpmsgRxCallback(void *param, uint8_t *data, uint32_t len);
 
-#ifndef __ZEPHYR__
 /*!
  * \brief Set BT Cal Data to Controller
  *
@@ -233,14 +218,6 @@ static int PLATFORM_SetBtCalData(void);
  */
 static int PLATFORM_SetBtCalDataAnnex100(void);
 #endif /* gPlatformDisableSetBtCalDataAnnex100_d */
-
-/*!
- * \brief Send Host sleep config to Controller
- *
- * \return int return status: >=0 for success, <0 for errors
- */
-static int PLATFORM_BleSetHostSleepConfig(void);
-#endif /* __ZEPHYR__ */
 
 /*!
  * \brief Handles supported Vendor Specific events received from Controller
@@ -262,6 +239,13 @@ static bool PLATFORM_HandleHciVendorEvent(uint8_t *eventData, uint32_t len);
  */
 static int PLATFORM_HandleBlePowerStateEvent(ble_ps_event_t psEvent);
 
+/*!
+ * \brief Send Host sleep config to Controller
+ *
+ * \return int return status: >=0 for success, <0 for errors
+ */
+static int PLATFORM_BleSetHostSleepConfig(void);
+
 void BLE_MCI_WAKEUP_DONE0_DriverIRQHandler(void);
 
 static void PLATFORM_FillInHciCmdMsg(uint8_t *pbuf, uint16_t opcode, uint8_t msg_sz, const uint8_t *msg_payload);
@@ -279,16 +263,13 @@ static hal_rpmsg_config_t hci_rpmsg_config = {
     .param       = NULL,
 };
 
-static bool               initialized    = false;
-static bool               hciInitialized = false;
-static volatile ble_ps_t  blePowerState  = ble_awake_state;
-#ifdef __ZEPHYR__
-static struct k_event wakeUpEventGroup;
-static struct k_mutex  bleMutexHandle;
-#else
-static EventGroupHandle_t wakeUpEventGroup;
-static SemaphoreHandle_t  bleMutexHandle;
-#endif /* __ZEPHYR__ */
+static bool              initialized    = false;
+static bool              hciInitialized = false;
+static volatile ble_ps_t blePowerState  = ble_awake_state;
+
+static OSA_EVENT_HANDLE_DEFINE(wakeUpEventGroup);
+static OSA_MUTEX_HANDLE_DEFINE(bleMutexHandle);
+
 static void (*hci_rx_callback)(uint8_t packetType, uint8_t *data, uint16_t len);
 
 /* -------------------------------------------------------------------------- */
@@ -313,13 +294,13 @@ const uint8_t hci_cal_data_params[HCI_CMD_STORE_BT_CAL_DATA_PARAM_LENGTH] = {
     0x04U,                            //  Initial TX Power : 0x04
     BT_CAL_DATA_ANNEX_FRONT_END_LOSS, //  Front End Loss : 0x02 or 0x03
     0x28U,                            //  BT Options :
-                                        //              BIT[0] Force Class 2 operation = 0
-                                        //              BIT[1] Disable Pwr Control for class 2= 0
-                                        //              BIT[2] MiscFlag(to indicagte external XTAL) = 0
-                                        //              BIT[3] Used Internal Sleep Clock = 1
-                                        //              BIT[4] BT AOA localtion support = 0
-                                        //              BIT[5] Force Class 1 mode = 1
-                                        //              BIT[7:6] Reserved
+                                      //              BIT[0] Force Class 2 operation = 0
+                                      //              BIT[1] Disable Pwr Control for class 2= 0
+                                      //              BIT[2] MiscFlag(to indicagte external XTAL) = 0
+                                      //              BIT[3] Used Internal Sleep Clock = 1
+                                      //              BIT[4] BT AOA localtion support = 0
+                                      //              BIT[5] Force Class 1 mode = 1
+                                      //              BIT[7:6] Reserved
     0x00U,                            //  AOANumberOfAntennas: 0x00
     0x00U,                            //  RSSI Golden Low : 0
     0x00U,                            //  RSSI Golden High : 0
@@ -334,7 +315,7 @@ const uint8_t hci_cal_data_params[HCI_CMD_STORE_BT_CAL_DATA_PARAM_LENGTH] = {
     0x00U,                            //  BdAddress[4] : 0x000000000000
     0x00U,                            //  BdAddress[5] : 0x000000000000
     0xF0U,                            //  Encr_Key_Len[3:0]: MinEncrKeyLen = 0x0
-                                        //  Encr_Key_Len[7:4]: MaxEncrKeyLen = 0xF
+                                      //  Encr_Key_Len[7:4]: MaxEncrKeyLen = 0xF
 #if defined(gPlatformEnableTxPowerChangeWithCountry_d) && (gPlatformEnableTxPowerChangeWithCountry_d == 0)
     0x00U, //  RegionCode : 0x00
 #else
@@ -363,7 +344,7 @@ uint8_t hci_cal_data_annex100_params[HCI_CMD_STORE_BT_CAL_DATA_PARAM_ANNEX100_LE
     0x00U, // Ext_Ant Gain : Bit[7:1]   Ext_Ant Present : Bit[0]
 #else
     0x00U, // Reserved
-#endif                                               /* gPlatformEnableTxPowerChangeWithCountry_d */
+#endif                                           /* gPlatformEnableTxPowerChangeWithCountry_d */
     BT_CAL_DATA_ANNEX_100_EPA_FEM_MASK_LOW_BYTE, // BT_HW_INFO_EPA_FEM_Mask
     0x00U,                                       // BT_HW_INFO_EPA_FEM_Mask
     0x00U,                                       // Ext_LNA Present : Bit[0]   Ext_LNA Gain : Bit[7:1]
@@ -379,30 +360,17 @@ uint8_t hci_cal_data_annex100_params[HCI_CMD_STORE_BT_CAL_DATA_PARAM_ANNEX100_LE
 
 int PLATFORM_InitBle(void)
 {
-    int ret = 0;
+    int          ret = 0;
+    osa_status_t status;
 
     /* PLATFORM_InitBle can be called from OT or Ethermind context in multi mode applications
      * The 'initialized' variable will be set to true only when the initialization is complete
      * We have to protect the initialization flow with a mutex to make sure the first task completes the initialization
      * before the second reads 'initialized' */
-#ifdef __ZEPHYR__
-    int status = 0;
-
-    k_mutex_init(&bleMutexHandle);
-    status = k_mutex_lock(&bleMutexHandle, K_FOREVER);
-    assert(status == 0);
-#else
-    BaseType_t status;
-
-    if (bleMutexHandle == NULL)
-    {
-        bleMutexHandle = xSemaphoreCreateMutex();
-        assert(bleMutexHandle != NULL);
-    }
-
-    status = xSemaphoreTake(bleMutexHandle, portMAX_DELAY);
-    assert(status == pdTRUE);
-#endif /* __ZEPHYR__ */
+    status = OSA_MutexCreate((osa_mutex_handle_t)bleMutexHandle);
+    assert(status == KOSA_StatusSuccess);
+    status = OSA_MutexLock((osa_mutex_handle_t)bleMutexHandle, osaWaitForever_c);
+    assert(status == KOSA_StatusSuccess);
 
     do
     {
@@ -410,12 +378,8 @@ int PLATFORM_InitBle(void)
         {
             break;
         }
-#ifdef __ZEPHYR__
-        k_event_init(&wakeUpEventGroup);
-#else
-        wakeUpEventGroup = xEventGroupCreate();
-        assert(wakeUpEventGroup != NULL);
-#endif /* __ZEPHYR__ */
+        status = OSA_EventCreate((osa_event_handle_t)wakeUpEventGroup, 0);
+        assert(status == KOSA_StatusSuccess);
 
         /* Initialize BLE controller */
         ret = PLATFORM_InitControllers(connBle_c);
@@ -440,16 +404,35 @@ int PLATFORM_InitBle(void)
         /* after re-init cpu2, Reset blePowerState to ble_awake_state. */
         blePowerState = ble_awake_state;
     } while (false);
-#ifdef __ZEPHYR__
-    status = k_mutex_unlock(&bleMutexHandle);
-    assert(status == 0);
-#else
-    status = xSemaphoreGive(bleMutexHandle);
-    assert(status == pdTRUE);
-#endif /* __ZEPHYR__ */
+
+    status = OSA_MutexUnlock((osa_mutex_handle_t)bleMutexHandle);
+    assert(status == KOSA_StatusSuccess);
     (void)status;
 
     return ret;
+}
+
+void PLATFORM_VendorSpecificInit(void)
+{
+#if !defined(gPlatformDisableSetBtCalData_d) || (gPlatformDisableSetBtCalData_d == 0)
+    /* Send the BT Cal Data to Controller */
+    (void)PLATFORM_SetBtCalData();
+#if !defined(gPlatformDisableSetBtCalDataAnnex100_d) || (gPlatformDisableSetBtCalDataAnnex100_d == 0)
+    /* After send annex55 to CPU2, CPU2 need reset,
+       a delay of at least 20ms is required to continue sending annex100*/
+    OSA_TimeDelay(BLE_RESET_DELAY_MS);
+
+    /* Send the BT Cal Data annex100 to Controller */
+    (void)PLATFORM_SetBtCalDataAnnex100();
+#endif
+#endif
+
+    (void)PLATFORM_BleSetHostSleepConfig();
+
+#if !defined(gPlatformDisableBleLowPower_d) || (gPlatformDisableBleLowPower_d == 0)
+    /* Allow Controller to enter low power */
+    (void)PLATFORM_EnableBleLowPower();
+#endif
 }
 
 int PLATFORM_TerminateBle(void)
@@ -475,12 +458,14 @@ int PLATFORM_TerminateBle(void)
             break;
         }
 
-#ifndef __ZEPHYR__
-        vEventGroupDelete(wakeUpEventGroup);
-#endif
+        if (OSA_EventDestroy((osa_event_handle_t)wakeUpEventGroup) != KOSA_StatusSuccess)
+        {
+            ret = -3;
+            break;
+        }
 
         initialized = false;
-        /* after shutdown cpu2, Reset hciInitialized to false. */
+        /* after re-init cpu2, Reset hciInitialized to false. */
         hciInitialized = false;
     } while (false);
 
@@ -512,6 +497,7 @@ int PLATFORM_ResetBle(void)
                 break;
             }
         }
+
     } while (false);
 
     return ret;
@@ -532,31 +518,15 @@ int PLATFORM_StartHci(void)
         {
         }
 
-#ifndef __ZEPHYR__
-#if !defined(gPlatformDisableSetBtCalData_d) || (gPlatformDisableSetBtCalData_d == 0)
-        /* Send the BT Cal Data to Controller */
-        (void)PLATFORM_SetBtCalData();
-#if !defined(gPlatformDisableSetBtCalDataAnnex100_d) || (gPlatformDisableSetBtCalDataAnnex100_d == 0)
-        /* After send annex55 to CPU2, CPU2 need reset,
-           a delay of at least 20ms is required to continue sending annex100*/
-#ifdef __ZEPHYR__
-        k_sleep(BLE_RESET_DELAY_TICKS);
-#else
-        vTaskDelay(BLE_RESET_DELAY_TICKS);
-#endif /* __ZEPHYR__ */
-        /* Send the BT Cal Data annex100 to Controller */
-        (void)PLATFORM_SetBtCalDataAnnex100();
+#if !defined(gPlatformDisableVendorSpecificInit) || (gPlatformDisableVendorSpecificInit == 0)
+        /* This function call uses HCI vendor commands to configure the controller,
+         * this can cause troubles with some BLE Host. A host can send the HCI commands
+         * using its own API and then expect the right response from the controller, if the
+         * commands are sent under the hood using the framework, the host may receive anexpected
+         * responses which may lead to issues. In this case enable gPlatformDisableVendorSpecificInit.
+         */
+        PLATFORM_VendorSpecificInit();
 #endif
-#endif
-
-        (void)PLATFORM_BleSetHostSleepConfig();
-
-#if !defined(gPlatformDisableBleLowPower_d) || (gPlatformDisableBleLowPower_d == 0)
-        /* Allow Controller to enter low power */
-        (void)PLATFORM_EnableBleLowPower();
-#endif
-#endif /* __ZEPHYR__ */
-
         hciInitialized = true;
     } while (false);
 
@@ -656,28 +626,21 @@ int PLATFORM_DisableBleLowPower(void)
 
 int PLATFORM_RequestBleWakeUp(void)
 {
-    int         ret = 0;
-
+    int               ret = 0;
+    osa_status_t      status;
+    osa_event_flags_t events = 0;
     /* The request can come from different tasks (BLE or OT), but only one request should be performed at the same
      * time. The mutex ensures only one task is waking up the CPU2 at a time. */
-#ifdef __ZEPHYR__
-    uint32_t events = 0;
-    if (k_mutex_lock(&bleMutexHandle, K_FOREVER) != 0)
+
+    if (OSA_MutexLock((osa_mutex_handle_t)bleMutexHandle, osaWaitForever_c) != KOSA_StatusSuccess)
     {
         /* shouldn't happen */
         assert(0);
     }
-#else
-    EventBits_t eventBits;
-    if (xSemaphoreTake(bleMutexHandle, portMAX_DELAY) != pdTRUE)
-    {
-        /* shouldn't happen */
-        assert(0);
-    }
-#endif /* __ZEPHYR__ */
+
     if (PLATFORM_IsBleAwake() == false)
     {
-        /* After operate menu 130, there is a pending interrupt, 
+        /* After operate menu 130, there is a pending interrupt,
          * before enableIRQ, clear pending interrupt */
         NVIC_ClearPendingIRQ(BLE_MCI_WAKEUP_DONE0_IRQn);
 
@@ -692,27 +655,18 @@ int PLATFORM_RequestBleWakeUp(void)
         PMU_EnableBleWakeup(0x1U);
 
         /* Suspend the current task waiting for the Controller to be awake */
-#ifdef __ZEPHYR__
-        events = k_event_wait(&wakeUpEventGroup, ble_awake_event, 0, PLATFORM_BLE_WAKE_UP_TIMEOUT_TICKS);
-        if ((events & (uint32_t)ble_awake_event) == 0)
+        status = OSA_EventWait((osa_event_handle_t)wakeUpEventGroup, ble_awake_event, 1,
+                               PLATFORM_BLE_WAKE_UP_TIMEOUT_MS, &events);
+        if (((events & (uint32_t)ble_awake_event) == 0) || (status != KOSA_StatusSuccess))
         {
             ret = -1;
         }
-#else
-        eventBits = xEventGroupWaitBits(wakeUpEventGroup, (EventBits_t)ble_awake_event, pdTRUE, pdFALSE,
-                                        PLATFORM_BLE_WAKE_UP_TIMEOUT_TICKS);
-        if ((eventBits & (EventBits_t)ble_awake_event) == 0)
-        {
-            ret = -1;
-        }
-#endif /* __ZEPHYR__ */
     }
 
-#ifdef __ZEPHYR__
-    k_mutex_unlock(&bleMutexHandle);
-#else
-    xSemaphoreGive(bleMutexHandle);
-#endif /* __ZEPHYR__ */
+    if (OSA_MutexUnlock((osa_mutex_handle_t)bleMutexHandle) != KOSA_StatusSuccess)
+    {
+        ret = -1;
+    }
 
     return ret;
 }
@@ -745,11 +699,10 @@ int PLATFORM_HandleControllerPowerState(void)
     ret = PLATFORM_HandleBlePowerStateEvent(ble_awake_event);
 
     /* Unblock any sending task waiting for wake up */
-#ifdef __ZEPHYR__
-    k_event_post(&wakeUpEventGroup, ble_awake_event);
-#else
-    (void)xEventGroupSetBits(wakeUpEventGroup, (EventBits_t)ble_awake_event);
-#endif /* __ZEPHYR__ */
+    if (OSA_EventSet((osa_event_handle_t)wakeUpEventGroup, ble_awake_event) != KOSA_StatusSuccess)
+    {
+        ret = -1;
+    }
 
     return ret;
 }
@@ -850,12 +803,11 @@ static hal_rpmsg_return_status_t PLATFORM_HciRpmsgRxCallback(void *param, uint8_
     return kStatus_HAL_RL_RELEASE;
 }
 
-#ifndef __ZEPHYR__
 static int PLATFORM_SetBtCalData(void)
 {
-    int           ret = 0;
-    uint8_t       buffer[1 + HCI_CMD_PACKET_HEADER_LENGTH + HCI_CMD_STORE_BT_CAL_DATA_PARAM_LENGTH];
-    uint16_t      opcode = get_opcode(HCI_CMD_VENDOR_OCG, HCI_CMD_STORE_BT_CAL_DATA_OCF);
+    int      ret = 0;
+    uint8_t  buffer[1 + HCI_CMD_PACKET_HEADER_LENGTH + HCI_CMD_STORE_BT_CAL_DATA_PARAM_LENGTH];
+    uint16_t opcode = get_opcode(HCI_CMD_VENDOR_OCG, HCI_CMD_STORE_BT_CAL_DATA_OCF);
 
     PLATFORM_FillInHciCmdMsg(buffer, opcode, (uint8_t)sizeof(hci_cal_data_params), hci_cal_data_params);
 
@@ -875,7 +827,8 @@ static int PLATFORM_SetBtCalDataAnnex100(void)
     uint8_t  bufferAnnex100[1 + HCI_CMD_PACKET_HEADER_LENGTH + HCI_CMD_STORE_BT_CAL_DATA_PARAM_ANNEX100_LENGTH];
     uint16_t opcodeAnnex100 = get_opcode(HCI_CMD_VENDOR_OCG, HCI_CMD_STORE_BT_CAL_DATA_ANNEX100_OCF);
 
-    PLATFORM_FillInHciCmdMsg(bufferAnnex100, opcodeAnnex100, (uint8_t)sizeof(hci_cal_data_annex100_params), hci_cal_data_annex100_params);
+    PLATFORM_FillInHciCmdMsg(bufferAnnex100, opcodeAnnex100, (uint8_t)sizeof(hci_cal_data_annex100_params),
+                             hci_cal_data_annex100_params);
 
     ret = PLATFORM_SendHciMessage(bufferAnnex100, sizeof(bufferAnnex100));
     if (ret != 0)
@@ -886,30 +839,6 @@ static int PLATFORM_SetBtCalDataAnnex100(void)
     return ret;
 }
 #endif /* gPlatformDisableSetBtCalDataAnnex100_d */
-
-static int PLATFORM_BleSetHostSleepConfig(void)
-{
-    int ret = 0;
-    /* This command must be sent before sending any power commands, likely
-     * after HCI init  */
-    uint8_t       buffer[1 + HCI_CMD_PACKET_HEADER_LENGTH + HCI_CMD_BT_HOST_SLEEP_CONFIG_PARAM_LENGTH];
-    uint16_t      opcode = get_opcode(HCI_CMD_VENDOR_OCG, HCI_CMD_BT_HOST_SLEEP_CONFIG_OCF);
-    const uint8_t params[HCI_CMD_BT_HOST_SLEEP_CONFIG_PARAM_LENGTH] = {
-        0xFFU, // BT_HIU_WAKEUP_INBAND
-        0xFFU, // BT_HIU_WAKE_GAP_WAIT_FOR_IRQ
-    };
-
-    PLATFORM_FillInHciCmdMsg(buffer, opcode, (uint8_t)sizeof(params), params);
-
-    ret = PLATFORM_SendHciMessage(buffer, sizeof(buffer));
-    if (ret != 0)
-    {
-        ret = -1;
-    }
-
-    return ret;
-}
-#endif /* __ZEPHYR__ */
 
 static bool PLATFORM_HandleHciVendorEvent(uint8_t *eventData, uint32_t len)
 {
@@ -952,11 +881,10 @@ static int PLATFORM_HandleBlePowerStateEvent(ble_ps_event_t psEvent)
                 case ble_asleep_event:
                     blePowerState = ble_asleep_state;
                     /* Make sure to clear wake up event */
-#ifdef __ZEPHYR__
-                    k_event_clear(&wakeUpEventGroup, ble_awake_event);
-#else
-                    (void)xEventGroupClearBits(wakeUpEventGroup, (EventBits_t)ble_awake_event);
-#endif /* __ZEPHYR__ */
+                    if (OSA_EventClear((osa_event_handle_t)wakeUpEventGroup, ble_awake_event) != KOSA_StatusSuccess)
+                    {
+                        ret = -1;
+                    }
                     break;
 
                 default:
@@ -982,6 +910,29 @@ static int PLATFORM_HandleBlePowerStateEvent(ble_ps_event_t psEvent)
         default:
             ret = -1;
             break;
+    }
+
+    return ret;
+}
+
+static int PLATFORM_BleSetHostSleepConfig(void)
+{
+    int ret = 0;
+    /* This command must be sent before sending any power commands, likely
+     * after HCI init  */
+    uint8_t       buffer[1 + HCI_CMD_PACKET_HEADER_LENGTH + HCI_CMD_BT_HOST_SLEEP_CONFIG_PARAM_LENGTH];
+    uint16_t      opcode = get_opcode(HCI_CMD_VENDOR_OCG, HCI_CMD_BT_HOST_SLEEP_CONFIG_OCF);
+    const uint8_t params[HCI_CMD_BT_HOST_SLEEP_CONFIG_PARAM_LENGTH] = {
+        0xFFU, // BT_HIU_WAKEUP_INBAND
+        0xFFU, // BT_HIU_WAKE_GAP_WAIT_FOR_IRQ
+    };
+
+    PLATFORM_FillInHciCmdMsg(buffer, opcode, (uint8_t)sizeof(params), params);
+
+    ret = PLATFORM_SendHciMessage(buffer, sizeof(buffer));
+    if (ret != 0)
+    {
+        ret = -1;
     }
 
     return ret;
