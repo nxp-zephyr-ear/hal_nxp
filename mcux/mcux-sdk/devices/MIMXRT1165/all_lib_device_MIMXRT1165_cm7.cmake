@@ -166,7 +166,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(component_serial_manager_usb_cdc)
 #    include(driver_clock)
 #    include(driver_anatop_ai)
-#    include(device_CMSIS)
+#    
 #    include(driver_mecc)
 #    include(driver_romapi)
 #    include(middleware_multicore_rpmsg_lite_freertos)

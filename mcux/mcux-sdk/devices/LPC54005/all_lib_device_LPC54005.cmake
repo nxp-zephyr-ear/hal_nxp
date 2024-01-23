@@ -96,7 +96,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(middleware_sdmmc_osa_freertos)
 #    include(component_panic)
 #    include(driver_clock)
-#    include(device_CMSIS)
+#    
 #    include(CMSIS_Driver_Include_Common OPTIONAL)
 #    include(driver_lpc_iocon)
 #    include(driver_spifi)

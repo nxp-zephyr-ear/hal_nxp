@@ -85,7 +85,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(utility_assert)
 #    include(driver_mma8451q)
 #    include(utility_debug_console)
-#    include(device_CMSIS)
+#    
 #    include(driver_uart)
 #    include(utility_assert_lite)
 #    include(CMSIS_Include_common OPTIONAL)

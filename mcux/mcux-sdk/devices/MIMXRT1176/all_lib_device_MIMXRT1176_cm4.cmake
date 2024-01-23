@@ -233,7 +233,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_flexcan_edma)
 #    include(driver_display-mipi-dsi-cmd)
 #    include(driver_anatop_ai)
-#    include(device_CMSIS)
+#    
 #    include(driver_romapi)
 #    include(middleware_multicore_rpmsg_lite_freertos)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)

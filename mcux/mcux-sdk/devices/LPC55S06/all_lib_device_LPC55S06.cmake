@@ -88,7 +88,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_utick)
 #    include(utility_assert)
 #    include(driver_prince)
-#    include(device_CMSIS)
+#    
 #    include(CMSIS_Driver_Include_Common OPTIONAL)
 #    include(driver_lpc_iocon)
 #    include(utility_debug_console_lite)

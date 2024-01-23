@@ -146,7 +146,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(component_panic)
 #    include(driver_clock)
 #    include(driver_anatop_ai)
-#    include(device_CMSIS)
+#    
 #    include(driver_mecc)
 #    include(driver_romapi)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)

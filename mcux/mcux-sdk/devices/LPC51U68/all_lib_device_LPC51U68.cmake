@@ -94,7 +94,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_sctimer)
 #    include(component_log_backend_ringbuffer)
 #    include(driver_flexcomm_usart)
-#    include(device_CMSIS)
+#    
 #    include(middleware_usb_common_header)
 #    include(component_ctimer_adapter)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)

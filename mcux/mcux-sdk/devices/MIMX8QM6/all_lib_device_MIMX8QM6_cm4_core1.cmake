@@ -115,7 +115,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_camera-receiver-common)
 #    include(driver_flexcan_edma)
 #    include(driver_display-mipi-dsi-cmd)
-#    include(device_CMSIS)
+#    
 #    include(driver_tstmr)
 #    include(driver_sc_event)
 #    include(driver_camera-device-sccb)

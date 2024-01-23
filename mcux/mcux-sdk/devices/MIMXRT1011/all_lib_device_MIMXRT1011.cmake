@@ -126,7 +126,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_soc_flexram_allocate)
 #    include(component_serial_manager_usb_cdc)
 #    include(driver_clock)
-#    include(device_CMSIS)
+#    
 #    include(middleware_usb_host_ehci_MIMXRT1011)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)
 #    include(component_osa_bm)

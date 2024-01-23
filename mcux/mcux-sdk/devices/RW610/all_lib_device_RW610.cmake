@@ -150,7 +150,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_lpc_dma)
 #    include(driver_wwdt)
 #    include(component_els_pkc_prng)
-#    include(device_CMSIS)
+#    
 #    include(middleware_fatfs_usb)
 #    include(middleware_usb_host_common_header)
 #    include(component_messaging)

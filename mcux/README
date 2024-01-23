@@ -65,3 +65,4 @@ Patch List:
   3. Add device_system cmake definitions for the following SOCs: RW612, RW610
   4. fsl_common.h: add #ifdef ZEPHYR #endif to include Zephyr's sys utils
   5. Remove device_CMSIS.cmake and references to it
+  6. Restore els pkc zephyr updates

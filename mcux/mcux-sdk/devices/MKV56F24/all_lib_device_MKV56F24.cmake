@@ -104,7 +104,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_flexcan_edma)
 #    include(driver_sim)
 #    include(driver_rcm)
-#    include(device_CMSIS)
+#    
 #    include(driver_uart)
 #    include(utilities_misc_utilities)
 #    include(driver_flexbus)

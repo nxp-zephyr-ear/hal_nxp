@@ -177,7 +177,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_flexcan_edma)
 #    include(middleware_sdmmc_host_usdhc_interrupt_MIMXRT1176_cm7)
 #    include(driver_anatop_ai)
-#    include(device_CMSIS)
+#    
 #    include(driver_mecc)
 #    include(driver_romapi)
 #    include(middleware_multicore_rpmsg_lite_freertos)

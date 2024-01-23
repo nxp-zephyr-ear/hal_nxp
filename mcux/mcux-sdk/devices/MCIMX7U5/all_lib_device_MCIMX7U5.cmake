@@ -100,7 +100,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_cmsis_lpi2c)
 #    include(middleware_mmcau_cm4_cm7)
 #    include(driver_clock)
-#    include(device_CMSIS)
+#    
 #    include(middleware_multicore_rpmsg_lite_freertos)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)
 #    include(middleware_multicore_erpc_doc)

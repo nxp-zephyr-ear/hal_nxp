@@ -99,7 +99,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_clock)
 #    include(driver_edma_MCIMX7U5)
 #    include(driver_lpuart_edma)
-#    include(device_CMSIS)
+#    
 #    include(middleware_mbedtls_MCIMX7U5)
 #    include(driver_msmc)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)

@@ -88,7 +88,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_flexcan_edma)
 #    include(driver_flexcan)
 #    include(driver_lpuart_edma)
-#    include(device_CMSIS)
+#    
 #    include(driver_flexio_uart_edma)
 #    include(utilities_misc_utilities)
 #    include(driver_lpi2c)

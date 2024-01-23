@@ -65,7 +65,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(middleware_multicore_rpmsg_lite_imx8mq_m4_freertos)
 #    include(driver_clock)
 #    include(utility_debug_console)
-#    include(device_CMSIS)
+#    
 #    include(driver_wdog01)
 #    include(middleware_multicore_rpmsg_lite_freertos)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)
