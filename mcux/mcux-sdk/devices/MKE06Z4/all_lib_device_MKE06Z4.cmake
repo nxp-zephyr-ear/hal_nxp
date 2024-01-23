@@ -59,7 +59,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(component_uart_adapter)
 #    include(driver_clock)
 #    include(utility_debug_console)
-#    
+#    include(device_CMSIS)
 #    include(driver_wdog8)
 #    include(driver_uart)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)

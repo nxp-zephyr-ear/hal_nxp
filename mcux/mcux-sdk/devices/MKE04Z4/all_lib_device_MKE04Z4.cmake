@@ -47,7 +47,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(component_uart_adapter)
 #    include(driver_clock)
 #    include(utilities_misc_utilities_MKE04Z4)
-#    
+#    include(device_CMSIS)
 #    include(driver_uart)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)
 #    include(driver_common)

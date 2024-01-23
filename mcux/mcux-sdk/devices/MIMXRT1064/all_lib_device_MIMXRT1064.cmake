@@ -217,7 +217,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(component_serial_manager_usb_cdc)
 #    include(driver_flexcan_edma)
 #    include(middleware_eiq_worker_video_MIMXRT1064)
-#    
+#    include(device_CMSIS)
 #    include(driver_romapi)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)
 #    include(middleware_azure_rtos_fx)

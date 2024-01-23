@@ -69,7 +69,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_clock)
 #    include(utilities_misc_utilities_MIMX8MN6)
 #    include(utility_debug_console)
-#    
+#    include(device_CMSIS)
 #    include(driver_wdog01)
 #    include(driver_sai_sdma)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)

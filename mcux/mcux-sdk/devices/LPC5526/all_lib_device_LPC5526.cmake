@@ -92,7 +92,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(middleware_usb_device_common_header)
 #    include(component_panic)
 #    include(driver_clock)
-#    
+#    include(device_CMSIS)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)
 #    include(driver_lpc_iocon)
 #    include(utility_debug_console_lite)

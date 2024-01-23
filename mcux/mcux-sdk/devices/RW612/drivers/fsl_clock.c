@@ -98,7 +98,7 @@ static const uint32_t s_avpllPostDiv0p5[] = {
 /*******************************************************************************
  * Code
  ******************************************************************************/
-AT_QUICKACCESS_SECTION_CODE(static void CLOCK_Delay(uint32_t loop))
+static void CLOCK_Delay(uint32_t loop)
 {
     if (loop > 0U)
     {

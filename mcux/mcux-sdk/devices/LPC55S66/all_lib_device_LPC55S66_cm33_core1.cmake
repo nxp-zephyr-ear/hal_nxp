@@ -33,7 +33,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(utility_debug_console)
 #    include(utility_assert)
 #    include(driver_flexcomm_usart)
-#    
+#    include(device_CMSIS)
 #    include(driver_lpc_iocon)
 #    include(utilities_misc_utilities)
 #    include(driver_common)

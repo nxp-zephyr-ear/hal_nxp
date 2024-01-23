@@ -208,7 +208,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_clock)
 #    include(driver_display-mipi-dsi-cmd)
 #    include(driver_anatop_ai)
-#    
+#    include(device_CMSIS)
 #    include(middleware_lwip)
 #    include(driver_romapi)
 #    include(middleware_multicore_rpmsg_lite_freertos)

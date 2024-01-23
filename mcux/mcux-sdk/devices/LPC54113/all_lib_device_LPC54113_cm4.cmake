@@ -99,7 +99,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(middleware_multicore_erpc_eRPC_rpmsg_lite_rtos_master_c_wrapper)
 #    include(driver_sctimer)
 #    include(driver_flexcomm_usart)
-#    
+#    include(device_CMSIS)
 #    include(component_ctimer_adapter)
 #    include(driver_lpc_iocon)
 #    include(driver_flexcomm_i2c_freertos)

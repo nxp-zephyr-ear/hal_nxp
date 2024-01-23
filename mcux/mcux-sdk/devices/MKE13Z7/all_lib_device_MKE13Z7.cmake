@@ -92,7 +92,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_lpspi_edma)
 #    include(component_log_backend_ringbuffer)
 #    include(driver_lpuart_edma)
-#    
+#    include(device_CMSIS)
 #    include(driver_edma_MKE17Z7)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)
 #    include(component_osa_bm)

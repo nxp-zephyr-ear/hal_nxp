@@ -220,7 +220,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(component_els_pkc_prng)
 #    include(middleware_edgefast_bluetooth_extension_common_ethermind)
 #    include(middleware_wireless_framework_platform)
-#    
+#    include(device_CMSIS)
 #    include(middleware_fatfs_usb)
 #    include(middleware_edgefast_bluetooth_config_ethermind)
 #    include(middleware_maestro_framework_streamer_RW612)

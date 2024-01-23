@@ -116,7 +116,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(middleware_sdmmc_osa_freertos)
 #    include(component_serial_manager_usb_cdc)
 #    include(driver_clock)
-#    
+#    include(device_CMSIS)
 #    include(driver_soc_mipi_dsi)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)
 #    include(utility_debug_console_lite)

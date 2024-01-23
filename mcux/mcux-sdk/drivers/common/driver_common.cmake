@@ -27,5 +27,5 @@ include(driver_reset)
 
 #CMSIS is not needed for Audio DSP
 if(NOT (${MCUX_CPU_ARCH} MATCHES "DSP"))
-    
+    include(device_CMSIS)
 endif()

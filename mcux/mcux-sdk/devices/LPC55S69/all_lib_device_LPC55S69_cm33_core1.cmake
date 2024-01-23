@@ -42,7 +42,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(utility_debug_console)
 #    include(middleware_multicore_erpc_eRPC_rpmsg_lite_rtos_transport)
 #    include(driver_flexcomm_usart)
-#    
+#    include(device_CMSIS)
 #    include(middleware_multicore_rpmsg_lite_freertos)
 #    include(driver_lpc_iocon)
 #    include(middleware_multicore_erpc_doc)

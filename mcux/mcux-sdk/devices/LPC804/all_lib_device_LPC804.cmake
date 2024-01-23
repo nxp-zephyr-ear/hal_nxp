@@ -50,7 +50,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(utility_assert_lite)
 #    include(component_miniusart_adapter)
 #    include(driver_lpc_acomp)
-#    
+#    include(device_CMSIS)
 #    include(driver_power_no_lib)
 #    include(driver_rom_api)
 #    include(utility_debug_console_lite)

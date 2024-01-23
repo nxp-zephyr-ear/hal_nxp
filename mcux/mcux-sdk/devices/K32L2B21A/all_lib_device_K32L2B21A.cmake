@@ -106,7 +106,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(component_timer_manager)
 #    include(component_log_backend_ringbuffer)
 #    include(driver_flexio_uart_dma)
-#    
+#    include(device_CMSIS)
 #    include(driver_uart)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)
 #    include(middleware_usb_device_controller_driver_K32L2B31A)

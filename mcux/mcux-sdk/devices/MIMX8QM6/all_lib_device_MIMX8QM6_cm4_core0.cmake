@@ -96,7 +96,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_flexcan_edma)
 #    include(driver_flexcan)
 #    include(driver_lpuart_edma)
-#    
+#    include(device_CMSIS)
 #    include(driver_sema42)
 #    include(driver_lpspi_edma)
 #    include(driver_sc_event)

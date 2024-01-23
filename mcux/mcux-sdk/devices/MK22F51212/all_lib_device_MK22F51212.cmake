@@ -107,7 +107,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(middleware_usb_device_common_header)
 #    include(component_uart_adapter)
 #    include(driver_clock)
-#    
+#    include(device_CMSIS)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)
 #    include(middleware_multicore_erpc_doc)
 #    include(component_osa_bm)

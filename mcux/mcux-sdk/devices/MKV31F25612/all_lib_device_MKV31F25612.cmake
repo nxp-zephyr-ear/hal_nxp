@@ -94,7 +94,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_sim)
 #    include(component_log_backend_ringbuffer)
 #    include(driver_lpuart_edma)
-#    
+#    include(device_CMSIS)
 #    include(driver_uart)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)
 #    include(utility_debug_console_lite)

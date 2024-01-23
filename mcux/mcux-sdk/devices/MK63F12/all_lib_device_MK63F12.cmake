@@ -133,7 +133,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(CMSIS_Driver_Include_Ethernet OPTIONAL)
 #    include(component_uart_adapter)
 #    include(driver_clock)
-#    
+#    include(device_CMSIS)
 #    include(driver_edma_MK64F12)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)
 #    include(middleware_multicore_erpc_doc)

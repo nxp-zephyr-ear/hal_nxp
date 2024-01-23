@@ -99,7 +99,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(component_ak4497_adapter)
 #    include(driver_srtm_freertos)
 #    include(utility_debug_console)
-#    
+#    include(device_CMSIS)
 #    include(driver_wdog01)
 #    include(driver_sai_sdma)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)

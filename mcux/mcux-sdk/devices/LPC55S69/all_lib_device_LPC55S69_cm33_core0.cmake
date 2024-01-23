@@ -149,7 +149,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_clock)
 #    include(middleware_multicore_erpc_eRPC_rpmsg_lite_rtos_transport)
 #    include(driver_prince)
-#    
+#    include(device_CMSIS)
 #    include(middleware_multicore_rpmsg_lite_freertos)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)
 #    include(driver_lpc_iocon)

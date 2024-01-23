@@ -173,7 +173,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_soc_flexram_allocate)
 #    include(component_serial_manager_usb_cdc)
 #    include(CMSIS_Driver_Include_USART OPTIONAL)
-#    
+#    include(device_CMSIS)
 #    include(driver_romapi)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)
 #    include(middleware_azure_rtos_fx)

@@ -44,7 +44,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(component_miniusart_adapter)
 #    include(driver_lpc_acomp)
 #    include(driver_swm_connections)
-#    
+#    include(device_CMSIS)
 #    include(utility_debug_console_lite)
 #    include(CMSIS_Include_common OPTIONAL)
 #    include(driver_common)

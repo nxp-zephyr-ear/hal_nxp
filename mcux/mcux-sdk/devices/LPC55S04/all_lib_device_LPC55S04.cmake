@@ -88,7 +88,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_clock)
 #    include(driver_sctimer)
 #    include(driver_flexcomm_usart)
-#    
+#    include(device_CMSIS)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)
 #    include(driver_lpc_iocon)
 #    include(driver_flexcomm_i2c_freertos)

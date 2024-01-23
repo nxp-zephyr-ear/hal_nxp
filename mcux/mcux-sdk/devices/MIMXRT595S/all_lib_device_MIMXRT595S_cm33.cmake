@@ -209,7 +209,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_clock)
 #    include(driver_soc_mipi_dsi)
 #    include(driver_display-mipi-dsi-cmd)
-#    
+#    include(device_CMSIS)
 #    include(driver_dc-fb-ssd1963)
 #    include(middleware_multicore_rpmsg_lite_freertos)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)

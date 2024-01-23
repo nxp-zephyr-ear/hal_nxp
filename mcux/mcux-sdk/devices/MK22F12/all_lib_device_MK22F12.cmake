@@ -94,7 +94,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(CMSIS_Include_core_cm OPTIONAL)
 #    include(utility_assert_lite)
 #    include(utility_debug_console)
-#    
+#    include(device_CMSIS)
 #    include(utilities_misc_utilities)
 #    include(component_serial_manager)
 #    include(component_serial_manager_uart)

@@ -103,7 +103,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_sim)
 #    include(component_log_backend_ringbuffer)
 #    include(driver_rcm)
-#    
+#    include(device_CMSIS)
 #    include(driver_uart)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)
 #    include(utilities_misc_utilities_MK22F51212)

@@ -173,7 +173,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(middleware_sdmmc_osa_freertos)
 #    include(component_serial_manager_usb_cdc)
 #    include(driver_clock)
-#    
+#    include(device_CMSIS)
 #    include(middleware_multicore_rpmsg_lite_freertos)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)
 #    include(middleware_multicore_erpc_doc)

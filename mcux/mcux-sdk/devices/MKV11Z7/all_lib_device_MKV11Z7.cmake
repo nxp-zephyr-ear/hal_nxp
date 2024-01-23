@@ -92,7 +92,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_sim)
 #    include(component_log_backend_ringbuffer)
 #    include(utility_debug_console)
-#    
+#    include(device_CMSIS)
 #    include(driver_uart)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)
 #    include(component_osa_bm)

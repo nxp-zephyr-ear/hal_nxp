@@ -126,7 +126,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_utick)
 #    include(component_pkc)
 #    include(driver_clock)
-#    
+#    include(device_CMSIS)
 #    include(middleware_multicore_erpc_eRPC_spi_slave_transport)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)
 #    include(driver_lpc_iocon)

@@ -96,7 +96,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(middleware_sdmmc_host_sdhc_freertos)
 #    include(middleware_sdmmc_osa_freertos)
 #    include(utility_assert)
-#    
+#    include(device_CMSIS)
 #    include(driver_ft5406)
 #    include(component_osa_bm)
 #    include(driver_common)

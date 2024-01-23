@@ -133,7 +133,7 @@ list(APPEND CMAKE_MODULE_PATH
 #    include(driver_soc_flexram_allocate)
 #    include(component_serial_manager_usb_cdc)
 #    include(driver_clock)
-#    
+#    include(device_CMSIS)
 #    include(driver_romapi)
 #    include(CMSIS_Driver_Include_Common OPTIONAL)
 #    include(middleware_lwip_apps_httpd_support)
