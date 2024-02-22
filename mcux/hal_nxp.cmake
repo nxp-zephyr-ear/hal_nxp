@@ -333,3 +333,26 @@ if(CONFIG_MCUX_ELS_PKC)
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/mcux-sdk/components/els_pkc/examples)
   endif()
 endif()
+
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/mcux-sdk/components/osa)
+zephyr_include_directories(${CMAKE_CURRENT_SOURCE_DIR}/mcux-sdk/components/osa)
+include(component_osa_zephyr)
+
+if(CONFIG_WIFI_NXP)
+    list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/mcux-sdk/components/wifi_bt_module)
+    include(component_wifi_bt_module_tx_pwr_limits)
+endif()
+
+if(CONFIG_NXP_FW_LOADER)
+    list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/mcux-sdk/components/conn_fwloader)
+    include(driver_conn_fwloader)
+endif()
+
+if(CONFIG_NXP_RF_IMU)
+    list(APPEND CMAKE_MODULE_PATH
+        ${CMAKE_CURRENT_LIST_DIR}/mcux-sdk/components/rpmsg
+        ${CMAKE_CURRENT_LIST_DIR}/mcux-sdk/drivers/imu
+        ${CMAKE_CURRENT_LIST_DIR}/mcux-sdk/drivers/gdma
+    )
+    include(component_wireless_imu_adapter)
+endif()
