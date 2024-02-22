@@ -87,16 +87,18 @@ static bootloader_tree_v1_t *g_bootloaderTree_v1;
 /*******************************************************************************
  * Codes
  ******************************************************************************/
+__attribute__((__noinline__))
 static void sb3_Delay(uint32_t loop)
 {
     if (loop > 0U)
     {
-        __ASM volatile("MOV    R0, %0" : : "r"(loop));
         __ASM volatile(
-            "1: 							\n"
-            "	 SUBS	R0, R0, #1			\n"
-            "	 CMP	R0, #0				\n"
-            "	 BNE	1b					\n");
+            "1:                             \n"
+            "    SUBS   %0, %0, #1          \n"
+            "    CMP    %0, #0              \n"
+            "    BNE    1b                  \n"
+            :
+            : "r"(loop));
     }
 }
 
@@ -280,7 +282,6 @@ status_t sb3_fw_download_impl(LOAD_Target_Type loadTarget, uint32_t flag, uint32
     {
         if (IMU_SYNC_MAGIC_PATTERN != *((volatile uint32_t *)magic_pattern_addr))
         {
-            //OSA_TimeDelay(5);
             /* 5 ms delay */
             sb3_DelayUs(1000 * 5);
             wait_count--;

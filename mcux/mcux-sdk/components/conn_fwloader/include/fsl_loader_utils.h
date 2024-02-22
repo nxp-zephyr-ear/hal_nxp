@@ -9,7 +9,7 @@
 #define __FSL_LOADER_UTILS_H__
 
 #include <stdint.h>
-#include "fsl_os_abstraction.h"
+#include "fsl_common.h"
 #include "fsl_loader.h"
 #include "fusemap.h"
 #include "fsl_ocotp.h"
