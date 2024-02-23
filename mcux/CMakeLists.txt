@@ -99,6 +99,11 @@ add_subdirectory_ifdef(
   middleware/wifi_nxp
   )
 
+add_subdirectory_ifdef(
+  CONFIG_MCUX_NXP_IOT_AGENT
+  middleware/nxp_iot_agent
+  )
+
 #Include Entry cmake component
 include(${CMAKE_CURRENT_LIST_DIR}/hal_nxp.cmake)
 enable_language(C ASM)
