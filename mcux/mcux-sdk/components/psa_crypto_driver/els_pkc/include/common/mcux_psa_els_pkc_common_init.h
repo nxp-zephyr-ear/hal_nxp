@@ -21,11 +21,8 @@
 /* MUTEX FOR HW Modules*/
 #if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
 #include "osal_mutex.h"
-#else
-#include "fsl_common.h"
 #endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
- 
-#include "mcuxClEls.h"
+#include "fsl_common.h"
 
 /* MUTEX FOR HW Modules*/
 #if defined(PSA_CRYPTO_DRIVER_THREAD_EN)

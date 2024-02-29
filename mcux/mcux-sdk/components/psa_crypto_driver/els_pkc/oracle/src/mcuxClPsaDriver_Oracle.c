@@ -10,21 +10,16 @@
 #include <mcuxClPsaDriver_Oracle_Utils.h>
 #include <mcuxClPsaDriver_Oracle_Macros.h>
 #include <mcuxClPsaDriver.h>
-//#if defined (PSA_CRYPTO_MBEDTLS_STANDALONE)
-#include <psa/crypto_extra.h>
-//#else
-//#include <mbed_psa/crypto_extra.h>
-//#endif
+
 #include <mbedtls/platform.h>
 #include <string.h>
-#include "crypto.h"
 
 /* If TF-M Builtin keys are being used in project,
  then use rw61x specific plat builtin keys */
 #if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
 #include "tfm_crypto_defs.h"
 #include "tfm_plat_crypto_keys.h"
-#include "tfm_builtin_key_ids.h"
+#include "mcuxClPsaDriver_Oracle_Interface_builtin_key_ids.h"
 #endif /* PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER */
 
 #include "mcuxClPsaDriver_Oracle_ElsUtils.h"
@@ -34,261 +29,44 @@
 #include <internal/mcuxClKey_Functions_Internal.h>
 
 #if !defined (MBEDTLS_PSA_CRYPTO_KEY_ID_ENCODES_OWNER)
-static const mbedtls_svc_key_id_t el2goimport_kek_sk_id  = NXP_DIE_EL2GOIMPORT_KEK_SK;
-static const mbedtls_svc_key_id_t el2goimporttfm_kek_sk_id = NXP_DIE_EL2GOIMPORTTFM_KEK_SK;
-static const mbedtls_svc_key_id_t el2goimport_auth_sk_id = NXP_DIE_EL2GOIMPORT_AUTH_SK;
+#define MBEDTLS_NXP_DIE_EL2GOIMPORT_KEK_SK_ID NXP_DIE_EL2GOIMPORT_KEK_SK_ID
+#define MBEDTLS_NXP_DIE_EL2GOIMPORTTFM_KEK_SK_ID NXP_DIE_EL2GOIMPORTTFM_KEK_SK_ID
+#define MBEDTLS_NXP_DIE_EL2GOIMPORT_AUTH_SK_ID NXP_DIE_EL2GOIMPORT_AUTH_SK_ID
+#define MBEDTLS_NXP_DIE_EL2GOCONN_AUTH_PRK_ID NXP_DIE_EL2GOCONN_AUTH_PRK_ID
+#define MBEDTLS_NXP_DIE_EL2GOATTEST_AUTH_PRK_ID NXP_DIE_EL2GOATTEST_AUTH_PRK_ID
 #else
-static const mbedtls_svc_key_id_t el2goimport_kek_sk_id  = {
-    .MBEDTLS_PRIVATE(owner) = 0, .MBEDTLS_PRIVATE(key_id) = NXP_DIE_EL2GOIMPORT_KEK_SK
-};
-static const mbedtls_svc_key_id_t el2goimporttfm_kek_sk_id = {
-    .MBEDTLS_PRIVATE(owner) = 0, .MBEDTLS_PRIVATE(key_id) = NXP_DIE_EL2GOIMPORTTFM_KEK_SK
-};
-static const mbedtls_svc_key_id_t el2goimport_auth_sk_id = {
-    .MBEDTLS_PRIVATE(owner) = 0, .MBEDTLS_PRIVATE(key_id) = NXP_DIE_EL2GOIMPORT_AUTH_SK
-};
+#define MBEDTLS_NXP_DIE_EL2GOIMPORT_KEK_SK_ID {                                              \
+    .MBEDTLS_PRIVATE(owner) = 0, .MBEDTLS_PRIVATE(key_id) = NXP_DIE_EL2GOIMPORT_KEK_SK_ID    \
+}
+#define MBEDTLS_NXP_DIE_EL2GOIMPORTTFM_KEK_SK_ID {                                           \
+    .MBEDTLS_PRIVATE(owner) = 0, .MBEDTLS_PRIVATE(key_id) = NXP_DIE_EL2GOIMPORTTFM_KEK_SK_ID \
+}
+#define MBEDTLS_NXP_DIE_EL2GOIMPORT_AUTH_SK_ID {                                             \
+    .MBEDTLS_PRIVATE(owner) = 0, .MBEDTLS_PRIVATE(key_id) = NXP_DIE_EL2GOIMPORT_AUTH_SK_ID   \
+}
+#define MBEDTLS_NXP_DIE_EL2GOCONN_AUTH_PRK_ID {                                              \
+    .MBEDTLS_PRIVATE(owner) = 0, .MBEDTLS_PRIVATE(key_id) = NXP_DIE_EL2GOCONN_AUTH_PRK_ID    \
+}
+#define MBEDTLS_NXP_DIE_EL2GOATTEST_AUTH_PRK_ID {                                            \
+    .MBEDTLS_PRIVATE(owner) = 0, .MBEDTLS_PRIVATE(key_id) = NXP_DIE_EL2GOATTEST_AUTH_PRK_ID  \
+}
 #endif
 
-#if USE_A0_DEVELOPMENT_RECIPES
-
-#define MAX_RECIPE_STEPS 10
-
-#define RECIPE_STEP_CREATE_NXP_DIE_EXT_MK_SK                                                                        \
-    {                                                                                                               \
-        .operation = OP_KEYPROV, .storage = STORAGE_TEMP_KEY,                                                       \
-        .keyprov = {                                                                                                \
-            .target_key_slot           = 0x0A,                                                                      \
-            .key_properties.word.value = 0xa0010000,                                                                \
-            .options.word.value        = 0x00000000,                                                                \
-            .key_part_1 =                                                                                           \
-                {                                                                                                   \
-                    0x4e, 0x53, 0x27, 0x90, 0x94, 0xbe, 0x56, 0xa8, 0x27, 0x67, 0x53, 0x40, 0xac, 0x51, 0xa4, 0xbc, \
-                    0x39, 0xb5, 0x41, 0xa5, 0x22, 0x6e, 0xe3, 0x83, 0x43, 0xbd, 0x99, 0xa4, 0x4a, 0x7e, 0x61, 0xdf, \
-                },                                                                                                  \
-            .key_part_2_len = 64,                                                                                   \
-            .key_part_2 =                                                                                           \
-                {                                                                                                   \
-                    0xcb, 0x30, 0xfa, 0x0c, 0x17, 0x35, 0x5d, 0x8a, 0x3a, 0xcc, 0x82, 0x4f, 0xd1, 0x3b, 0xe4, 0xe9, \
-                    0x99, 0xb7, 0xc8, 0x48, 0x3f, 0x44, 0x86, 0x73, 0x6e, 0xfa, 0xad, 0x26, 0xfd, 0xcd, 0x72, 0x7d, \
-                    0xf3, 0x91, 0x6b, 0xa7, 0x93, 0xb4, 0xe5, 0x22, 0x91, 0xa3, 0xdd, 0x7f, 0x65, 0xd8, 0x6a, 0xcc, \
-                    0xec, 0xfc, 0x92, 0x56, 0x7c, 0x5d, 0xc0, 0x05, 0xd4, 0x69, 0x4d, 0x82, 0x78, 0xf8, 0x85, 0x07, \
-                },                                                                                                  \
-        },                                                                                                          \
-    }
-
-#define RECIPE_STEP_DELETE_NXP_DIE_EXT_MK_SK                  \
-    {                                                         \
-        .operation = OP_KDELETE, .storage = STORAGE_TEMP_KEY, \
-        .kdelete = {                                          \
-            .target_key_slot = 0x0A,                          \
-        },                                                    \
-    }
-
-#define RECIPE_STEP_CREATE_NXP_DIE_EL2GOSYM_MK_SK                                                                  \
-    {                                                                                                              \
-        .operation = OP_CKDF, .storage = STORAGE_TEMP_KEY,                                                         \
-        .ckdf = {                                                                                                  \
-            .source_key_slot           = 0x0A,                                                                     \
-            .target_key_slot           = 0x0C,                                                                     \
-            .key_properties.word.value = 0x80010021,                                                               \
-            .derivation_data           = {0x00, 0x65, 0x32, 0x67, 0x73, 0x79, 0x6D, 0x5F, 0x6D, 0x6B, 0x00, 0x00}, \
-        },                                                                                                         \
-    }
-
-#define RECIPE_STEP_DELETE_NXP_DIE_EL2GOSYM_MK_SK             \
-    {                                                         \
-        .operation = OP_KDELETE, .storage = STORAGE_TEMP_KEY, \
-        .kdelete = {                                          \
-            .target_key_slot = 0x0C,                          \
-        },                                                    \
-    }
-
-#define RECIPE_STEP_CREATE_NXP_DIE_EL2GOOEM_MK_SK                                                                  \
-    {                                                                                                              \
-        .operation = OP_CKDF, .storage = STORAGE_TEMP_KEY,                                                         \
-        .ckdf = {                                                                                                  \
-            .source_key_slot           = 0x0C,                                                                     \
-            .target_key_slot           = 0x0E,                                                                     \
-            .key_properties.word.value = 0x80010021,                                                               \
-            .derivation_data           = {0x00, 0x65, 0x32, 0x67, 0x6f, 0x65, 0x6D, 0x5F, 0x6D, 0x6B, 0x00, 0x00}, \
-        },                                                                                                         \
-    }
-
-#define RECIPE_STEP_DELETE_NXP_DIE_EL2GOOEM_MK_SK             \
-    {                                                         \
-        .operation = OP_KDELETE, .storage = STORAGE_TEMP_KEY, \
-        .kdelete = {                                          \
-            .target_key_slot = 0x0E,                          \
-        },                                                    \
-    }
-
-#define RECIPE_STEP_CREATE_NXP_DIE_EL2GOIMPORT_AUTH_SK                                                             \
-    {                                                                                                              \
-        .operation = OP_CKDF, .storage = STORAGE_FINAL_KEY,                                                        \
-        .ckdf = {                                                                                                  \
-            .source_key_slot           = 0x0E,                                                                     \
-            .target_key_slot           = 0x08,                                                                     \
-            .key_properties.word.value = 0x80002021,                                                               \
-            .derivation_data           = {0x00, 0x65, 0x32, 0x67, 0x69, 0x61, 0x75, 0x74, 0x5f, 0x73, 0x6b, 0x00}, \
-        },                                                                                                         \
-    }
+static const mbedtls_svc_key_id_t el2goimport_kek_sk_id = MBEDTLS_NXP_DIE_EL2GOIMPORT_KEK_SK_ID;
+static const mbedtls_svc_key_id_t el2goimporttfm_kek_sk_id = MBEDTLS_NXP_DIE_EL2GOIMPORTTFM_KEK_SK_ID;
+static const mbedtls_svc_key_id_t el2goimport_auth_sk_id = MBEDTLS_NXP_DIE_EL2GOIMPORT_AUTH_SK_ID;
 
 #define RECIPE_STEP_CREATE_NXP_DIE_EL2GOIMPORT_KEK_SK                                                              \
     {                                                                                                              \
         .operation = OP_CKDF, .storage = STORAGE_FINAL_KEY,                                                        \
         .ckdf = {                                                                                                  \
-            .source_key_slot           = 0x0E,                                                                     \
-            .target_key_slot           = 0x08,                                                                     \
-            .key_properties.word.value = 0x80800021,                                                               \
-            .derivation_data           = {0x00, 0x65, 0x32, 0x67, 0x69, 0x6b, 0x65, 0x6b, 0x5f, 0x73, 0x6b, 0x00}, \
-        },                                                                                                         \
-    }
-
-#define RECIPE_STEP_CREATE_NXP_DIE_EL2GOIMPORTTFM_KEK_SK                                                           \
-    {                                                                                                              \
-        .operation = OP_CKDF, .storage = STORAGE_FINAL_KEY,                                                        \
-        .ckdf = {                                                                                                  \
-            .source_key_slot           = 0x0E,                                                                     \
-            .target_key_slot           = 0x08,                                                                     \
-            .key_properties.word.value = 0x80100021,                                                               \
-            .derivation_data           = {0x00, 0x65, 0x32, 0x67, 0x69, 0x74, 0x66, 0x6d, 0x5f, 0x73, 0x6b, 0x00}, \
-        },                                                                                                         \
-    }
-
-const key_recipe_t recipe_el2go_import_auth_key = {
-#if defined(MCUXCL_FEATURE_ELS_KEY_MGMT_KEYPROV)
-    .number_of_steps = 7,
-    .steps =
-        {
-            RECIPE_STEP_CREATE_NXP_DIE_EXT_MK_SK, // temporary, only for A0
-#else
-    .number_of_steps = 6,
-    .steps =
-        {
-#endif /* MCUXCL_FEATURE_ELS_KEY_MGMT_KEYPROV */
-            RECIPE_STEP_CREATE_NXP_DIE_EL2GOSYM_MK_SK,
-            RECIPE_STEP_DELETE_NXP_DIE_EXT_MK_SK,
-            RECIPE_STEP_CREATE_NXP_DIE_EL2GOOEM_MK_SK,
-            RECIPE_STEP_DELETE_NXP_DIE_EL2GOSYM_MK_SK,
-            RECIPE_STEP_CREATE_NXP_DIE_EL2GOIMPORT_AUTH_SK,
-            RECIPE_STEP_DELETE_NXP_DIE_EL2GOOEM_MK_SK,
-        },
-};
-
-const key_recipe_t recipe_el2goimport_kek_sk = {
-#if defined(MCUXCL_FEATURE_ELS_KEY_MGMT_KEYPROV)
-    .number_of_steps = 7,
-    .steps =
-        {
-            RECIPE_STEP_CREATE_NXP_DIE_EXT_MK_SK, // temporary, only for A0
-#else
-    .number_of_steps = 6,
-    .steps =
-        {
-#endif /* MCUXCL_FEATURE_ELS_KEY_MGMT_KEYPROV */
-            RECIPE_STEP_CREATE_NXP_DIE_EL2GOSYM_MK_SK,
-            RECIPE_STEP_DELETE_NXP_DIE_EXT_MK_SK,
-            RECIPE_STEP_CREATE_NXP_DIE_EL2GOOEM_MK_SK,
-            RECIPE_STEP_DELETE_NXP_DIE_EL2GOSYM_MK_SK,
-            RECIPE_STEP_CREATE_NXP_DIE_EL2GOIMPORT_KEK_SK,
-            RECIPE_STEP_DELETE_NXP_DIE_EL2GOOEM_MK_SK,
-        },
-};
-
-const key_recipe_t recipe_el2goimporttfm_kek_sk = {
-#if defined(MCUXCL_FEATURE_ELS_KEY_MGMT_KEYPROV)
-    .number_of_steps = 7,
-    .steps =
-        {
-            RECIPE_STEP_CREATE_NXP_DIE_EXT_MK_SK, // temporary, only for A0
-#else
-    .number_of_steps = 6,
-    .steps =
-        {
-#endif /* MCUXCL_FEATURE_ELS_KEY_MGMT_KEYPROV */
-            RECIPE_STEP_CREATE_NXP_DIE_EL2GOSYM_MK_SK,
-            RECIPE_STEP_DELETE_NXP_DIE_EXT_MK_SK,
-            RECIPE_STEP_CREATE_NXP_DIE_EL2GOOEM_MK_SK,
-            RECIPE_STEP_DELETE_NXP_DIE_EL2GOSYM_MK_SK,
-            RECIPE_STEP_CREATE_NXP_DIE_EL2GOIMPORTTFM_KEK_SK,
-            RECIPE_STEP_DELETE_NXP_DIE_EL2GOOEM_MK_SK,
-        },
-};
-
-#define RECIPE_STEP_CREATE_NXP_DIE_EL2GO_ATTEST_AUTH_PRK_SEED                                                      \
-    {                                                                                                              \
-        .operation = OP_CKDF, .storage = STORAGE_TEMP_KEY,                                                         \
-        .ckdf = {                                                                                                  \
-            .source_key_slot           = 0x06,                                                                     \
-            .target_key_slot           = 0x0E,                                                                     \
-            .key_properties.word.value = 0x84000021,                                                               \
-            .derivation_data           = {0x00, 0x65, 0x32, 0x67, 0x61, 0x74, 0x74, 0x5f, 0x73, 0x65, 0x00, 0x00}, \
-        },                                                                                                         \
-    }
-
-#define RECIPE_STEP_CREATE_NXP_DIE_EL2GO_ATTEST_AUTH_PRK      \
-    {                                                         \
-        .operation = OP_KEYGEN, .storage = STORAGE_FINAL_KEY, \
-        .keygen = {                                           \
-            .target_key_slot           = 0x0E,                \
-            .key_properties.word.value = 0x80040001,          \
-        },                                                    \
-    }
-
-const key_recipe_t recipe_el2go_attest_key = {
-    .number_of_steps = 2,
-    .steps =
-        {
-            RECIPE_STEP_CREATE_NXP_DIE_EL2GO_ATTEST_AUTH_PRK_SEED,
-            RECIPE_STEP_CREATE_NXP_DIE_EL2GO_ATTEST_AUTH_PRK,
-        },
-};
-
-#else // if USE_A0_DEVELOPMENT_RECIPES
-
-#define MAX_RECIPE_STEPS 5
-
-#define RECIPE_STEP_CREATE_NXP_DIE_EL2GOIMPORT_AUTH_SK                                                             \
-    {                                                                                                              \
-        .operation = OP_CKDF, .storage = STORAGE_FINAL_KEY,                                                        \
-        .ckdf = {                                                                                                  \
-            .source_key_slot           = 0x04,                                                                     \
-            .target_key_slot           = 0x08,                                                                     \
-            .key_properties.word.value = 0x40002021,                                                               \
-            .derivation_data           = {0x00, 0x65, 0x32, 0x67, 0x69, 0x61, 0x75, 0x74, 0x5f, 0x73, 0x6b, 0x00}, \
-        },                                                                                                         \
-    }
-
-#define RECIPE_STEP_CREATE_NXP_DIE_EL2GOIMPORT_KEK_SK                                                              \
-    {                                                                                                              \
-        .operation = OP_CKDF, .storage = STORAGE_FINAL_KEY,                                                        \
-        .ckdf = {                                                                                                  \
-            .source_key_slot           = 0x04,                                                                     \
-            .target_key_slot           = 0x08,                                                                     \
+            .source_key_slot           = NXP_DIE_EL2GOOEM_MK_SK_SLOT,                                              \
+            .target_key_id             = MBEDTLS_NXP_DIE_EL2GOIMPORT_KEK_SK_ID,                                    \
             .key_properties.word.value = 0x40800021,                                                               \
             .derivation_data           = {0x00, 0x65, 0x32, 0x67, 0x69, 0x6b, 0x65, 0x6b, 0x5f, 0x73, 0x6b, 0x00}, \
         },                                                                                                         \
     }
 
-#define RECIPE_STEP_CREATE_NXP_DIE_EL2GOIMPORTTFM_KEK_SK                                                           \
-    {                                                                                                              \
-        .operation = OP_CKDF, .storage = STORAGE_FINAL_KEY,                                                        \
-        .ckdf = {                                                                                                  \
-            .source_key_slot           = 0x04,                                                                     \
-            .target_key_slot           = 0x08,                                                                     \
-            .key_properties.word.value = 0x40100021,                                                               \
-            .derivation_data           = {0x00, 0x65, 0x32, 0x67, 0x69, 0x74, 0x66, 0x6d, 0x5f, 0x73, 0x6b, 0x00}, \
-        },                                                                                                         \
-    }
-
-const key_recipe_t recipe_el2go_import_auth_key = {
-    .number_of_steps = 1,
-    .steps =
-        {
-            RECIPE_STEP_CREATE_NXP_DIE_EL2GOIMPORT_AUTH_SK,
-        },
-};
-
 const key_recipe_t recipe_el2goimport_kek_sk = {
     .number_of_steps = 1,
     .steps =
@@ -296,6 +74,17 @@ const key_recipe_t recipe_el2goimport_kek_sk = {
             RECIPE_STEP_CREATE_NXP_DIE_EL2GOIMPORT_KEK_SK,
         },
 };
+
+#define RECIPE_STEP_CREATE_NXP_DIE_EL2GOIMPORTTFM_KEK_SK                                                           \
+    {                                                                                                              \
+        .operation = OP_CKDF, .storage = STORAGE_FINAL_KEY,                                                        \
+        .ckdf = {                                                                                                  \
+            .source_key_slot           = NXP_DIE_EL2GOOEM_MK_SK_SLOT,                                              \
+            .target_key_id             = MBEDTLS_NXP_DIE_EL2GOIMPORTTFM_KEK_SK_ID,                                 \
+            .key_properties.word.value = 0x40100021,                                                               \
+            .derivation_data           = {0x00, 0x65, 0x32, 0x67, 0x69, 0x74, 0x66, 0x6d, 0x5f, 0x73, 0x6b, 0x00}, \
+        },                                                                                                         \
+    }
 
 const key_recipe_t recipe_el2goimporttfm_kek_sk = {
     .number_of_steps = 1,
@@ -305,65 +94,82 @@ const key_recipe_t recipe_el2goimporttfm_kek_sk = {
         },
 };
 
-#define RECIPE_STEP_CREATE_NXP_DIE_EL2GO_ATTEST_AUTH_PRK_SEED                                                      \
+#define RECIPE_STEP_CREATE_NXP_DIE_EL2GOIMPORT_AUTH_SK                                                             \
     {                                                                                                              \
-        .operation = OP_CKDF, .storage = STORAGE_TEMP_KEY,                                                         \
+        .operation = OP_CKDF, .storage = STORAGE_FINAL_KEY,                                                        \
         .ckdf = {                                                                                                  \
-            .source_key_slot           = 0x06,                                                                     \
-            .target_key_slot           = 0x0E,                                                                     \
-            .key_properties.word.value = 0x84000021,                                                               \
-            .derivation_data           = {0x00, 0x65, 0x32, 0x67, 0x61, 0x74, 0x74, 0x5f, 0x73, 0x65, 0x00, 0x00}, \
+            .source_key_slot           = NXP_DIE_EL2GOOEM_MK_SK_SLOT,                                              \
+            .target_key_id             = MBEDTLS_NXP_DIE_EL2GOIMPORT_AUTH_SK_ID,                                   \
+            .key_properties.word.value = 0x40002021,                                                               \
+            .derivation_data           = {0x00, 0x65, 0x32, 0x67, 0x69, 0x61, 0x75, 0x74, 0x5f, 0x73, 0x6b, 0x00}, \
         },                                                                                                         \
     }
 
-#define RECIPE_STEP_CREATE_NXP_DIE_EL2GO_ATTEST_AUTH_PRK      \
-    {                                                         \
-        .operation = OP_KEYGEN, .storage = STORAGE_FINAL_KEY, \
-        .keygen = {                                           \
-            .target_key_slot           = 0x0E,                \
-            .key_properties.word.value = 0x80040001,          \
-        },                                                    \
-    }
-
-const key_recipe_t recipe_el2go_attest_key = {
-    .number_of_steps = 2,
+const key_recipe_t recipe_el2goimport_auth_sk = {
+    .number_of_steps = 1,
     .steps =
         {
-            RECIPE_STEP_CREATE_NXP_DIE_EL2GO_ATTEST_AUTH_PRK_SEED,
-            RECIPE_STEP_CREATE_NXP_DIE_EL2GO_ATTEST_AUTH_PRK,
+            RECIPE_STEP_CREATE_NXP_DIE_EL2GOIMPORT_AUTH_SK,
         },
 };
 
-
-#define RECIPE_STEP_CREATE_NXP_DIE_EL2GO_CONN_AUTH_PRK_SEED                                                        \
+#define RECIPE_STEP_CREATE_NXP_DIE_EL2GOCONN_AUTH_PRK_SEED                                                         \
     {                                                                                                              \
         .operation = OP_CKDF, .storage = STORAGE_TEMP_KEY,                                                         \
         .ckdf = {                                                                                                  \
-            .source_key_slot           = 0x06,                                                                     \
-            .target_key_slot           = 0x0E,                                                                     \
+            .source_key_slot           = NXP_DIE_EL2GOPUBLIC_MK_SK_SLOT,                                           \
+            .target_key_id             = MBEDTLS_NXP_DIE_EL2GOCONN_AUTH_PRK_ID,                                    \
             .key_properties.word.value = 0x84000021,                                                               \
             .derivation_data           = {0x00, 0x65, 0x32, 0x67, 0x63, 0x6f, 0x6e, 0x5f, 0x73, 0x65, 0x00, 0x00}, \
         },                                                                                                         \
     }
 
-#define RECIPE_STEP_CREATE_NXP_DIE_EL2GO_CONN_AUTH_PRK        \
-    {                                                         \
-        .operation = OP_KEYGEN, .storage = STORAGE_FINAL_KEY, \
-        .keygen = {                                           \
-            .target_key_slot           = 0x0E,                \
-            .key_properties.word.value = 0x80040001,          \
-        },                                                    \
+#define RECIPE_STEP_CREATE_NXP_DIE_EL2GOCONN_AUTH_PRK                           \
+    {                                                                           \
+        .operation = OP_KEYGEN, .storage = STORAGE_FINAL_KEY,                   \
+        .keygen = {                                                             \
+            .target_key_id             = MBEDTLS_NXP_DIE_EL2GOCONN_AUTH_PRK_ID, \
+            .key_properties.word.value = 0x80040001,                            \
+        },                                                                      \
     }
 
-const key_recipe_t recipe_el2go_conn_key = {
+const key_recipe_t recipe_el2goconn_auth_prk = {
     .number_of_steps = 2,
     .steps =
         {
-            RECIPE_STEP_CREATE_NXP_DIE_EL2GO_CONN_AUTH_PRK_SEED,
-            RECIPE_STEP_CREATE_NXP_DIE_EL2GO_CONN_AUTH_PRK,
+            RECIPE_STEP_CREATE_NXP_DIE_EL2GOCONN_AUTH_PRK_SEED,
+            RECIPE_STEP_CREATE_NXP_DIE_EL2GOCONN_AUTH_PRK,
         },
 };
-#endif
+
+#define RECIPE_STEP_CREATE_NXP_DIE_EL2GOATTEST_AUTH_PRK_SEED                                                       \
+    {                                                                                                              \
+        .operation = OP_CKDF, .storage = STORAGE_TEMP_KEY,                                                         \
+        .ckdf = {                                                                                                  \
+            .source_key_slot           = NXP_DIE_EL2GOPUBLIC_MK_SK_SLOT,                                           \
+            .target_key_id             = MBEDTLS_NXP_DIE_EL2GOATTEST_AUTH_PRK_ID,                                  \
+            .key_properties.word.value = 0x84000021,                                                               \
+            .derivation_data           = {0x00, 0x65, 0x32, 0x67, 0x61, 0x74, 0x74, 0x5f, 0x73, 0x65, 0x00, 0x00}, \
+        },                                                                                                         \
+    }
+
+#define RECIPE_STEP_CREATE_NXP_DIE_EL2GOATTEST_AUTH_PRK                           \
+    {                                                                             \
+        .operation = OP_KEYGEN, .storage = STORAGE_FINAL_KEY,                     \
+        .keygen = {                                                               \
+            .target_key_id             = MBEDTLS_NXP_DIE_EL2GOATTEST_AUTH_PRK_ID, \
+            .key_properties.word.value = 0x80040001,                              \
+        },                                                                        \
+    }
+
+const key_recipe_t recipe_el2goattest_auth_prk = {
+    .number_of_steps = 2,
+    .steps =
+        {
+            RECIPE_STEP_CREATE_NXP_DIE_EL2GOATTEST_AUTH_PRK_SEED,
+            RECIPE_STEP_CREATE_NXP_DIE_EL2GOATTEST_AUTH_PRK,
+        },
+};
 
 /*  For now assumes that when location is PSA_KEY_LOCATION_S50_TEMP_STORAGE the slot is passed
     in key_buffer (stored in pKey->container.pData) otherwise that pointer is considered to contain
@@ -379,12 +185,12 @@ psa_status_t mcuxClPsaDriver_Oracle_GetBuiltinKeyBufferSize(mbedtls_svc_key_id_t
  then use rw61x specific plat builtin keys */
 #if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
         case TFM_BUILTIN_KEY_ID_EL2GO_CONN_AUTH:
-            *key_buffer_size = mcuxClPsaDriver_Oracle_Utils_GetRecipeSize(&recipe_el2go_conn_key);
+            *key_buffer_size = mcuxClPsaDriver_Oracle_Utils_GetRecipeSize(&recipe_el2goconn_auth_prk);
             return PSA_SUCCESS;
 #endif /*PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER*/
 #ifdef TFM_PARTITION_INITIAL_ATTESTATION
         case TFM_BUILTIN_KEY_ID_IAK:
-            *key_buffer_size = mcuxClPsaDriver_Oracle_Utils_GetRecipeSize(&recipe_el2go_attest_key);
+            *key_buffer_size = mcuxClPsaDriver_Oracle_Utils_GetRecipeSize(&recipe_el2goattest_auth_prk);
             return PSA_SUCCESS;
 #endif // TFM_PARTITION_INITIAL_ATTESTATION
         default:
@@ -404,7 +210,7 @@ psa_status_t mcuxClPsaDriver_Oracle_GetBuiltinKeyBuffer(psa_key_attributes_t *at
 
     mbedtls_svc_key_id_t key_id     = psa_get_key_id(attributes);
     size_t required_key_buffer_size = 0;
-    psa_status_t status = mcuxClPsaDriver_Oracle_GetBuiltinKeyBufferSize(key_id, &required_key_buffer_size);
+    psa_status_t status             = mcuxClPsaDriver_Oracle_GetBuiltinKeyBufferSize(key_id, &required_key_buffer_size);
     if (status != PSA_SUCCESS)
     {
         return PSA_ERROR_NOT_PERMITTED;
@@ -419,35 +225,34 @@ psa_status_t mcuxClPsaDriver_Oracle_GetBuiltinKeyBuffer(psa_key_attributes_t *at
     {
         return PSA_ERROR_INVALID_ARGUMENT;
     }
-    psa_key_usage_t usage        = psa_get_key_usage_flags(attributes);
 
-    /* If TF-M Builtin keys are being used in project,
-     then use rw61x specific plat builtin keys */
+    psa_key_usage_t usage = psa_get_key_usage_flags(attributes);
+/* If TF-M Builtin keys are being used in project,
+ then use rw61x specific plat builtin keys */
 #if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
-        /* Retrieve the usage policy based on the key_id and the user of the key */
-        const tfm_plat_builtin_key_policy_t *policy_table = NULL;
-        size_t number_of_keys = tfm_plat_builtin_key_get_policy_table_ptr(&policy_table);
+    /* Retrieve the usage policy based on the key_id and the user of the key */
+    const tfm_plat_builtin_key_policy_t *policy_table = NULL;
+    size_t number_of_keys = tfm_plat_builtin_key_get_policy_table_ptr(&policy_table);
 
-        for (size_t idx = 0; idx < number_of_keys; idx++) {
-            if (policy_table[idx].key_id == MBEDTLS_SVC_KEY_ID_GET_KEY_ID(key_id)) {
-                if (policy_table[idx].per_user_policy == 0) {
-                    usage = policy_table[idx].usage;
-                } else {
-                    /* The policy depedends also on the user of the key */
-                    size_t num_users = policy_table[idx].per_user_policy;
-                    const tfm_plat_builtin_key_per_user_policy_t *p_policy = policy_table[idx].policy_ptr;
+    for (size_t idx = 0; idx < number_of_keys; idx++) {
+        if (policy_table[idx].key_id == MBEDTLS_SVC_KEY_ID_GET_KEY_ID(key_id)) {
+            if (policy_table[idx].per_user_policy == 0) {
+                usage = policy_table[idx].usage;
+            } else {
+                /* The policy depedends also on the user of the key */
+                size_t num_users = policy_table[idx].per_user_policy;
+                const tfm_plat_builtin_key_per_user_policy_t *p_policy = policy_table[idx].policy_ptr;
 
-                    for (size_t j = 0; j < num_users; j++) {
-                        if (p_policy[j].user == MBEDTLS_SVC_KEY_ID_GET_OWNER_ID(key_id)) {
-                            usage = p_policy[j].usage;
-                            break;
-                        }
+                for (size_t j = 0; j < num_users; j++) {
+                    if (p_policy[j].user == MBEDTLS_SVC_KEY_ID_GET_OWNER_ID(key_id)) {
+                        usage = p_policy[j].usage;
+                        break;
                     }
                 }
-                break;
             }
+            break;
         }
-    
+    }
 #endif /* PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER */
     psa_set_key_usage_flags(attributes, usage);
 
@@ -457,7 +262,7 @@ psa_status_t mcuxClPsaDriver_Oracle_GetBuiltinKeyBuffer(psa_key_attributes_t *at
  then use rw61x specific plat builtin keys */
 #if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
         case TFM_BUILTIN_KEY_ID_EL2GO_CONN_AUTH:
-            memcpy(key_buffer, &recipe_el2go_conn_key, required_key_buffer_size);
+            memcpy(key_buffer, &recipe_el2goconn_auth_prk, required_key_buffer_size);
             *key_buffer_length = required_key_buffer_size;
             psa_set_key_algorithm(attributes, PSA_ALG_ECDSA(PSA_ALG_SHA_256));
             psa_set_key_type(attributes, PSA_KEY_TYPE_ECC_KEY_PAIR(PSA_ECC_FAMILY_SECP_R1));
@@ -466,7 +271,7 @@ psa_status_t mcuxClPsaDriver_Oracle_GetBuiltinKeyBuffer(psa_key_attributes_t *at
 #endif /* PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER */
 #ifdef TFM_PARTITION_INITIAL_ATTESTATION
         case TFM_BUILTIN_KEY_ID_IAK:
-            memcpy(key_buffer, &recipe_el2go_attest_key, required_key_buffer_size);
+            memcpy(key_buffer, &recipe_el2goattest_auth_prk, required_key_buffer_size);
             *key_buffer_length = required_key_buffer_size;
             psa_set_key_algorithm(attributes, PSA_ALG_ECDSA(PSA_ALG_SHA_256));
             psa_set_key_type(attributes, PSA_KEY_TYPE_ECC_KEY_PAIR(PSA_ECC_FAMILY_SECP_R1));
@@ -506,8 +311,7 @@ psa_status_t mcuxClPsaDriver_Oracle_LoadKey(mcuxClKey_Descriptor_t *pKey)
     size_t decrypted_key_length = 0;
 
     psa_key_attributes_t *attributes = (psa_key_attributes_t *)pKey->container.pAuxData;
-    psa_key_location_t location =
-        PSA_KEY_LIFETIME_GET_LOCATION(attributes->MBEDTLS_PRIVATE(core).MBEDTLS_PRIVATE(lifetime));
+    psa_key_location_t location = PSA_KEY_LIFETIME_GET_LOCATION(psa_get_key_lifetime(attributes));
 
     if (MCUXCLPSADRIVER_IS_S50_TEMP_STORAGE(location))
     {
@@ -518,13 +322,12 @@ psa_status_t mcuxClPsaDriver_Oracle_LoadKey(mcuxClKey_Descriptor_t *pKey)
     else if (MCUXCLPSADRIVER_IS_S50_KEY_GEN_STORAGE(location))
     {
         mcuxClEls_KeyIndex_t key_slot = 0;
-        psa_status = mcuxClPsaDriver_Oracle_Utils_GetSlotFromKeyId(
-            attributes->MBEDTLS_PRIVATE(core).MBEDTLS_PRIVATE(id), &key_slot);
+        psa_status = mcuxClPsaDriver_Oracle_Utils_GetSlotFromKeyId(psa_get_key_id(attributes), &key_slot);
         if (psa_status == PSA_ERROR_DOES_NOT_EXIST)
         {
             key_recipe_t *recipe = (key_recipe_t *)pKey->container.pData;
             psa_status           = mcuxClPsaDriver_Oracle_Utils_ExecuteKeyRecipe(
-                attributes->MBEDTLS_PRIVATE(core).MBEDTLS_PRIVATE(id), // psa reference
+                psa_get_key_id(attributes), // psa reference
                 recipe, &key_slot);
             PSA_DRIVER_SUCCESS_OR_EXIT_MSG("mcuxClPsaDriver_Oracle_Utils_ExecuteKeyRecipe returned 0x%x",
                                            psa_status);
@@ -537,8 +340,7 @@ psa_status_t mcuxClPsaDriver_Oracle_LoadKey(mcuxClKey_Descriptor_t *pKey)
     else if (MCUXCLPSADRIVER_IS_S50_BLOB_STORAGE(location))
     {
         mcuxClEls_KeyIndex_t key_slot = 0;
-        psa_status = mcuxClPsaDriver_Oracle_Utils_GetSlotFromKeyId(
-            attributes->MBEDTLS_PRIVATE(core).MBEDTLS_PRIVATE(id), &key_slot);
+        psa_status = mcuxClPsaDriver_Oracle_Utils_GetSlotFromKeyId(psa_get_key_id(attributes), &key_slot);
         if (psa_status == PSA_ERROR_DOES_NOT_EXIST)
         {
             // derive the NXP_DIE_EL2GOIMPORT_KEK_SK key in the keyslot
@@ -547,15 +349,10 @@ psa_status_t mcuxClPsaDriver_Oracle_LoadKey(mcuxClKey_Descriptor_t *pKey)
                                                                        &recipe_el2goimport_kek_sk, &el2goimport_kek_sk_slot);
             PSA_DRIVER_SUCCESS_OR_EXIT_MSG("Error in dispatching the key command to ELS");
 
-            // get free S50 slot
-            key_slot = mcuxClPsaDriver_Oracle_ElsUtils_GetFreeKeySlot(1);
-            PSA_DRIVER_ASSERT_OR_EXIT_STATUS_MSG(key_slot < MCUXCLELS_KEY_SLOTS, PSA_ERROR_BAD_STATE,
-                                                 "No free keyslot available");
-
             // load blob on free S50 slot
-            psa_status = mcuxClPsaDriver_Oracle_UtilsExecuteElsKeyIn(
-                attributes->MBEDTLS_PRIVATE(core).MBEDTLS_PRIVATE(id), // psa reference
-                pKey->container.pData, pKey->container.length, el2goimport_kek_sk_slot, key_slot);
+            psa_status = mcuxClPsaDriver_Oracle_Utils_ExecuteElsKeyIn(
+                psa_get_key_id(attributes), // psa reference
+                pKey->container.pData, pKey->container.length, el2goimport_kek_sk_slot, &key_slot);
 
             //  regardless of the status of the KEYIN, we need to free the keyslot of the wrap key
             psa_status_t psa_status_remove_key = mcuxClPsaDriver_Oracle_Utils_RemoveKeyFromEls(el2goimport_kek_sk_id);
@@ -572,8 +369,7 @@ psa_status_t mcuxClPsaDriver_Oracle_LoadKey(mcuxClKey_Descriptor_t *pKey)
     }
     else if (MCUXCLPSADRIVER_IS_S50_ENC_STORAGE(location))
     {
-        psa_status = mcuxClPsaDriver_Oracle_Utils_GetSlotFromKeyId(
-            attributes->MBEDTLS_PRIVATE(core).MBEDTLS_PRIVATE(id), &pKey->location.slot);
+        psa_status = mcuxClPsaDriver_Oracle_Utils_GetSlotFromKeyId(psa_get_key_id(attributes), &pKey->location.slot);
         if (psa_status == PSA_ERROR_DOES_NOT_EXIST)
         {
             // derive the NXP_DIE_EL2GOIMPORTTFM_KEK_SK key in the keyslot
@@ -583,7 +379,7 @@ psa_status_t mcuxClPsaDriver_Oracle_LoadKey(mcuxClKey_Descriptor_t *pKey)
             PSA_DRIVER_SUCCESS_OR_EXIT_MSG("Error in dispatching the key command to ELS");
 
             // parse blob and decrypt data on S50 slot
-            psa_status = mcuxClPsaDriver_Oracle_UtilsExecuteElsDecryptCbc(pKey->container.pData, pKey->container.length,
+            psa_status = mcuxClPsaDriver_Oracle_Utils_ExecuteElsDecryptCbc(pKey->container.pData, pKey->container.length,
                                                                           &decrypted_key, &decrypted_key_length,
                                                                           el2goimporttfm_kek_sk_slot);
 
@@ -626,18 +422,17 @@ psa_status_t mcuxClPsaDriver_Oracle_ImportKey(
     const psa_key_attributes_t *attributes = (psa_key_attributes_t *)pKey->container.pAuxData;
     uint8_t *key_buffer                    = pKey->container.pData;
 
-    psa_key_location_t location =
-        PSA_KEY_LIFETIME_GET_LOCATION(attributes->MBEDTLS_PRIVATE(core).MBEDTLS_PRIVATE(lifetime));
+    psa_key_location_t location = PSA_KEY_LIFETIME_GET_LOCATION(psa_get_key_lifetime(attributes));
     if ((MCUXCLPSADRIVER_IS_S50_BLOB_STORAGE(location)) || (MCUXCLPSADRIVER_IS_S50_ENC_STORAGE(location)))
     {
         // derive the NXP_DIE_EL2GOIMPORT_AUTH_SK key in the keyslot
         mcuxClEls_KeyIndex_t el2goimport_auth_sk_slot;
         psa_status = mcuxClPsaDriver_Oracle_Utils_ExecuteKeyRecipe(el2goimport_auth_sk_id, // psa reference
-                                                                   &recipe_el2go_import_auth_key, &el2goimport_auth_sk_slot);
+                                                                   &recipe_el2goimport_auth_sk, &el2goimport_auth_sk_slot);
         PSA_DRIVER_SUCCESS_OR_EXIT_MSG("Error in dispatching the key command to ELS");
 
         // validate blob attributes
-        psa_status = mcuxClPsaDriver_Oracle_UtilsValidateBlobAttributes(attributes, data, data_length, el2goimport_auth_sk_slot);
+        psa_status = mcuxClPsaDriver_Oracle_Utils_ValidateBlobAttributes(attributes, data, data_length, el2goimport_auth_sk_slot);
 
         // regardless of the status of the blob validation, we need to free the keyslot of the auth key
         psa_status_t psa_status_remove_key = mcuxClPsaDriver_Oracle_Utils_RemoveKeyFromEls(el2goimport_auth_sk_id);
@@ -658,9 +453,11 @@ psa_status_t mcuxClPsaDriver_Oracle_ImportKey(
 
         return PSA_SUCCESS;
     }
-#ifdef PSA_CRYPTO_MBEDTLS_STANDALONE
+#ifdef MCUXCLPSADRIVER_KEY_RECIPE_IMPORT_ENABLE
     else if (MCUXCLPSADRIVER_IS_S50_KEY_GEN_STORAGE(location)) {
-        // Store the blob as is in the PSA keystore.
+        // TODO: Validate key recipe
+
+        // Store the recipe as is in the PSA keystore.
         if (key_buffer_size < data_length)
         {
             return PSA_ERROR_INVALID_ARGUMENT;
@@ -689,13 +486,12 @@ psa_status_t mcuxClPsaDriver_Oracle_ExportPublicKey(mcuxClKey_Descriptor_t *pKey
     uint8_t *public_key              = NULL;
     size_t public_key_size           = 0U;
     psa_key_attributes_t *attributes = (psa_key_attributes_t *)pKey->container.pAuxData;
-    psa_key_location_t location =
-        PSA_KEY_LIFETIME_GET_LOCATION(attributes->MBEDTLS_PRIVATE(core).MBEDTLS_PRIVATE(lifetime));
+    psa_key_location_t location = PSA_KEY_LIFETIME_GET_LOCATION(psa_get_key_lifetime(attributes));
 
     if ((MCUXCLPSADRIVER_IS_S50_BLOB_STORAGE(location)) || (MCUXCLPSADRIVER_IS_S50_KEY_GEN_STORAGE(location)))
     {
         psa_status = mcuxClPsaDriver_Oracle_Utils_GetPublicKeyFromHandler(
-            attributes->MBEDTLS_PRIVATE(core).MBEDTLS_PRIVATE(id), &public_key, &public_key_size);
+            psa_get_key_id(attributes), &public_key, &public_key_size);
 
         if (psa_status == PSA_SUCCESS)
         {
@@ -744,14 +540,13 @@ psa_status_t mcuxClPsaDriver_Oracle_ResumeKey(mcuxClKey_Descriptor_t *pKey)
 psa_status_t mcuxClPsaDriver_Oracle_UnloadKey(mcuxClKey_Descriptor_t *pKey)
 {
     psa_key_attributes_t *attributes = (psa_key_attributes_t *)pKey->container.pAuxData;
-    psa_key_location_t location =
-        PSA_KEY_LIFETIME_GET_LOCATION(attributes->MBEDTLS_PRIVATE(core).MBEDTLS_PRIVATE(lifetime));
+    psa_key_location_t location = PSA_KEY_LIFETIME_GET_LOCATION(psa_get_key_lifetime(attributes));
     // PSA_KEY_LOCATION_S50_ENC_STORAGE :as key is in RAM, no operation is required on slot.
 
     // Perform remove key operation on location where slot is relevant.
     if ((MCUXCLPSADRIVER_IS_S50_BLOB_STORAGE(location)) || (MCUXCLPSADRIVER_IS_S50_KEY_GEN_STORAGE(location)))
     {
-        return mcuxClPsaDriver_Oracle_Utils_RemoveKeyFromEls(attributes->MBEDTLS_PRIVATE(core).MBEDTLS_PRIVATE(id));
+        return mcuxClPsaDriver_Oracle_Utils_RemoveKeyFromEls(psa_get_key_id(attributes));
     }
     else if (MCUXCLPSADRIVER_IS_S50_TEMP_STORAGE(location))
     {
@@ -789,31 +584,20 @@ psa_status_t mcuxClPsaDriver_Oracle_GetKeyBufferSizeFromKeyData(const psa_key_at
                                                                 size_t data_length,
                                                                 size_t *key_buffer_length)
 {
-    psa_status_t psa_status = PSA_ERROR_INVALID_ARGUMENT;
-    psa_key_location_t location =
-        PSA_KEY_LIFETIME_GET_LOCATION(attributes->MBEDTLS_PRIVATE(core).MBEDTLS_PRIVATE(lifetime));
+    psa_key_location_t location = PSA_KEY_LIFETIME_GET_LOCATION(psa_get_key_lifetime(attributes));
     if ((MCUXCLPSADRIVER_IS_S50_BLOB_STORAGE(location)) || (MCUXCLPSADRIVER_IS_S50_ENC_STORAGE(location)) ||
         (MCUXCLPSADRIVER_IS_S50_TEMP_STORAGE(location)))
     {
         *key_buffer_length = data_length;
         return PSA_SUCCESS;
     }
+#ifdef MCUXCLPSADRIVER_KEY_RECIPE_IMPORT_ENABLE
     else if (MCUXCLPSADRIVER_IS_S50_KEY_GEN_STORAGE(location))
     {
-#ifdef PSA_CRYPTO_MBEDTLS_STANDALONE
         *key_buffer_length = data_length;
         return PSA_SUCCESS;
-#else
-        psa_status = mcuxClPsaDriver_Oracle_Utils_GetKeyBufferSizeFromKeyData(data, data_length, key_buffer_length);
-        PSA_DRIVER_SUCCESS_OR_EXIT_MSG("mcuxClPsaDriver_Oracle_Utils_GetKeyBufferSizeFromKeyData returned 0x%x",
-                                       psa_status);
-        return PSA_SUCCESS;
-#endif
     }
-
+#endif
     // TODO: check which return code is better to use
     return PSA_ERROR_NOT_SUPPORTED;
-
-exit:
-    return psa_status;
 }

@@ -15,6 +15,8 @@
  *
  */
 
+#include "fsl_common.h"
+
 typedef int mcux_mutex_t;
 
 #endif /* OSAL_MUTEX_PLATFORM_H */

@@ -74,5 +74,4 @@
 extern void * ip_css_base;
 #define ELS_SFR_BASE           ((S50_Type *) ip_css_base)
 #endif /* NXPCL_FEATURE_ELS_LINK_BASE_ADDRESS */
-
 #endif

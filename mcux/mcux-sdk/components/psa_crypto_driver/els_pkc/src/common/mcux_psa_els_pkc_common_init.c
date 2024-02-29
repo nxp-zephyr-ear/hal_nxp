@@ -6,10 +6,9 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+#include "mcux_psa_els_pkc_common_init.h"
 #include "mcux_els.h"
 #include "mcux_pkc.h"
-#include "mcux_psa_els_pkc_common_init.h" /* ELE Crypto port layer */
-
 
 /******************************************************************************/
 /*************************** Mutex ********************************************/
@@ -157,7 +156,10 @@ status_t CRYPTO_DeinitHardware(void)
     if (mcux_mutex_unlock(&els_pkc_hwcrypto_mutex)) {
         return kStatus_Fail;
     }
-#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
 
+    if (result == kStatus_Success) {
+        mcux_mutex_free(&els_pkc_hwcrypto_mutex);
+    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
     return result;
 }

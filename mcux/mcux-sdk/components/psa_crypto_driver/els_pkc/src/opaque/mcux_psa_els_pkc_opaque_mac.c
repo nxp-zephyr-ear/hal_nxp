@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  * All rights reserved.
  *
  *
@@ -16,7 +16,7 @@
 #include "mcuxClEls.h"
 #include "mcuxClPsaDriver_Functions.h"
 #include "mcux_psa_els_pkc_opaque_mac.h"
-
+#include <mbedtls/platform.h>
 #if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
 #include "mcux_psa_els_pkc_common_init.h"
 #endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
@@ -37,24 +37,35 @@ psa_status_t els_pkc_opaque_mac_compute(const psa_key_attributes_t *attributes,
 
 #if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
     if (mcux_mutex_lock(&els_pkc_hwcrypto_mutex)) {
-        return kStatus_Fail;
+        return PSA_ERROR_GENERIC_ERROR;
     }
 #endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
+    uint8_t *padded_input = NULL;
+    if (PSA_ALG_IS_HMAC(alg)) {
+        padded_input = mbedtls_calloc(1, MCUXCLHMAC_ELS_INPUTBUFFER_LENGTH(input_length));
+        if (!padded_input) {
+            return PSA_ERROR_INSUFFICIENT_MEMORY;
+        }
+        memcpy(padded_input, input, input_length);
+    }
 
     status = mcuxClPsaDriver_psa_driver_wrapper_mac_computeLayer(
                                         attributes,
                                         key_buffer,
                                         key_buffer_size,
                                         alg,
-                                        input,
+                                        PSA_ALG_IS_HMAC(alg) ? padded_input : input,
                                         input_length,
                                         mac,
                                         mac_size,
                                         mac_length);
 
+    mbedtls_free(padded_input);
+
 #if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
     if (mcux_mutex_unlock(&els_pkc_hwcrypto_mutex)) {
-        return kStatus_Fail;
+        return PSA_ERROR_GENERIC_ERROR;
     }
 #endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
 
@@ -78,7 +89,7 @@ psa_status_t els_pkc_opaque_mac_sign_setup(els_pkc_opaque_mac_operation_t *opera
 
 #if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
     if (mcux_mutex_lock(&els_pkc_hwcrypto_mutex)) {
-        return kStatus_Fail;
+        return PSA_ERROR_GENERIC_ERROR;
     }
 #endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
 
@@ -90,7 +101,7 @@ psa_status_t els_pkc_opaque_mac_sign_setup(els_pkc_opaque_mac_operation_t *opera
 
 #if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
     if (mcux_mutex_unlock(&els_pkc_hwcrypto_mutex)) {
-        return kStatus_Fail;
+        return PSA_ERROR_GENERIC_ERROR;
     }
 #endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
 
@@ -106,7 +117,7 @@ psa_status_t els_pkc_opaque_mac_verify_setup(els_pkc_opaque_mac_operation_t *ope
 
 #if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
     if (mcux_mutex_lock(&els_pkc_hwcrypto_mutex)) {
-        return kStatus_Fail;
+        return PSA_ERROR_GENERIC_ERROR;
     }
 #endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
 
@@ -118,7 +129,7 @@ psa_status_t els_pkc_opaque_mac_verify_setup(els_pkc_opaque_mac_operation_t *ope
 
 #if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
     if (mcux_mutex_unlock(&els_pkc_hwcrypto_mutex)) {
-        return kStatus_Fail;
+        return PSA_ERROR_GENERIC_ERROR;
     }
 #endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
 
@@ -132,7 +143,7 @@ psa_status_t els_pkc_opaque_mac_update(els_pkc_opaque_mac_operation_t *operation
 
 #if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
     if (mcux_mutex_lock(&els_pkc_hwcrypto_mutex)) {
-        return kStatus_Fail;
+        return PSA_ERROR_GENERIC_ERROR;
     }
 #endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
 
@@ -142,7 +153,7 @@ psa_status_t els_pkc_opaque_mac_update(els_pkc_opaque_mac_operation_t *operation
 
 #if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
     if (mcux_mutex_unlock(&els_pkc_hwcrypto_mutex)) {
-        return kStatus_Fail;
+        return PSA_ERROR_GENERIC_ERROR;
     }
 #endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
 
@@ -157,7 +168,7 @@ psa_status_t els_pkc_opaque_mac_sign_finish(els_pkc_opaque_mac_operation_t *oper
 
 #if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
     if (mcux_mutex_lock(&els_pkc_hwcrypto_mutex)) {
-        return kStatus_Fail;
+        return PSA_ERROR_GENERIC_ERROR;
     }
 #endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
 
@@ -168,7 +179,7 @@ psa_status_t els_pkc_opaque_mac_sign_finish(els_pkc_opaque_mac_operation_t *oper
 
 #if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
     if (mcux_mutex_unlock(&els_pkc_hwcrypto_mutex)) {
-        return kStatus_Fail;
+        return PSA_ERROR_GENERIC_ERROR;
     }
 #endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
 
@@ -190,7 +201,7 @@ psa_status_t els_pkc_opaque_mac_verify_finish(els_pkc_opaque_mac_operation_t *op
 
 #if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
     if (mcux_mutex_lock(&els_pkc_hwcrypto_mutex)) {
-        return kStatus_Fail;
+        return PSA_ERROR_GENERIC_ERROR;
     }
 #endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
 
@@ -213,7 +224,7 @@ psa_status_t els_pkc_opaque_mac_verify_finish(els_pkc_opaque_mac_operation_t *op
 
 #if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
     if (mcux_mutex_unlock(&els_pkc_hwcrypto_mutex)) {
-        return kStatus_Fail;
+        return PSA_ERROR_GENERIC_ERROR;
     }
 #endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
 
@@ -226,7 +237,7 @@ psa_status_t els_pkc_opaque_mac_abort(els_pkc_opaque_mac_operation_t *operation)
 
 #if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
     if (mcux_mutex_lock(&els_pkc_hwcrypto_mutex)) {
-        return kStatus_Fail;
+        return PSA_ERROR_GENERIC_ERROR;
     }
 #endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
 
@@ -234,7 +245,7 @@ psa_status_t els_pkc_opaque_mac_abort(els_pkc_opaque_mac_operation_t *operation)
 
 #if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
     if (mcux_mutex_unlock(&els_pkc_hwcrypto_mutex)) {
-        return kStatus_Fail;
+        return PSA_ERROR_GENERIC_ERROR;
     }
 #endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
 

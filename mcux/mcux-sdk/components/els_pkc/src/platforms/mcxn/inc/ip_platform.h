@@ -24,8 +24,9 @@
 /* ================================================================================ */
 /* ================             Peripheral declaration             ================ */
 /* ================================================================================ */
-
-#define ELS_KS0            KS[0]         ///compatibility define 
+#if (defined(CDOG0))
+#define CDOG CDOG0
+#endif
 
 // Define base address of ELS
 #define ELS_SFR_BASE            ELS         ///< base of ELS SFRs
@@ -87,5 +88,4 @@
 extern void * ip_css_base;
 #define ELS_SFR_BASE           ((S50_Type *) ip_css_base)
 #endif /* NXPCL_FEATURE_ELS_LINK_BASE_ADDRESS */
-
 #endif

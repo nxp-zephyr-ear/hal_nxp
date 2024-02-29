@@ -294,6 +294,10 @@ if(CONFIG_ENTROPY_MCUX_CSS)
   include(component_css)
 endif()
 
+if(CONFIG_MCUX_ELS_PKC)
+  set(CONFIG_EXPORT_MCUX_ELS_PKC_TARGETS ON)
+endif()
+
 if(CONFIG_MCUX_ELS_PKC AND NOT CONFIG_BUILD_WITH_TFM)
   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/mcux-sdk/components/els_pkc)
   zephyr_include_directories("$<TARGET_PROPERTY:McuxElsPkc,INTERFACE_INCLUDE_DIRECTORIES>")

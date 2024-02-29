@@ -8,15 +8,16 @@
 
 #ifndef ELS_PKC_DRIVER_H
 #define ELS_PKC_DRIVER_H
+#if defined(PSA_CRYPTO_DRIVER_ELS_PKC)
 
-/** \file els_pkc.h
+/** \file els_pkc_driver.h
  *
  * This file includes each module of the els_pkc driver that complies with the
  * PSA Cryptoprocessor Driver interface specification. the list of the
  * available modules is:
  *
  *  - Symmetric ciphers:                      mcux_psa_els_pkc_cipher.h
- *  - Access to ELE for entropy extraction:  mcux_psa_els_pkc_entropy.h
+ *  - Access to ELE for entropy extraction:   mcux_psa_els_pkc_entropy.h
  *  - Hashing:                                mcux_psa_els_pkc_hash.h
  *  - Authenticated Encryption w Assoc. Data: mcux_psa_els_pkc_aead.h
  *  - Asymmetric signature schemes:           mcux_psa_els_pkc_asymmetric_signature.h
@@ -36,17 +37,20 @@
 #ifndef PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT
 #define PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT
 #endif
-#endif /* PSA_CRYPTO_DRIVER_ELS_PKC */
 
-#if defined(PSA_CRYPTO_DRIVER_ELS_PKC)
 #ifndef PSA_CRYPTO_ELS_PKC_TRANSPARENT_DRIVER_ID
     #define PSA_CRYPTO_ELS_PKC_TRANSPARENT_DRIVER_ID (9)          /* Chosen a device id that doesn't clash with extra drivers in TFM */
 #endif
 #ifndef PSA_CRYPTO_ELS_PKC_OPAQUE_DRIVER_ID
-    #define PSA_CRYPTO_ELS_PKC_OPAQUE_DRIVER_ID (10)               /* Chosen a device id that doesn't clash with extra drivers in TFM */
+    #define PSA_CRYPTO_ELS_PKC_OPAQUE_DRIVER_ID (10)              /* Chosen a device id that doesn't clash with extra drivers in TFM */
 #endif
 
+#include "mcuxClPsaDriver_Oracle_Interface_key_locations.h"
 
+#define PSA_CRYPTO_ELS_PKC_LOCATION_S50_ENC_STORAGE_KEY   PSA_KEY_LOCATION_S50_ENC_STORAGE_KEY
+#define PSA_CRYPTO_ELS_PKC_LOCATION_S50_ENC_STORAGE_DATA  PSA_KEY_LOCATION_S50_ENC_STORAGE_DATA
+#define PSA_CRYPTO_ELS_PKC_LOCATION_S50_BLOB_STORAGE      PSA_KEY_LOCATION_S50_BLOB_STORAGE
+#define PSA_CRYPTO_ELS_PKC_LOCATION_S50_KEY_GEN_STORAGE   PSA_KEY_LOCATION_S50_KEY_GEN_STORAGE
 
 #include "mcux_psa_els_pkc_entropy.h"
 
@@ -65,11 +69,5 @@
 #include "mcux_psa_els_pkc_opaque_aead.h"
 #include "mcux_psa_els_pkc_opaque_mac.h"
 
-#include "mcuxClPsaDriver_Oracle_Interface_key_locations.h"
-
-#define PSA_CRYPTO_ELS_PKC_LOCATION_S50_ENC_STORAGE_KEY   PSA_KEY_LOCATION_S50_ENC_STORAGE_KEY
-#define PSA_CRYPTO_ELS_PKC_LOCATION_S50_ENC_STORAGE_DATA  PSA_KEY_LOCATION_S50_ENC_STORAGE_DATA
-#define PSA_CRYPTO_ELS_PKC_LOCATION_S50_BLOB_STORAGE      PSA_KEY_LOCATION_S50_BLOB_STORAGE
-#define PSA_CRYPTO_ELS_PKC_LOCATION_S50_KEY_GEN_STORAGE   PSA_KEY_LOCATION_S50_KEY_GEN_STORAGE
-
+#endif /* PSA_CRYPTO_DRIVER_ELS_PKC */
 #endif /* ELS_PKC_DRIVER_H */

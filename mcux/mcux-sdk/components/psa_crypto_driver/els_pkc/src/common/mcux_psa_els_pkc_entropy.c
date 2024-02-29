@@ -19,20 +19,27 @@
 #if defined(MBEDTLS_MCUX_ENTROPY) && (MBEDTLS_MCUX_ENTROPY == 1)
 
 #include "mcux_psa_els_pkc_entropy.h"
+#if defined(FSL_FEATURE_SOC_TRNG_COUNT) && (FSL_FEATURE_SOC_TRNG_COUNT > 0)
 #include "fsl_trng.h"
+#define MBEDTLS_MCUX_USE_TRNG_AS_ENTROPY_SEED
+#endif
 
 /* function initializes the rng*/
 static void trigger_rng_init(void)
 {
+#if defined(MBEDTLS_MCUX_USE_TRNG_AS_ENTROPY_SEED)
+  
 #if defined(TRNG)
 #define TRNG0 TRNG
 #endif
+
     trng_config_t trngConfig;
     
     TRNG_GetDefaultConfig(&trngConfig);
     /* Set sample mode of the TRNG ring oscillator to Von Neumann, for better random data.*/
     /* Initialize TRNG */
     TRNG_Init(TRNG0, &trngConfig);
+#endif
 }
      
 /** \defgroup psa_entropy PSA driver entry points for entropy collection
@@ -65,12 +72,6 @@ psa_status_t els_pkc_get_entropy(uint32_t flags, size_t *estimate_bits,
         goto end;
     }
 
-#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
-    if (mcux_mutex_lock(&els_pkc_hwcrypto_mutex)) {
-        return kStatus_Fail;
-    }
-#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
-
     /*
      * The order of functions in psa_crypto_init() is not correct as
      * driver init is called after call to random number generator. To
@@ -81,6 +82,12 @@ psa_status_t els_pkc_get_entropy(uint32_t flags, size_t *estimate_bits,
         return status;
     }
 
+#if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
+    if (mcux_mutex_lock(&els_pkc_hwcrypto_mutex)) {
+        return PSA_ERROR_GENERIC_ERROR;
+    }
+#endif /* defined(PSA_CRYPTO_DRIVER_THREAD_EN) */
+
     /* Initialize trng */
     static bool rng_init_is_done = false;
     if(rng_init_is_done == false)
@@ -89,15 +96,29 @@ psa_status_t els_pkc_get_entropy(uint32_t flags, size_t *estimate_bits,
         rng_init_is_done = true;
     }
 
+#if defined(MBEDTLS_MCUX_USE_TRNG_AS_ENTROPY_SEED)
 #ifndef TRNG0
 #define TRNG0 TRNG
 #endif
+    
     /* Get random data from trng driver*/
     result = TRNG_GetRandomData(TRNG0, output, output_size);
+#else
+    /* Call ELS to get random data */
+    MCUX_CSSL_FP_FUNCTION_CALL_BEGIN(css_result, token, mcuxClEls_Prng_GetRandom(output, output_size));
+    if ((MCUX_CSSL_FP_FUNCTION_CALLED(mcuxClEls_Prng_GetRandom) != token) || (MCUXCLELS_STATUS_OK != css_result))
+    {
+        result = kStatus_Fail;
+    }
+    MCUX_CSSL_FP_FUNCTION_CALL_END();
+
+    result = kStatus_Success;
+    
+#endif
 
 #if defined(PSA_CRYPTO_DRIVER_THREAD_EN)
     if (mcux_mutex_unlock(&els_pkc_hwcrypto_mutex)) {
-        return kStatus_Fail;
+        return PSA_ERROR_GENERIC_ERROR;
     }
 #endif
 

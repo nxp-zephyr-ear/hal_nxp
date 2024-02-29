@@ -19,9 +19,15 @@
 /* oracle is part of TF-M S */
 #define PRINTF(...)
 #define PSA_DRIVER_ERROR(...)
-#else /* standalone mbedtls usage case*/
+#else /* PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER */
+/* define PRINTF */
 #include <stdio.h>
 #define PRINTF printf
+#endif /* PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER */
+#endif /* PRINTF */
+
+
+#ifndef PSA_DRIVER_ERROR
 #define PSA_DRIVER_ERROR(...)                          \
     for (;;)                                           \
     {                                                  \
@@ -30,9 +36,7 @@
         PRINTF("\r\n");                                \
         break;                                         \
     }
-#endif /* PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER */
-#endif /* PRINTF */
-
+#endif /* PSA_DRIVER_ERROR */
 
 #define PSA_DRIVER_EXIT_STATUS_MSG(STATUS, ...) \
     psa_status = STATUS;                        \

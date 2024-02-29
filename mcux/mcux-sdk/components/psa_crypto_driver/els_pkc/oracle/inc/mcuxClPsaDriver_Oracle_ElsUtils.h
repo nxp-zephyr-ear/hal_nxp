@@ -82,27 +82,6 @@ psa_status_t mcuxClPsaDriver_Oracle_ElsUtils_EccKeyGen(mcuxClEls_EccKeyGenOption
                                                        mcuxClEls_KeyProp_t generatedKeyProperties,
                                                        uint8_t *pPublicKey);
 
-#if defined ( MCUXCL_FEATURE_ELS_KEY_MGMT_KEYPROV)
-/**
- * @brief Provisions a key in S50; this will be removed for A1 material
- *
- * @param[in]  options                The command options. For more information, see #KeyProvisionOption_t.
- * @param[in]  pKeyPart1              Key material 1 (size is hardcoded to MCUXCLELS_KEYPROV_KEY_PART_1_SIZE)
- * @param[in]  pKeyPart2              Key material 2
- * @param[in]  part2Length            Size of key material 2
- * @param[in]  targetKeyIdx           Output key index.
- * @param[in]  targetKeyProperties    The desired key properties of the provisioned key.
- *
- * @retval PSA_SUCCESS                 The operation was succesful
- * @retval PSA_ERROR_HARDWARE_FAILURE  The ELS operation failed
- */
-psa_status_t mcuxClPsaDriver_Oracle_ElsUtils_KeyProv(mcuxClEls_KeyProvisionOption_t options,
-                                                     uint8_t const *pKeyPart1,
-                                                     uint8_t const *pKeyPart2,
-                                                     size_t part2Length,
-                                                     mcuxClEls_KeyIndex_t targetKeyIdx,
-                                                     mcuxClEls_KeyProp_t targetKeyProperties);
-#endif /* MCUXCL_FEATURE_ELS_KEY_MGMT_KEYPROV */
 /**
  * @brief Deletes a key in S50
  *
