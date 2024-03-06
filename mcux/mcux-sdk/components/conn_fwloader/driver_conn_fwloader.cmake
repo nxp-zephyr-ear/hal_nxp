@@ -8,21 +8,19 @@
 include_guard(GLOBAL)
 message("driver_conn_fwloader component is included.")
 
+if(NOT CONFIG_BUILD_WITH_TFM)
+
 target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/fsl_loader.c
-)
-
-if(NOT CONFIG_BUILD_WITH_TFM)
-target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/fsl_loader_utils.c
     ${CMAKE_CURRENT_LIST_DIR}/nboot_hal.c
     ${CMAKE_CURRENT_LIST_DIR}/life_cycle.c
 )
-endif()
 
 target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/include
 )
+endif()
 
 if(CONFIG_BUILD_WITH_TFM)
     add_compile_definitions(TFM_PARTITION_LOADER_SERVICE)
