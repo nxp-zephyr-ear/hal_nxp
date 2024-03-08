@@ -1,4 +1,4 @@
-if(CONFIG_NXP_FW_LOADER_MONOLITHIC)
+if(CONFIG_MONOLITHIC_WIFI OR CONFIG_MONOLITHIC_BT OR CONFIG_MONOLITHIC_IEEE802154)
 	# TODO: currently, the binary blobs are not public so we can't fetch them with west blob
 	# So, when the firmwares will be published to a public repo, we'll be able to fetch them
 	# and update this path to the fetch path
@@ -9,7 +9,7 @@ if(CONFIG_NXP_FW_LOADER_MONOLITHIC)
 	set(binary_blobs_list)
 	set(output_includes_list)
 
-	if(CONFIG_WIFI)
+	if(CONFIG_MONOLITHIC_WIFI)
 		list(APPEND output_includes_list ${ZEPHYR_BINARY_DIR}/include/generated/rw61x_wifi_fw.bin.inc)
 
 		if(CONFIG_SOC_SERIES_RW6XX_REVISION_A1)
@@ -37,7 +37,24 @@ if(CONFIG_NXP_FW_LOADER_MONOLITHIC)
 
 		zephyr_library_sources(${CMAKE_CURRENT_LIST_DIR}/rw61x_cpu1.c)
 	endif()
-	if(CONFIG_BT)
+	if(CONFIG_MONOLITHIC_IEEE802154)
+		list(APPEND output_includes_list ${ZEPHYR_BINARY_DIR}/include/generated/rw61x_combo_fw.bin.inc)
+
+		if(CONFIG_SOC_SERIES_RW6XX_REVISION_A1)
+			set(signed_binary_blob_name rw61x_sb_combo_a1.bin)
+			set(raw_binary_blob_name rw61xn_raw_cpu2_combo_a1.bin)
+		elseif(CONFIG_SOC_SERIES_RW6XX_REVISION_A2)
+			set(signed_binary_blob_name rw61x_sb_combo_a2.bin)
+			set(raw_binary_blob_name rw61xn_raw_cpu2_combo_a2.bin)
+		else()
+			message(FATAL_ERROR "Couldn't determine soc revision, check SOC_SERIES_RW6XX_REVISION")
+		endif()
+
+		list(APPEND signed_binary_blobs_list ${hal_blobs_dir}/${signed_binary_blob_name})
+		list(APPEND raw_binary_blobs_list ${hal_blobs_dir}/${raw_binary_blob_name})
+
+		zephyr_library_sources(${CMAKE_CURRENT_LIST_DIR}/rw61x_cpu2.c)
+	elseif(CONFIG_MONOLITHIC_BT)
 		list(APPEND output_includes_list ${ZEPHYR_BINARY_DIR}/include/generated/rw61x_ble_fw.bin.inc)
 
 		if(CONFIG_SOC_SERIES_RW6XX_REVISION_A1)
