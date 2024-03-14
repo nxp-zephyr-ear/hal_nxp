@@ -464,6 +464,12 @@ int PLATFORM_TerminateBle(void)
             break;
         }
 
+        if (OSA_MutexDestroy((osa_mutex_handle_t)bleMutexHandle) != KOSA_StatusSuccess)
+        {
+            ret = -4;
+            break;
+        }
+
         initialized = false;
         /* after re-init cpu2, Reset hciInitialized to false. */
         hciInitialized = false;
