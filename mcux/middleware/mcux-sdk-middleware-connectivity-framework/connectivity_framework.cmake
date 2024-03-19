@@ -19,16 +19,16 @@ if(CONFIG_SOC_SERIES_RW6XX)
 
     zephyr_compile_definitions(gPlatformDisableVendorSpecificInit=1U)
 
-    if (CONFIG_NXP_FW_LOADER_MONOLITHIC)
+    if (CONFIG_MONOLITHIC_WIFI OR CONFIG_MONOLITHIC_BT OR CONFIG_MONOLITHIC_IEEE802154)
         zephyr_compile_definitions(gPlatformMonolithicApp_d=1U)
 
-        zephyr_compile_definitions_ifndef(CONFIG_BT
+        zephyr_compile_definitions_ifndef(CONFIG_MONOLITHIC_BT
                                           BLE_FW_ADDRESS=0U)
 
-        zephyr_compile_definitions_ifndef(CONFIG_WIFI
+        zephyr_compile_definitions_ifndef(CONFIG_MONOLITHIC_WIFI
                                           WIFI_FW_ADDRESS=0U)
 
-        # Combo FW not supported yet on Zephyr
-        zephyr_compile_definitions(COMBO_FW_ADDRESS=0U)
+        zephyr_compile_definitions_ifndef(CONFIG_MONOLITHIC_IEEE802154
+                                          COMBO_FW_ADDRESS=0U)
     endif()
 endif()
